@@ -377,6 +377,9 @@ check('bottle page: average shop price and number of shops', () => {
   assert.equal(je.reviews, 11);
   const unlisted = WB.analyseBottleHtml('<p>Last Average Shop Price</p><div><p>&euro; 50.00</p></div>');
   assert.equal(unlisted.price, null, 'no price without current shop listings');
+  assert.equal(je.signedIn, true, 'saved while signed in');
+  assert.equal(je.priceBlock, true);
+  assert.equal(unlisted.signedIn, false);
 });
 
 check('isBottlePhoto rejects the placeholder and the social card', () => {

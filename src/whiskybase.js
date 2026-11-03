@@ -199,7 +199,18 @@
    */
   function analyseBottleHtml(html) {
     html = String(html || '');
-    const out = { challenge: analyseSearchHtml(html).challenge, rating: null, reviews: null, photo: null, price: null, shops: null };
+    const out = {
+      challenge: analyseSearchHtml(html).challenge,
+      rating: null,
+      reviews: null,
+      photo: null,
+      price: null,
+      shops: null,
+      // For explaining a missing price: was the page served signed in, and did it have a price block?
+      signedIn: /href="[^"]*\/logout[?"]/i.test(html),
+      priceBlock: /Average Shop Price\s*<\/p>/i.test(html),
+      bytes: html.length,
+    };
     const find = (node) => {
       if (!node || typeof node !== 'object') return null;
       if (node.aggregateRating) return node.aggregateRating;
