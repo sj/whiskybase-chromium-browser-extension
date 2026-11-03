@@ -1,0 +1,27 @@
+# Runs the tests on every push to any branch and on pull requests (when opened,
+# reopened or updated with new commits).
+name: Tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The detector tests run in headless Chrome, which the runner image includes.
+      - name: Run tests
+        run: npm test
+        env:
+          CHROME_BIN: google-chrome

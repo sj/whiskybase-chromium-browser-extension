@@ -155,6 +155,9 @@ PATH). Add `-v` (`node test/run.mjs -v`) to see every signal for each fixture.
 To fix a page that is detected wrongly, save it as a fixture, add an expectation
 in `test/run.mjs`, and adjust the detector.
 
+The GitHub Actions workflow [`.github/workflows/test.yml`](.github/workflows/test.yml)
+runs the tests on every push to any branch and on every pull request.
+
 Pages saved while signed in contain your name, email, username, account IDs and
 session tokens. Scrub them before sharing the project; your own details are
 passed as options, so they are never stored in it:
