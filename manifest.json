@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Whiskybase Lookup",
+  "name": "Whiskybase Chromium Browser Extension",
   "version": "0.1.0",
   "description": "Recognises web pages that show a bottle of whisky and looks the bottle up on Whiskybase.",
   "icons": {
@@ -10,7 +10,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Whiskybase Lookup",
+    "default_title": "Whiskybase Chromium Browser Extension",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
