@@ -30,6 +30,7 @@ function bottlerCell(w) {
 // One line: "**Whisky bottle detected**. Confidence: 85%".
 function showStatus(cls, title, detail) {
   const el = $('status');
+  el.hidden = false;
   el.className = `status status-${cls}`;
   el.replaceChildren();
   const strong = document.createElement('strong');
@@ -41,6 +42,8 @@ function showStatus(cls, title, detail) {
 function render(result) {
   const { status, whisky, reasons, score } = result;
   showStatus(status, STATUS_TEXT[status], status === 'none' ? '' : `Confidence: ${Math.round(result.confidence * 100)}%`);
+  // A detected bottle speaks for itself; only "possibly" and "none" need saying.
+  $('status').hidden = status === 'whisky';
 
   const table = $('fields');
   table.replaceChildren();
