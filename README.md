@@ -126,11 +126,13 @@ builds `dist/whiskybase-chromium-browser-extension/` and
 containing only what the extension needs (manifest, `src/`, `popup/`, PNG icons).
 
 The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
-runs the tests and this packaging on every push to `main`, pull request and
-manual run, and uploads the extension as a workflow artifact (on the run's
-summary page; needs a GitHub login, kept for 90 days). To publish a release
-that anyone can download, bump `version` in `manifest.json`, commit, and push a
-matching tag:
+runs only when started by hand: on GitHub, open **Actions**, pick **Package
+extension** and click **Run workflow**. It runs the tests and this packaging,
+and uploads the extension as a workflow artifact (on the run's summary page;
+needs a GitHub login, kept for 90 days).
+
+To publish a release that anyone can download, bump `version` in
+`manifest.json`, commit, and push a matching tag:
 
 ```bash
 git tag v0.1.0
@@ -140,8 +142,9 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-The workflow then attaches the zip to a GitHub Release for that tag, and fails
-if the tag doesn't match the manifest version.
+Then run the workflow with that tag selected under **Use workflow from**. It
+attaches the zip to a GitHub Release for the tag, and fails if the tag doesn't
+match the manifest version.
 
 ## Tests
 

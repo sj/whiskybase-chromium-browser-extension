@@ -1,17 +1,14 @@
-# Tests the extension and packages it as a zip.
+# Tests the extension and packages it as a zip. Runs only when started by hand
+# (Actions tab > Package extension > Run workflow).
 #
-# - Every push to main, pull request and manual run uploads the extension as a
-#   workflow artifact (download it from the run's summary page; needs a GitHub
-#   login, kept for 90 days).
-# - Pushing a version tag (e.g. v0.1.0, matching "version" in manifest.json)
-#   also publishes a GitHub Release with the zip attached, downloadable by anyone.
+# - Every run uploads the extension as a workflow artifact (download it from the
+#   run's summary page; needs a GitHub login, kept for 90 days).
+# - Run on a version tag (e.g. v0.1.0, matching "version" in manifest.json; pick
+#   it under "Use workflow from"), it also publishes a GitHub Release with the
+#   zip attached, downloadable by anyone.
 name: Package extension
 
 on:
-  push:
-    branches: [main]
-    tags: ['v*']
-  pull_request:
   workflow_dispatch:
 
 permissions:
