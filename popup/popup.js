@@ -69,6 +69,7 @@ function render(result) {
     li.append(pts, r.text);
     list.append(li);
   }
+  $('no-reasons').hidden = reasons.length > 0;
   $('score').textContent = `(score: ${score})`;
   $('why').hidden = false;
 
