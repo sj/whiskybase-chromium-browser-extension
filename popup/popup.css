@@ -30,7 +30,7 @@ body {
   color: var(--fg);
 }
 
-/* Column headings: "Whisky information detected" + Re-scan on the left, "Whiskybase" on the right. */
+/* Column headings: "Whisky information detected" + Re-scan on the left, "Whiskybase match" on the right. */
 .col-head {
   display: flex;
   align-items: center;
