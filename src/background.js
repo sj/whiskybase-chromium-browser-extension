@@ -138,12 +138,11 @@ async function bottleDetails(match) {
 }
 
 function missingPriceNote(page) {
-  const kb = `${Math.round(page.bytes / 1024)} kB`;
   if (!page.signedIn) {
-    return `No price estimate: Whiskybase sent the bottle page as to a signed-out visitor (${kb}), without shop prices. Are you signed in on whiskybase.com in this browser?`;
+    return 'No price estimate: Whiskybase sent the bottle page as to a signed-out visitor, without shop prices. Are you signed in on whiskybase.com in this browser?';
   }
-  if (!page.priceBlock) return `No price estimate: the bottle page (${kb}, signed in) has no Average Shop Price on it.`;
-  return `No price estimate: no shop currently lists this bottle on Whiskybase (bottle page ${kb}, signed in).`;
+  if (!page.priceBlock) return 'No price estimate: the Whiskybase bottle page has no Average Shop Price on it.';
+  return 'No price estimate: no shop currently lists this bottle on Whiskybase.';
 }
 
 // ---------------------------------------------------------------------------
