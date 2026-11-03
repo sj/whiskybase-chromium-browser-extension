@@ -229,6 +229,11 @@ const fixtureCases = [
     whisky: { distillery: 'Inchgower', bottler: 'James Eadie', bottling: 'independent', caskNumber: '348039', vintage: 2009, age: 12, abv: 58.7 },
     query: 'Inchgower 2009 12 James Eadie 348039 58.7%',
   },
+  {
+    file: 'hedonism-glendronach-old-kingsbury-1991.html',
+    status: 'whisky',
+    whisky: { distillery: 'GlenDronach', bottler: 'Kingsbury', vintage: 1991, age: 34, abv: 44.8 },
+  },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },

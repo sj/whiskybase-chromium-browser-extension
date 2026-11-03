@@ -27,6 +27,9 @@ STRUCTURAL = [
     (r'("identify":\{"email":")[^"]*(","\$first_name":")[^"]*(","\$last_name":")[^"]*(")',
      r'\1user@example.com\2Example\3User\4'),
     (r'("profile":\{"user_id":)\d+(,"name":")[^"]*(","email":")[^"]*(")', r'\g<1>10001\2Example User\3user@example.com\4'),
+    # Shopify's per-visit identifiers in var __st={...}.
+    (r'(__st=\{[^}]*"reqid":")[^"]+(")', r'\g<1>00000000-0000-0000-0000-000000000000\2'),
+    (r'(__st=\{[^}]*"u":")[0-9a-f]+(")', r'\g<1>000000000000\2'),
 ]
 
 

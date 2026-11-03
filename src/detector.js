@@ -210,6 +210,19 @@
     /\b(?:add\s+to\s+(?:cart|basket|bag|trolley)|buy\s+now|in\s+(?:de\s+|het\s+)?winkel(?:wagen|mand)(?:je)?|toevoegen\s+aan|in\s+den\s+warenkorb|ajouter\s+au\s+panier|añadir\s+al\s+carrito|aggiungi\s+al\s+carrello|koop\s+nu|jetzt\s+kaufen)\b/i;
 
   const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'SVG', 'CANVAS', 'IFRAME']);
+
+  // Sections showing other products ("You may also like", recently viewed, ...).
+  // Their ABVs, ages and years belong to those bottles, so page text leaves them out.
+  const OTHER_PRODUCTS_RE = /recommend|related|upsell|up-sell|cross-?sell|also-?like|also-?bought|recently-?viewed/i;
+  function isOtherProducts(node) {
+    if (node === node.ownerDocument.body) return false;
+    const cls = typeof node.className === 'string' ? node.className : '';
+    return OTHER_PRODUCTS_RE.test(`${node.tagName} ${node.id} ${cls}`);
+  }
+  function inOtherProducts(el) {
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) if (isOtherProducts(n)) return true;
+    return false;
+  }
   const PRODUCT_TYPE_RE = /Product/i;
   const LISTING_TYPE_RE = /^(?:ItemList|CollectionPage|SearchResultsPage|OfferCatalog)$/i;
 
@@ -254,8 +267,12 @@
     const doc = el.ownerDocument || el;
     const parts = [];
     let length = 0;
-    const walker = doc.createTreeWalker(el, 4 /* NodeFilter.SHOW_TEXT */, {
+    // Elements are visited too, so that rejecting a section of other products
+    // skips everything inside it. Icon titles (<svg><title>Cask</title>) stay:
+    // some shops label their fields with them.
+    const walker = doc.createTreeWalker(el, 1 | 4 /* NodeFilter.SHOW_ELEMENT | SHOW_TEXT */, {
       acceptNode(node) {
+        if (node.nodeType === 1) return isOtherProducts(node) ? 2 /* REJECT */ : 3 /* SKIP */;
         const p = node.parentElement;
         return p && !SKIP_TAGS.has(p.tagName.toUpperCase()) ? 1 /* ACCEPT */ : 2 /* REJECT */;
       },
@@ -694,7 +711,7 @@
     let length = 0;
     for (const el of els) {
       if (length > 8000) break;
-      if (el.closest('header, nav, footer')) continue;
+      if (el.closest('header, nav, footer') || inOtherProducts(el)) continue;
       const t = textOf(el, 3000);
       parts.push(t);
       length += t.length;
@@ -712,18 +729,18 @@
     for (const tr of doc.querySelectorAll('tr')) {
       if (pairs.length >= 200) break;
       const cells = tr.querySelectorAll('th, td');
-      if (cells.length === 2) pairs.push([textOf(cells[0], 100), textOf(cells[1], 200)]);
+      if (cells.length === 2 && !inOtherProducts(tr)) pairs.push([textOf(cells[0], 100), textOf(cells[1], 200)]);
     }
     for (const dt of doc.querySelectorAll('dt')) {
       if (pairs.length >= 300) break;
       const dd = dt.nextElementSibling;
-      if (dd && dd.tagName.toUpperCase() === 'DD') pairs.push([textOf(dt, 100), textOf(dd, 200)]);
+      if (dd && dd.tagName.toUpperCase() === 'DD' && !inOtherProducts(dt)) pairs.push([textOf(dt, 100), textOf(dd, 200)]);
     }
     const labels = doc.querySelectorAll('[class*="label" i], [class*="name" i], [class*="key" i]');
     for (const label of labels) {
       if (pairs.length >= 400) break;
       const value = label.nextElementSibling;
-      if (!value || label.closest('header, nav, footer')) continue;
+      if (!value || label.closest('header, nav, footer') || inOtherProducts(label)) continue;
       // "label" classes are explicit; "name"/"key" only count when followed by a "value".
       const cls = (el) => el.getAttribute('class') || '';
       if (!/label/i.test(cls(label)) && !/value/i.test(cls(value))) continue;

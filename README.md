@@ -86,7 +86,9 @@ from the background worker with your browser's cookies.
 - **Bottle evidence**: schema.org `Product` data (JSON-LD or microdata),
   `og:type=product`, an add-to-cart button, and bottle attributes parsed from
   the name, structured data and spec tables: ABV (incl. US proof), volume (ml/cl/l),
-  age statement (EN/NL/DE/FR/ES/IT), vintage and bottling year.
+  age statement (EN/NL/DE/FR/ES/IT), vintage and bottling year. Sections showing
+  other bottles ("You may also like", related or recently viewed products) are
+  left out, so their ABVs, ages and cask numbers aren't mistaken for this bottle's.
 - **Penalties**: listing/category pages, other drinks (gin, rum, cognac, ...),
   non-bottle products (lotion, glasses, books, ...).
 
