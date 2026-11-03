@@ -357,6 +357,17 @@ check('bottle page: rating and number of reviews', () => {
   assert.equal(d.photo, 'https://static.whiskybase.com/storage/whiskies/2/3/3907/450971-normal.png', 'photo from JSON-LD, not the og:image card');
 });
 
+check('bottle page: average shop price and number of shops', () => {
+  const mm = WB.analyseBottleHtml(readFileSync(join(here, 'fixtures', 'whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-bottle-page.html'), 'utf8'));
+  assert.equal(mm.price, '€ 34.90');
+  assert.equal(mm.shops, 14);
+  const htfw = WB.analyseBottleHtml(readFileSync(join(here, 'fixtures', 'whiskybase/htfw.com-inchgower-cask-2289-whiskybase-bottle-page-WB304211.html'), 'utf8'));
+  assert.equal(htfw.price, '€ 107.76');
+  assert.equal(htfw.shops, 3);
+  const unlisted = WB.analyseBottleHtml('<p>Last Average Shop Price</p><div><p>&euro; 50.00</p></div>');
+  assert.equal(unlisted.price, null, 'no price without current shop listings');
+});
+
 check('isBottlePhoto rejects the placeholder and the social card', () => {
   assert.ok(WB.isBottlePhoto('https://static.whiskybase.com/storage/whiskies/2/3/3907/450971-normal.png'));
   assert.ok(!WB.isBottlePhoto('https://static.whiskybase.com/storage/whiskies/default/normal.png?v7'));

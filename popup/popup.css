@@ -155,7 +155,8 @@ a {
 
 
 
-.wb-rating {
+.wb-rating td,
+.wb-price td {
   font-variant-numeric: tabular-nums;
 }
 
@@ -195,6 +196,12 @@ body.wide #wb {
 }
 .wb-name {
   font-weight: 600;
+}
+.wb-fields {
+  margin-top: 4px;
+}
+.wb-fields th {
+  width: 96px;
 }
 .wb-id a {
   color: var(--ok);

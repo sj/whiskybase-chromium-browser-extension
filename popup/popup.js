@@ -145,12 +145,14 @@ function matchDetails(lk) {
 }
 
 function ratingText(m) {
-  if (!m.rating) return 'Not rated yet on Whiskybase';
+  if (!m.rating) return 'Not rated yet';
   const n = m.reviews != null ? ` (${m.reviews} ${m.reviews === 1 ? 'review' : 'reviews'})` : '';
-  return `Rating ${m.rating.toFixed(2)} / 100${n}`;
+  return `${m.rating.toFixed(2)} / 100${n}`;
 }
 
-// Photo on top, then name, ID and rating.
+const priceText = (m) => `${m.price} (${m.shops} ${m.shops === 1 ? 'shop' : 'shops'})`;
+
+// Photo on top, then the name and a table like the parsed data: ID, rating, price.
 function matchCard(m) {
   const card = el('div', { className: 'wb-match' });
   if (m.photoData || m.photo) {
@@ -160,11 +162,15 @@ function matchCard(m) {
     img.addEventListener('error', () => a.remove());
     card.append(a);
   }
-  card.append(
-    el('p', { className: 'wb-name' }, m.text),
-    el('p', { className: 'wb-id' }, link(m.url, Whiskybase.displayId(m.id))),
-    el('p', { className: 'wb-rating' }, ratingText(m))
-  );
+  const rows = [
+    ['Whiskybase ID', link(m.url, Whiskybase.displayId(m.id)), 'wb-id'],
+    ['Rating', ratingText(m), 'wb-rating'],
+  ];
+  // Only for bottles that shops currently list.
+  if (m.price && m.shops) rows.push(['Price estimate', priceText(m), 'wb-price']);
+  const table = el('table', { className: 'wb-fields' });
+  for (const [label, value, className] of rows) table.append(el('tr', { className }, el('th', {}, label), el('td', {}, value)));
+  card.append(el('p', { className: 'wb-name' }, m.text), table);
   return card;
 }
 

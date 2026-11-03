@@ -59,9 +59,11 @@ from the background worker with your browser's cookies.
   candidates. **Details of Whiskybase match** shows the best result's points,
   why it was or wasn't accepted, the query, and the other candidates.
 - **Match details:** the popup shows the parsed data on the left and Whiskybase
-  on the right: the bottle photo, name, ID (as Whiskybase writes it, e.g.
-  **WB233907**), and the rating with the number of reviews it is based on. The count is only on the bottle's own page, so
-  a match costs one more request; the photo host is behind Cloudflare too, so the
+  on the right: the bottle photo and name, then rows for the ID (as Whiskybase
+  writes it, e.g. **WB233907**), the rating with the number of reviews it is
+  based on, and, when shops list the bottle, the price estimate (Whiskybase's
+  Average Shop Price) with the number of shops. The review count and price are
+  only on the bottle's own page, so a match costs one more request; the photo host is behind Cloudflare too, so the
   background fetches the photo (trying its other sizes if one fails) and hands
   it to the popup as data. When there is no photo, **Details of Whiskybase match**
   says why.

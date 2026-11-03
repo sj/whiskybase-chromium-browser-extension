@@ -127,7 +127,7 @@
     };
   }
 
-  const ENTITIES = { quot: '"', amp: '&', lt: '<', gt: '>', apos: "'", nbsp: ' ' };
+  const ENTITIES = { quot: '"', amp: '&', lt: '<', gt: '>', apos: "'", nbsp: ' ', euro: '€', pound: '£', dollar: '$' };
 
   /** Decodes HTML entities (enough for attribute values and link text). */
   function decodeEntities(s) {
@@ -199,7 +199,7 @@
    */
   function analyseBottleHtml(html) {
     html = String(html || '');
-    const out = { challenge: analyseSearchHtml(html).challenge, rating: null, reviews: null, photo: null };
+    const out = { challenge: analyseSearchHtml(html).challenge, rating: null, reviews: null, photo: null, price: null, shops: null };
     const find = (node) => {
       if (!node || typeof node !== 'object') return null;
       if (node.aggregateRating) return node.aggregateRating;
@@ -236,6 +236,14 @@
           break;
         }
       }
+    }
+    // Average Shop Price, only while shops list the bottle ("Available at N shops");
+    // without listings the page shows the last known price instead.
+    const shops = html.match(/Available at\s*(?:<strong>)?\s*(\d+)\s*(?:<\/strong>)?\s*shops?/i);
+    const price = html.match(/<p>\s*Average Shop Price\s*<\/p>[\s\S]{0,300}?<p>([^<]*\d[^<]*)<\/p>/i);
+    if (shops && +shops[1] > 0 && price) {
+      out.shops = +shops[1];
+      out.price = clean(decodeEntities(price[1]));
     }
     if (out.rating == null) {
       const m = html.match(/"rating":"(\d+(?:\.\d+)?)","votes":(\d+)/);
