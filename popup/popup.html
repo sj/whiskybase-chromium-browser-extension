@@ -6,13 +6,13 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <header>
-      <h1>Whiskybase Lookup</h1>
-      <button id="rescan" type="button" title="Scan this page again">Re-scan</button>
-    </header>
-
     <div class="layout">
       <main class="parsed">
+        <header class="col-head">
+          <h2 id="parsed-title">Whisky information detected</h2>
+          <button id="rescan" type="button" title="Scan this page again">Re-scan</button>
+        </header>
+
         <section id="status" class="status status-loading">Scanning…</section>
 
         <table id="fields" hidden></table>

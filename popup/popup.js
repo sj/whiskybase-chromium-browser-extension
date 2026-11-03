@@ -42,8 +42,9 @@ function showStatus(cls, title, detail) {
 function render(result) {
   const { status, whisky, reasons, score } = result;
   showStatus(status, STATUS_TEXT[status], status === 'none' ? '' : `Confidence: ${Math.round(result.confidence * 100)}%`);
-  // A detected bottle speaks for itself; only "possibly" and "none" need saying.
-  $('status').hidden = status === 'whisky';
+  // A detected bottle speaks for itself, and the heading already says when nothing was found.
+  $('parsed-title').textContent = status === 'none' ? 'No whisky information detected' : 'Whisky information detected';
+  $('status').hidden = status === 'whisky' || status === 'none';
 
   const table = $('fields');
   table.replaceChildren();
@@ -226,6 +227,7 @@ async function scan(rescan) {
   } catch (e) {
     $('fields').hidden = true;
     $('why').hidden = true;
+    $('parsed-title').textContent = 'No whisky information detected';
     showStatus('none', 'Cannot inspect this page', 'Browser pages cannot be scanned. If this is a normal web page, reload it.');
   }
 }

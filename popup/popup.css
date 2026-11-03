@@ -30,15 +30,18 @@ body {
   color: var(--fg);
 }
 
-header {
+/* Column headings: "Whisky information detected" + Re-scan on the left, "Whiskybase" on the right. */
+.col-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  gap: 8px;
+  min-height: 24px;
+  margin-bottom: 6px;
 }
 
-h1 {
-  font-size: 15px;
+.col-head h2 {
+  font-size: 13px;
   margin: 0;
 }
 
@@ -116,6 +119,7 @@ summary {
 }
 #wb h2 {
   font-size: 13px;
+  line-height: 24px;
   margin: 0 0 6px;
 }
 
