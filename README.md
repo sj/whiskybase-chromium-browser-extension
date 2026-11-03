@@ -1,7 +1,7 @@
-# Whiskybase Lookup (Chrome extension)
+# Whiskybase Lookup (Chromium extension)
 
-Recognises when the current web page shows a single bottle of whisky and pulls
-out its details. Looking the bottle up on whiskybase.com comes in a later step.
+Recognises when the current web page shows a single bottle of whisky, pulls out
+its details, and looks the bottle up on whiskybase.com.
 
 ## Load it in Chrome / Chromium
 
