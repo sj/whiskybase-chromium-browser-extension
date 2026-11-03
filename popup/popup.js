@@ -22,11 +22,9 @@ const FIELDS = [
   ['EAN/GTIN', (w) => w.gtin],
 ];
 
-// Always shown: the bottler's name, "Inchgower (distillery bottling)", or "Unknown".
+// Only an independent bottler gets a row; distillery bottlings and unknown bottlers don't.
 function bottlerCell(w) {
-  if (w.bottling === 'independent' && w.bottler) return w.bottler;
-  if (w.bottling === 'distillery') return `${w.distillery || w.brand || 'Distillery'} (distillery bottling)`;
-  return 'Unknown';
+  return w.bottling === 'independent' ? w.bottler || '' : '';
 }
 
 // One line: "**Whisky bottle detected**. Confidence: 85%".

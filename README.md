@@ -90,8 +90,8 @@ table (any name there counts); such a phrase in the description; the structured 
 (the distillery or its owner means a distillery bottling, anything else except the shop
 itself or a category is taken as the bottler); a "Company" field; and finally the site
 itself when it belongs to a known bottler (e.g. the SMWS shop). If only the distillery is
-known, it is taken to be a distillery bottling. The popup shows the bottler's name, or
-e.g. **Inchgower (distillery bottling)**, or **Unknown**.
+known, it is taken to be a distillery bottling. The popup only shows a Bottler row for
+an independent bottler; for a distillery bottling or an unknown bottler it is left out.
 
 A page counts as **whisky** with at least 3 context points, 2 bottle points and
 6 points in total, and as **possible** with at least 2, 1 and 4. Listing pages never count.
