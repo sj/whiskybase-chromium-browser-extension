@@ -209,7 +209,8 @@ body.wide #wb {
   font-variant-numeric: tabular-nums;
 }
 
-.wb-manual {
+.wb-manual,
+.wb-retry {
   display: block;
   width: 100%;
   margin-top: 10px;

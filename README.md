@@ -74,7 +74,8 @@ from the background worker with your browser's cookies.
 - **Politeness:** results are cached per query for an hour, requests are at least
   2 seconds apart and one at a time, and after a Cloudflare check automatic
   searches pause for 2 minutes. When the popup says **Blocked by the Cloudflare
-  check**, open the search, pass the check yourself, and search again.
+  check** or **Paused after a Cloudflare check**, open the search, pass the
+  check yourself, and click **Try again** (which also ends the pause).
 
 ## How detection works
 

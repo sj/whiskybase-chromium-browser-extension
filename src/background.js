@@ -213,6 +213,16 @@ async function lookup(tabId, pageUrl, whisky) {
 chrome.runtime.onMessage.addListener((msg, sender) => {
   if (!msg) return;
 
+  // "Try again" in the popup: the user asks to search once more, so the pause
+  // after a Cloudflare check no longer applies.
+  if (msg.type === 'whisky:retry' && (sender.url || '').startsWith(chrome.runtime.getURL('popup/'))) {
+    chrome.storage.session.remove('blockedAt').then(() => {
+      pageUrls.set(msg.tabId, msg.url);
+      lookup(msg.tabId, msg.url, msg.whisky);
+    });
+    return;
+  }
+
   if (msg.type !== 'whisky:detection' || !sender.tab || sender.frameId !== 0) return;
   const tabId = sender.tab.id;
   const { status, whisky, confidence, url } = msg.result;

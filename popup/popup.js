@@ -203,11 +203,22 @@ function renderWhiskybase() {
   } else if (lk.state === 'blocked') {
     out.append(
       el('p', { className: 'wb-bad' }, lk.paused ? 'Paused after a Cloudflare check.' : 'Blocked by the Cloudflare check.'),
-      el('p', {}, 'Open the search, pass the check there yourself, then search again: ', link(lk.searchUrl, 'open search'))
+      el('p', {}, 'Open the search, pass the check there yourself, then try again: ', link(lk.searchUrl, 'open search')),
+      retryButton()
     );
   } else {
-    out.append(el('p', { className: 'wb-bad' }, `Search failed: ${lk.error || 'unknown error'}`));
+    out.append(el('p', { className: 'wb-bad' }, `Search failed: ${lk.error || 'unknown error'}`), retryButton());
   }
+}
+
+// Asks the background to search Whiskybase again for this page.
+function retryButton() {
+  const button = el('button', { type: 'button', className: 'wb-retry' }, 'Try again');
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    chrome.runtime.sendMessage({ type: 'whisky:retry', tabId: currentTabId, url: currentResult.url, whisky: currentResult.whisky });
+  });
+  return button;
 }
 
 // Manual search opens Whiskybase's own results page for the query in a new tab.
