@@ -1,0 +1,17 @@
+# Test harness output (regenerated on every run)
+test/.out/
+
+# Dependencies and packaged builds
+node_modules/
+*.zip
+*.crx
+*.pem
+
+# Python
+__pycache__/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store
