@@ -138,6 +138,7 @@
     ['Whiskybase Archives'],
     ['Lady of the Glen'],
     ['North Star Spirits'],
+    ['James Eadie'],
     ["Claxton's"],
     ['Dramfool'],
     ['The Whisky Sponge', 'Whisky Sponge'],

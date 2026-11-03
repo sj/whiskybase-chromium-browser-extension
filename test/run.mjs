@@ -223,6 +223,12 @@ const fixtureCases = [
     status: 'whisky',
     whisky: { distillery: 'Inchgower', caskNumber: '2289' },
   },
+  {
+    file: 'htfw.com-inchgower-james-eadie-cask-348039-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Inchgower', bottler: 'James Eadie', bottling: 'independent', caskNumber: '348039', vintage: 2009, age: 12, abv: 58.7 },
+    query: 'Inchgower 2009 12 James Eadie 348039 58.7%',
+  },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },
@@ -364,6 +370,11 @@ check('bottle page: average shop price and number of shops', () => {
   const htfw = WB.analyseBottleHtml(readFileSync(join(here, 'fixtures', 'whiskybase/htfw.com-inchgower-cask-2289-whiskybase-bottle-page-WB304211.html'), 'utf8'));
   assert.equal(htfw.price, '€ 107.76');
   assert.equal(htfw.shops, 3);
+  const je = WB.analyseBottleHtml(readFileSync(join(here, 'fixtures', 'whiskybase/htfw.com-inchgower-james-eadie-cask-348039-whiskybase-bottle-page-WB210223.html'), 'utf8'));
+  assert.equal(je.price, '€ 83.85');
+  assert.equal(je.shops, 9);
+  assert.equal(je.rating, 84.83);
+  assert.equal(je.reviews, 11);
   const unlisted = WB.analyseBottleHtml('<p>Last Average Shop Price</p><div><p>&euro; 50.00</p></div>');
   assert.equal(unlisted.price, null, 'no price without current shop listings');
 });

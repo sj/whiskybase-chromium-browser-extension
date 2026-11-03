@@ -137,6 +137,7 @@ function matchDetails(lk) {
     ),
     el('p', {}, `Searched for “${lk.query}”: ${lk.total} ${lk.total === 1 ? 'result' : 'results'}${lk.cached ? ' (cached)' : ''} · `, link(lk.searchUrl, 'open search'))
   );
+  if (lk.match.detailsNote) body.append(el('p', {}, lk.match.detailsNote));
   if (lk.match.photoNote) body.append(el('p', {}, lk.match.photoNote));
   if (lk.candidates.length > 1) {
     body.append(el('p', {}, 'Other candidates (hover for points):'), candidateList(lk.candidates.slice(1)));

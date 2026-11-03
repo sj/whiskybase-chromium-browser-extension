@@ -124,10 +124,17 @@ async function photoData(urls) {
   return { url: tried[0], note: `The Whiskybase photo could not be loaded: ${error}.` };
 }
 
-/** Rating, number of ratings and photo from the bottle's own page. */
+/**
+ * Rating, number of ratings, shop price and photo from the bottle's own page,
+ * plus a note saying why the review count or price is missing, if it is.
+ */
 async function bottleDetails(match) {
   const r = await cachedFetch(`bottle:${match.id}`, match.url, Whiskybase.analyseBottleHtml);
-  return r.state === 'ok' ? r.page : null;
+  if (r.state !== 'ok') {
+    const why = r.state === 'blocked' ? 'a Cloudflare check' : r.error || 'unknown error';
+    return { note: `The Whiskybase bottle page could not be loaded (${why}), so the number of reviews and the price estimate are missing.` };
+  }
+  return { ...r.page, note: r.page.price ? null : 'No shop currently lists this bottle on Whiskybase, so there is no price estimate.' };
 }
 
 // ---------------------------------------------------------------------------
@@ -173,7 +180,7 @@ async function lookup(tabId, pageUrl, whisky) {
   setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
 
   // The number of ratings and the shop price are only on the bottle's own page.
-  const details = (await bottleDetails(match)) || {};
+  const details = await bottleDetails(match);
   const photo = await photoData([result.match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
   if (pageUrls.get(tabId) !== pageUrl) return;
   await setLookup(tabId, {
@@ -184,6 +191,7 @@ async function lookup(tabId, pageUrl, whisky) {
       reviews: details.reviews != null ? details.reviews : null,
       price: details.price || null,
       shops: details.shops || null,
+      detailsNote: details.note,
       photo: photo.url || null,
       photoData: photo.data || null,
       photoNote: photo.note || null,
