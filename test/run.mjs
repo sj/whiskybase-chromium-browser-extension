@@ -268,7 +268,9 @@ ${script('detector.js')}
 </script>`;
   const harnessPath = join(outDir, 'harness.html');
   writeFileSync(harnessPath, harness);
-  const dom = execFileSync(findBrowser(), ['--headless', '--disable-gpu', '--dump-dom', pathToFileURL(harnessPath).href], {
+  // GitHub's Ubuntu runners don't allow Chrome's sandbox; it only loads our own local test page.
+  const ciFlags = process.env.CI ? ['--no-sandbox'] : [];
+  const dom = execFileSync(findBrowser(), ['--headless', '--disable-gpu', ...ciFlags, '--dump-dom', pathToFileURL(harnessPath).href], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore'],
     timeout: 60000,

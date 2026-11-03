@@ -15,3 +15,6 @@ __pycache__/
 .idea/
 *.swp
 .DS_Store
+
+# Packaged extension (npm run package)
+dist/

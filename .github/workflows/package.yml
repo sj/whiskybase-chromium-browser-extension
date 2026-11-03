@@ -1,0 +1,88 @@
+# Tests the extension and packages it as a zip.
+#
+# - Every push to main, pull request and manual run uploads the extension as a
+#   workflow artifact (download it from the run's summary page; needs a GitHub
+#   login, kept for 90 days).
+# - Pushing a version tag (e.g. v0.1.0, matching "version" in manifest.json)
+#   also publishes a GitHub Release with the zip attached, downloadable by anyone.
+name: Package extension
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.build.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # The detector tests run in headless Chrome, which the runner image includes.
+      - name: Run tests
+        run: npm test
+        env:
+          CHROME_BIN: google-chrome
+
+      - name: Build package
+        id: build
+        run: |
+          zip=$(bash scripts/package.sh)
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+          echo "version=$(node -p "require('./manifest.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Check tag matches manifest version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          if [ "${GITHUB_REF_NAME}" != "v${{ steps.build.outputs.version }}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match manifest.json version ${{ steps.build.outputs.version }}"
+            exit 1
+          fi
+
+      # GitHub zips artifacts on download, so upload the unpacked folder: the
+      # downloaded zip then contains the extension files at its root.
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: whiskybase-lookup-${{ steps.build.outputs.version }}
+          path: dist/whiskybase-lookup/
+          if-no-files-found: error
+
+      - name: Keep zip for the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-zip
+          path: ${{ steps.build.outputs.zip }}
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-zip
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" whiskybase-lookup-*.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Whiskybase Lookup $GITHUB_REF_NAME" \
+            --notes "Download whiskybase-lookup-${{ needs.package.outputs.version }}.zip, unzip it, then in chrome://extensions turn on Developer mode, click Load unpacked and pick the unzipped folder."

@@ -3,6 +3,12 @@
 Recognises when the current web page shows a single bottle of whisky, pulls out
 its details, and looks the bottle up on whiskybase.com.
 
+## Install from a release
+
+Download `whiskybase-lookup-<version>.zip` from the repository's **Releases**
+page and unzip it. Then follow the steps below, picking the unzipped folder at
+**Load unpacked**.
+
 ## Load it in Chrome / Chromium
 
 1. Open `chrome://extensions` and switch on **Developer mode** (top right).
@@ -107,6 +113,33 @@ A page counts as **whisky** with at least 3 context points, 2 bottle points and
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results and a Re-scan button |
 | `test/` | Parser unit tests and fixture pages |
+
+## Packaging
+
+```bash
+npm run package
+```
+
+builds `dist/whiskybase-lookup/` and `dist/whiskybase-lookup-<version>.zip`,
+containing only what the extension needs (manifest, `src/`, `popup/`, PNG icons).
+
+The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
+runs the tests and this packaging on every push to `main`, pull request and
+manual run, and uploads the extension as a workflow artifact (on the run's
+summary page; needs a GitHub login, kept for 90 days). To publish a release
+that anyone can download, bump `version` in `manifest.json`, commit, and push a
+matching tag:
+
+```bash
+git tag v0.1.0
+```
+
+```bash
+git push origin v0.1.0
+```
+
+The workflow then attaches the zip to a GitHub Release for that tag, and fails
+if the tag doesn't match the manifest version.
 
 ## Tests
 

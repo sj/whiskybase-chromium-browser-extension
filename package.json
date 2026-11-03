@@ -5,6 +5,7 @@
   "description": "Chrome extension that recognises whisky bottle pages and looks them up on Whiskybase.",
   "scripts": {
     "test": "node test/run.mjs",
-    "serve-fixtures": "python3 -m http.server 8000 --directory test/fixtures"
+    "serve-fixtures": "python3 -m http.server 8000 --directory test/fixtures",
+    "package": "bash scripts/package.sh"
   }
 }
