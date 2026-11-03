@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Whiskybase Lookup</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Whiskybase Lookup</h1>
+      <button id="rescan" type="button" title="Scan this page again">Re-scan</button>
+    </header>
+
+    <div class="layout">
+      <main class="parsed">
+        <section id="status" class="status status-loading">Scanning…</section>
+
+        <table id="fields" hidden></table>
+
+        <details id="why" hidden>
+          <summary>Details of parsed data <span id="score"></span></summary>
+          <ul id="reasons" class="reasons"></ul>
+        </details>
+      </main>
+
+      <aside id="wb" hidden>
+        <h2>Whiskybase</h2>
+        <div id="wb-result"></div>
+        <button id="wb-run" type="button" class="wb-manual">Manual search</button>
+      </aside>
+    </div>
+
+    <script src="../src/whiskybase.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
