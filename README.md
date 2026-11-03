@@ -29,7 +29,7 @@ On any page, the toolbar icon shows:
 Click the icon to see the extracted details (name, brand, distillery, bottler,
 age, ABV, volume, vintage/bottled year, cask number, EAN) and, under
 **Details of parsed data**, every signal that added or removed points. Each detection is also logged to the
-page's DevTools console as `[Whiskybase Chromium Browser Extension]`.
+page's DevTools console as `[Whiskybase]`.
 
 To try it on the bundled test pages:
 
