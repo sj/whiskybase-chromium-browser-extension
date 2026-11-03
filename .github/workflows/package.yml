@@ -81,5 +81,5 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" whiskybase-chromium-browser-extension-*.zip \
             --repo "$GITHUB_REPOSITORY" \
-            --title "Whiskybase Chromium Browser Extension $GITHUB_REF_NAME" \
+            --title "Bottle lookup for Whiskybase $GITHUB_REF_NAME" \
             --notes "Download whiskybase-chromium-browser-extension-${{ needs.package.outputs.version }}.zip, unzip it, then in chrome://extensions turn on Developer mode, click Load unpacked and pick the unzipped folder."

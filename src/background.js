@@ -31,7 +31,7 @@ function setBadge(tabId, key, name) {
   const title = key === 'none' ? badge.title : `${badge.title}: ${name}`;
   chrome.action.setBadgeText({ tabId, text: badge.text });
   chrome.action.setBadgeBackgroundColor({ tabId, color: badge.color });
-  chrome.action.setTitle({ tabId, title: `Whiskybase – ${title}` });
+  chrome.action.setTitle({ tabId, title: `Bottle lookup for Whiskybase – ${title}` });
 }
 
 // ---------------------------------------------------------------------------

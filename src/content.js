@@ -23,7 +23,7 @@
     const key = JSON.stringify([latest.url, latest.status, latest.whisky.name]);
     if (key !== lastReported) {
       lastReported = key;
-      console.debug('[Whiskybase]', latest.status, latest);
+      console.debug('[Bottle lookup for Whiskybase]', latest.status, latest);
       try {
         chrome.runtime.sendMessage({ type: 'whisky:detection', result: latest }).catch(() => {});
       } catch (e) {
