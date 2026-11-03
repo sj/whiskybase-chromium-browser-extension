@@ -55,8 +55,8 @@ jobs:
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whiskybase-lookup-${{ steps.build.outputs.version }}
-          path: dist/whiskybase-lookup/
+          name: whiskybase-chromium-browser-extension-${{ steps.build.outputs.version }}
+          path: dist/whiskybase-chromium-browser-extension/
           if-no-files-found: error
 
       - name: Keep zip for the release
@@ -82,7 +82,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" whiskybase-lookup-*.zip \
+          gh release create "$GITHUB_REF_NAME" whiskybase-chromium-browser-extension-*.zip \
             --repo "$GITHUB_REPOSITORY" \
             --title "Whiskybase Lookup $GITHUB_REF_NAME" \
-            --notes "Download whiskybase-lookup-${{ needs.package.outputs.version }}.zip, unzip it, then in chrome://extensions turn on Developer mode, click Load unpacked and pick the unzipped folder."
+            --notes "Download whiskybase-chromium-browser-extension-${{ needs.package.outputs.version }}.zip, unzip it, then in chrome://extensions turn on Developer mode, click Load unpacked and pick the unzipped folder."

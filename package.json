@@ -1,5 +1,5 @@
 {
-  "name": "whiskybase-chrome-extension",
+  "name": "whiskybase-chromium-browser-extension",
   "version": "0.1.0",
   "private": true,
   "description": "Chrome extension that recognises whisky bottle pages and looks them up on Whiskybase.",

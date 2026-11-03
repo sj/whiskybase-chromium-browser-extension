@@ -5,7 +5,8 @@ its details, and looks the bottle up on whiskybase.com.
 
 ## Install from a release
 
-Download `whiskybase-lookup-<version>.zip` from the repository's **Releases**
+Download `whiskybase-chromium-browser-extension-<version>.zip` from the
+repository's **Releases**
 page and unzip it. Then follow the steps below, picking the unzipped folder at
 **Load unpacked**.
 
@@ -120,7 +121,8 @@ A page counts as **whisky** with at least 3 context points, 2 bottle points and
 npm run package
 ```
 
-builds `dist/whiskybase-lookup/` and `dist/whiskybase-lookup-<version>.zip`,
+builds `dist/whiskybase-chromium-browser-extension/` and
+`dist/whiskybase-chromium-browser-extension-<version>.zip`,
 containing only what the extension needs (manifest, `src/`, `popup/`, PNG icons).
 
 The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
