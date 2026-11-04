@@ -16,6 +16,7 @@ const verbose = process.argv.includes('-v');
 const require = createRequire(import.meta.url);
 const D = require('../src/detector.js');
 const WB = require('../src/whiskybase.js');
+const { changelogSection, releaseNotes } = await import('../scripts/release-notes.mjs');
 
 let failures = 0;
 function check(label, fn) {
@@ -400,6 +401,16 @@ check('bottle page: bottling series', () => {
   assert.equal(page('htfw.com-inchgower-james-eadie-cask-348039-whiskybase-bottle-page-WB210223.html').series, 'Sherry Cask Finish');
   const none = WB.analyseBottleHtml('<dl><dt>Bottler</dt><dd>Distillery Bottling</dd><dt>Stated Age</dt><dd>14 years</dd></dl>');
   assert.equal(none.series, null, 'most bottles have no series');
+});
+
+check('release notes: install text, then the version\'s CHANGELOG section', () => {
+  const changelog = '# Changelog\n\n## 0.2.10\n\n- ten\n\n## [0.2.1] - 2026-11-20\n\n- one\n- two\n\n## v0.2.0\n\n- zero\n';
+  assert.equal(changelogSection(changelog, '0.2.1'), '- one\n- two', 'not 0.2.10, and up to the next section');
+  assert.equal(changelogSection(changelog, 'v0.2.0'), '- zero', 'with or without v, last section');
+  assert.equal(changelogSection(changelog, '0.3.0'), '');
+  assert.equal(releaseNotes('0.2.1', 'Get {version}.zip', changelog), "Get 0.2.1.zip\n\n## What's changed\n\n- one\n- two\n");
+  assert.equal(releaseNotes('0.3.0', 'Get {version}.zip', changelog), 'Get 0.3.0.zip\n', 'only the install text without a section');
+  assert.equal(releaseNotes('0.3.0', 'Get {version}.zip', ''), 'Get 0.3.0.zip\n', 'or without a CHANGELOG.md');
 });
 
 check('Whiskybase.HOSTS matches host_permissions in the manifest', () => {

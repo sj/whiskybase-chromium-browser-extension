@@ -140,6 +140,17 @@ Then run the workflow with that tag selected under **Use workflow from**. It
 attaches the zip to a GitHub Release for the tag, and fails if the tag doesn't
 match the manifest version.
 
+The release notes are the install instructions in
+[`.github/release-intro.md`](.github/release-intro.md) (`{version}` is filled
+in), followed by the section for the version in [`CHANGELOG.md`](CHANGELOG.md),
+if it has one: from a `## 0.2.1` heading (`## v0.2.1` or `## [0.2.1] - date`
+work too) to the next `## `. Add that section before tagging. To preview the
+notes:
+
+```bash
+node scripts/release-notes.mjs 0.2.1
+```
+
 ## Tests
 
 
