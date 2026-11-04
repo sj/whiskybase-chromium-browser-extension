@@ -234,21 +234,69 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
+// The page's detector, loaded into the tab first if it isn't there yet:
+// clicking the toolbar icon gives the extension access to this tab (activeTab).
+async function detection(tabId, rescan) {
+  const ask = () => chrome.tabs.sendMessage(tabId, { type: 'whisky:get', rescan });
+  try {
+    const result = await ask();
+    if (result) return result;
+  } catch (e) {
+    // Not loaded yet (or left over from before the extension was reloaded).
+  }
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['src/detector.js', 'src/content.js'] });
+  return ask();
+}
+
 async function scan(rescan) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
   const key = `lookup:${tab.id}`;
   currentLookup = (await chrome.storage.session.get(key))[key] || null;
   try {
-    currentResult = await chrome.tabs.sendMessage(tab.id, { type: 'whisky:get', rescan });
+    currentResult = await detection(tab.id, rescan);
     render(currentResult);
   } catch (e) {
     $('fields').hidden = true;
     $('why').hidden = true;
     $('parsed-title').textContent = 'No whisky information detected';
-    showStatus('none', 'Cannot inspect this page', 'Browser pages cannot be scanned. If this is a normal web page, reload it.');
+    showStatus(
+      'none',
+      'Cannot inspect this page',
+      /^file:/.test(tab.url || '')
+        ? 'For local files, turn on Allow access to file URLs on the extension’s details page.'
+        : 'Browser pages and the Chrome Web Store cannot be scanned.'
+    );
   }
 }
 
+// --- Automatic checking -------------------------------------------------------
+// Off: pages are only checked when the toolbar icon is clicked. On: the optional
+// access to all sites is granted and the background registers the detector on
+// every page. Chrome may close the popup for its permission prompt; the
+// background picks the change up either way.
+
+const ALL_SITES = ['http://*/*', 'https://*/*'];
+
+async function showAutoCheck() {
+  const on = await chrome.permissions.contains({ origins: ALL_SITES });
+  $('auto-check').checked = on;
+  $('auto-hint').textContent = on
+    ? 'Pages are checked as they load. Turn this off to withdraw the access to all websites.'
+    : 'Pages are only checked when you click this icon. Turning this on asks for access to all websites.';
+}
+
+$('auto-check').addEventListener('change', async (e) => {
+  try {
+    if (e.target.checked) await chrome.permissions.request({ origins: ALL_SITES });
+    else await chrome.permissions.remove({ origins: ALL_SITES });
+  } finally {
+    showAutoCheck();
+  }
+});
+chrome.permissions.onAdded.addListener(showAutoCheck);
+chrome.permissions.onRemoved.addListener(showAutoCheck);
+
 $('rescan').addEventListener('click', () => scan(true));
+showAutoCheck();
 scan(false);

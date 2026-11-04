@@ -42,6 +42,24 @@ A page counts as **whisky** with at least 3 context points, 2 bottle points and
 6 points in total, and as **possible** with at least 2, 1 and 4. Listing pages never count.
 
 
+## When pages are checked
+
+The manifest has no content scripts, so the extension can't read pages unless asked:
+
+- **On click (default):** clicking the toolbar icon gives the extension access to
+  that tab (`activeTab`). If the page doesn't have the detector yet, the popup
+  loads `src/detector.js` and `src/content.js` into it with `chrome.scripting`.
+  From there it works as before: the content script reports to the background,
+  which sets the badge and starts the Whiskybase lookup.
+- **Automatic checking (opt-in):** the popup's **Check every page automatically**
+  requests the optional access to all `http`/`https` sites. While that is
+  granted, the background registers the same two files as a content script on
+  every page (`syncAutoCheck`); when it is withdrawn, from the popup or from
+  Chrome's site access settings, the script is unregistered. Pages already open
+  are checked on the next load or click.
+
+A page can get the content script both ways; `content.js` then keeps one copy.
+
 ## How Whiskybase lookup works
 
 - **Query:** built from the detected fields (`buildQuery` in
@@ -76,12 +94,12 @@ A page counts as **whisky** with at least 3 context points, 2 bottle points and
 
 | Path | Role |
 | ---- | ---- |
-| `manifest.json` | Manifest V3; `storage` permission and access to www.whiskybase.com (pages) and static.whiskybase.com (photos) |
+| `manifest.json` | Manifest V3; `storage`, `activeTab` and `scripting` permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
-| `src/content.js` | Runs the detector on each page; re-scans single-page-app navigations and late-rendered content |
-| `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup |
+| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content |
+| `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
-| `popup/` | Toolbar popup with results and a Re-scan button |
+| `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
 | `test/` | Parser unit tests and fixture pages |
 
 ## Packaging
@@ -124,8 +142,9 @@ To try it on the bundled test pages:
 npm run serve-fixtures
 ```
 
-Then open e.g. http://localhost:8000/shop-jsonld-ardbeg.html. (To use `file://`
-pages instead, enable **Allow access to file URLs** on the extension's details page.)
+Then open e.g. http://localhost:8000/shop-jsonld-ardbeg.html and click the
+extension's icon. (To use `file://` pages instead, enable **Allow access to file
+URLs** on the extension's details page.)
 
 
 

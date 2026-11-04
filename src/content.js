@@ -2,12 +2,21 @@
  * Content script: runs the detector on the page, reports the result to the
  * background worker (for the toolbar badge) and answers the popup.
  *
+ * It is loaded by the popup when the toolbar icon is clicked, and on every
+ * page when automatic checking is on; a page that gets it twice keeps one copy.
+ *
  * Pages that render late or navigate client-side (SPAs) are re-scanned after
  * DOM changes: always when the URL changed, otherwise only during the first
  * few seconds after load.
  */
 (() => {
   'use strict';
+
+  // An earlier copy counts only while its extension is still running: after a
+  // reload of the extension, its runtime loses its id and the new copy takes over.
+  const earlier = globalThis.__bottleLookupRuntime;
+  if (earlier && earlier.id) return;
+  globalThis.__bottleLookupRuntime = chrome.runtime;
 
   const RESCAN_DELAY_MS = 800;
   const SETTLE_WINDOW_MS = 15000;

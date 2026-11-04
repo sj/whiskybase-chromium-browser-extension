@@ -1,5 +1,7 @@
 /*
  * Background service worker:
+ *  - when automatic checking is on (the user granted access to all sites),
+ *    keeps the detector registered as a content script on every page;
  *  - shows the detection result as a per-tab badge on the toolbar icon
  *    (Chrome resets tab-specific badges on navigation);
  *  - for confident detections, looks the bottle up on Whiskybase and stores
@@ -241,3 +243,27 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   pageUrls.delete(tabId);
   chrome.storage.session.remove(`lookup:${tabId}`);
 });
+
+// ---------------------------------------------------------------------------
+// Automatic checking: without it, the popup loads the detector when the toolbar
+// icon is clicked (activeTab). Turning it on in the popup grants the optional
+// access to all sites; the content script is registered while that is granted.
+
+const ALL_SITES = ['http://*/*', 'https://*/*'];
+const AUTO_SCRIPT = { id: 'detector', matches: ALL_SITES, js: ['src/detector.js', 'src/content.js'], runAt: 'document_idle' };
+
+async function syncAutoCheck() {
+  const on = await chrome.permissions.contains({ origins: ALL_SITES });
+  const registered = (await chrome.scripting.getRegisteredContentScripts({ ids: [AUTO_SCRIPT.id] })).length > 0;
+  try {
+    if (on && !registered) await chrome.scripting.registerContentScripts([AUTO_SCRIPT]);
+    if (!on && registered) await chrome.scripting.unregisterContentScripts({ ids: [AUTO_SCRIPT.id] });
+  } catch (e) {
+    console.warn('Automatic checking:', e); // e.g. two changes at once; the next one syncs again
+  }
+}
+
+chrome.runtime.onInstalled.addListener(syncAutoCheck);
+chrome.runtime.onStartup.addListener(syncAutoCheck);
+chrome.permissions.onAdded.addListener(syncAutoCheck);
+chrome.permissions.onRemoved.addListener(syncAutoCheck);

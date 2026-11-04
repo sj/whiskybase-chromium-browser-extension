@@ -226,3 +226,23 @@ body.wide #wb {
 #no-reasons {
   margin: 6px 0 0;
 }
+
+/* Automatic checking, below both columns. */
+.auto {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.auto label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.auto input {
+  margin: 0;
+}
+.auto p {
+  margin: 4px 0 0;
+  font-size: 12px;
+}

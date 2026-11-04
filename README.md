@@ -8,7 +8,7 @@ its details, and looks the bottle up on whiskybase.com.
 
 
 
-On any page, the browser extension's toolbar icon shows:
+Click the extension's toolbar icon on a page to check it. Afterwards, the icon shows:
 
 | Badge | Meaning |
 | ----- | ------- |
@@ -21,6 +21,8 @@ age, ABV, volume, vintage/bottled year, cask number, EAN) and, under
 **Details of parsed data**, every signal that added or removed points. 
 
 If and when a whisky bottle is detected on a webpage, the extension will automatically try and find the bottle's Whiskybase entry.
+
+By default, the extension only looks at a page when you click its icon, so it doesn't need access to the websites you visit. To have every page checked as it loads, with the badge and the Whiskybase lookup happening without a click, tick **Check every page automatically** at the bottom of the popup. Chrome then asks you to allow access to all websites; untick it to withdraw that access again.
 
 **Please note**: This is an independent project; it is not affiliated with or endorsed by
 Whiskybase. 
