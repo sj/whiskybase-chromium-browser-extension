@@ -279,13 +279,7 @@ async function scan(rescan) {
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
 async function showAutoCheck() {
-  const on = await chrome.permissions.contains({ origins: ALL_SITES });
-  $('auto-check').checked = on;
-  const hint = on
-    ? 'Pages are checked as they load. Turn this off to withdraw the access to all websites.'
-    : 'Pages are only checked when you click this icon. Turning this on asks for access to all websites.';
-  $('auto-info').title = hint;
-  $('auto-info').setAttribute('aria-label', hint);
+  $('auto-check').checked = await chrome.permissions.contains({ origins: ALL_SITES });
 }
 
 $('auto-check').addEventListener('change', async (e) => {
