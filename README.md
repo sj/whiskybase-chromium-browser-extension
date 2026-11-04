@@ -2,17 +2,20 @@
 
 Browser extension that recognises when the current web page contains details for a bottle of whisky, tries to automatically recognise the relevant details from the page, and looks the bottle up on whiskybase.com. This extension works on all Chromium-based browsers, including: Google Chrome, Microsoft Edge, Brave, Chromium, Opera, and Vivaldi.
 
+🌐 [Download here from the Google Chrome Store](https://chromewebstore.google.com/detail/bottle-lookup-for-whiskybase/nngkmbiongkmhiiiblajjiokfllneomm)<br/><br/><br/>
+
 
 ![Screenshot (closeup)](https://github.com/sj/whiskybase-chromium-browser-extension/blob/main/screenshots/fettercairn-50-closeup.jpg)
 
 
 
-Click the extension's toolbar icon on a page to see what it can do. By default, the extension only analyses the current web page when you click its icon, but you can easily tell it to do so for every page. When the extension is triggered (automatically or manually), the icon in the toolbar shows whether it was able to recognise any information. Click the extension icon to see the extracted details: distillery, bottle name, bottler, age, ABV, volume, vintage/bottled year, cask number, etc. 
+Once you've installed the extension: navigate to a page describing a bottle of whisky (e.g. an online shop or auction). Then click the extension's toolbar icon on a page to see what it can do. If you don't see the extension in your browser's toolbar: make sure to pin it. For most browsers, this works by clicking the puzzle piece icon 🧩 top-right corner next to the address bar, and click the pin icon 📌 next to the extension.
 
-If and when a whisky bottle is detected on a webpage, the extension will automatically try and find the bottle's Whiskybase entry, and link to it. 
+By default, the extension only analyses the current web page when you click its icon, but you can easily tell it to do so automatically for every page that loads. When the extension is triggered, the icon in the toolbar shows whether it was able to recognise any information, and whether it was able to link it to a bottle on Whiskybase.com. Click the extension icon to see the extracted details: distillery, bottle name, bottler, age, ABV, volume, vintage/bottled year, cask number, etc. 
 
-**Please note**: This is an independent project; it is not affiliated with or endorsed by
-Whiskybase. 
+If and when a whisky bottle is detected on a webpage, the extension will automatically try and find the bottle's Whiskybase entry. 
+
+**Please note**: This is an independent project; it is not affiliated with nor endorsed by Whiskybase. 
 
 ## Installation instructions
 
