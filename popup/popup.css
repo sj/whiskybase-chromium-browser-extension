@@ -227,8 +227,11 @@ body.wide #wb {
   margin: 6px 0 0;
 }
 
-/* Automatic checking, below both columns. */
+/* Automatic checking, below both columns; its explanation is the info icon's tooltip. */
 .auto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 12px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
@@ -242,7 +245,13 @@ body.wide #wb {
 .auto input {
   margin: 0;
 }
-.auto p {
-  margin: 4px 0 0;
-  font-size: 12px;
+.info {
+  display: inline-flex;
+  color: var(--muted);
+  opacity: 0.7;
+  cursor: help;
+}
+.info:hover,
+.info:focus-visible {
+  opacity: 1;
 }
