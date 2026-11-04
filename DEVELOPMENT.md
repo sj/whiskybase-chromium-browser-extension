@@ -125,31 +125,73 @@ extension** and click **Run workflow**. It runs the tests and this packaging,
 and uploads the extension as a workflow artifact (on the run's summary page;
 needs a GitHub login, kept for 90 days).
 
-To publish a release that anyone can download, bump `version` in
-`manifest.json`, commit, and push a matching tag:
+### Publishing a release
 
-```bash
-git tag v0.1.0
-```
+A release is a GitHub Release with the zip attached, downloadable by anyone.
+The steps, here for version 0.2.1:
 
-```bash
-git push origin v0.1.0
-```
+1. **Describe the changes** in [`CHANGELOG.md`](CHANGELOG.md), in a new
+   section at the top:
 
-Then run the workflow with that tag selected under **Use workflow from**. It
-attaches the zip to a GitHub Release for the tag, and fails if the tag doesn't
-match the manifest version.
+   ```markdown
+   ## 0.2.1
 
-The release notes are the install instructions in
-[`.github/release-intro.md`](.github/release-intro.md) (`{version}` is filled
-in), followed by the section for the version in [`CHANGELOG.md`](CHANGELOG.md),
-if it has one: from a `## 0.2.1` heading (`## v0.2.1` or `## [0.2.1] - date`
-work too) to the next `## `. Add that section before tagging. To preview the
-notes:
+   - What changed, as users would notice it.
+   ```
 
-```bash
-node scripts/release-notes.mjs 0.2.1
-```
+2. **Bump `version`** in `manifest.json` to `0.2.1`. The Chrome Web Store
+   also needs a higher version for every upload.
+
+3. **Preview the release notes:**
+
+   ```bash
+   node scripts/release-notes.mjs 0.2.1
+   ```
+
+4. **Commit and push** `main`. The workflow file must be on GitHub's default
+   branch for **Run workflow** to appear.
+
+   ```bash
+   git push origin main
+   ```
+
+5. **Tag the release commit** and push the tag:
+
+   ```bash
+   git tag v0.2.1
+   ```
+
+   ```bash
+   git push origin v0.2.1
+   ```
+
+6. **Run the workflow on the tag:** on GitHub, open **Actions**, pick
+   **Package extension**, click **Run workflow** and switch **Use workflow
+   from** to the **Tags** tab, then pick `v0.2.1`. (Run on a branch, the
+   workflow only uploads the artifact, without a release.) It fails if the tag
+   doesn't match the manifest version.
+
+7. **Check the release** under **Releases**. To publish the same version on
+   the Chrome Web Store, upload its zip in the Developer Dashboard; every
+   upload is reviewed again.
+
+If a tag ends up on the wrong commit before you push it, delete it with
+`git tag -d v0.2.1` and tag again. Notes of a published release can be edited
+on its page on GitHub (**Edit**).
+
+### Release notes
+
+The workflow writes the notes with
+[`scripts/release-notes.mjs`](scripts/release-notes.mjs):
+
+- **At the top,** the install instructions in
+  [`.github/release-intro.md`](.github/release-intro.md); `{version}` is
+  replaced with the release's version. Edit this file to change the text for
+  all future releases.
+- **Below that, under "What's changed",** the version's section of
+  `CHANGELOG.md`: from its `## 0.2.1` heading (`## v0.2.1` and
+  `## [0.2.1] - 2026-11-20` work too) to the next `## ` heading. Without such a
+  section, the notes are only the install instructions.
 
 ## Tests
 
