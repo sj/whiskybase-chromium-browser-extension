@@ -38,6 +38,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://*.whiskybase.com/*"
+    "https://www.whiskybase.com/*",
+    "https://static.whiskybase.com/*"
   ]
 }

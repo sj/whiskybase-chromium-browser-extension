@@ -76,7 +76,7 @@ A page counts as **whisky** with at least 3 context points, 2 bottle points and
 
 | Path | Role |
 | ---- | ---- |
-| `manifest.json` | Manifest V3; `storage` permission and access to *.whiskybase.com |
+| `manifest.json` | Manifest V3; `storage` permission and access to www.whiskybase.com (pages) and static.whiskybase.com (photos) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
 | `src/content.js` | Runs the detector on each page; re-scans single-page-app navigations and late-rendered content |
 | `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup |
