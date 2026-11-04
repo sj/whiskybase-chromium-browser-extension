@@ -200,6 +200,12 @@ function renderWhiskybase() {
   } else if (lk.state === 'nomatch') {
     out.append(el('p', { className: 'wb-bad' }, lk.total ? 'No confident match. Best candidates:' : 'No results.'));
     if (lk.candidates.length) out.append(candidateList(lk.candidates));
+  } else if (lk.state === 'noaccess') {
+    out.append(
+      el('p', { className: 'wb-bad' }, 'No access to Whiskybase.'),
+      el('p', {}, 'The extension needs access to www.whiskybase.com and static.whiskybase.com to look bottles up.'),
+      accessButton()
+    );
   } else if (lk.state === 'blocked') {
     out.append(
       el('p', { className: 'wb-bad' }, lk.paused ? 'Paused after a Cloudflare check.' : 'Blocked by the Cloudflare check.'),
@@ -217,6 +223,22 @@ function retryButton() {
   button.addEventListener('click', () => {
     button.disabled = true;
     chrome.runtime.sendMessage({ type: 'whisky:retry', tabId: currentTabId, url: currentResult.url, whisky: currentResult.whisky });
+  });
+  return button;
+}
+
+// Asks Chrome to give back the access to Whiskybase (removed in Chrome's site
+// access settings, for example), then searches again.
+function accessButton() {
+  const button = el('button', { type: 'button', className: 'wb-retry' }, 'Allow access to Whiskybase');
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    // Asked straight away: Chrome only shows the prompt during the click.
+    if (await chrome.permissions.request({ origins: Whiskybase.HOSTS })) {
+      chrome.runtime.sendMessage({ type: 'whisky:retry', tabId: currentTabId, url: currentResult.url, whisky: currentResult.whisky });
+    } else {
+      button.disabled = false;
+    }
   });
   return button;
 }
@@ -272,26 +294,33 @@ async function scan(rescan) {
 
 // --- Automatic checking -------------------------------------------------------
 // Off: pages are only checked when the toolbar icon is clicked. On: the optional
-// access to all sites is granted and the background registers the detector on
-// every page. Chrome may close the popup for its permission prompt; the
-// background picks the change up either way.
+// access to all sites is granted, autoCheck is set, and the background
+// registers the detector on every page. Chrome may close the popup for its
+// permission prompt; the background turns the setting on when it is accepted.
+// Turning it off keeps the access (see background.js for why).
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
 async function showAutoCheck() {
-  $('auto-check').checked = await chrome.permissions.contains({ origins: ALL_SITES });
+  const { autoCheck } = await chrome.storage.local.get('autoCheck');
+  $('auto-check').checked = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
 }
 
 $('auto-check').addEventListener('change', async (e) => {
   try {
-    if (e.target.checked) await chrome.permissions.request({ origins: ALL_SITES });
-    else await chrome.permissions.remove({ origins: ALL_SITES });
+    if (e.target.checked) {
+      // Asked straight away: Chrome only shows the prompt during the click.
+      if (await chrome.permissions.request({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
+    } else {
+      await chrome.storage.local.set({ autoCheck: false });
+    }
   } finally {
     showAutoCheck();
   }
 });
-chrome.permissions.onAdded.addListener(showAutoCheck);
-chrome.permissions.onRemoved.addListener(showAutoCheck);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.autoCheck) showAutoCheck();
+});
 
 $('rescan').addEventListener('click', () => scan(true));
 showAutoCheck();

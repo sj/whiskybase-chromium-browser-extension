@@ -159,12 +159,15 @@ async function setLookup(tabId, lookup) {
 
 /**
  * Searches Whiskybase for the detected bottle and stores the outcome:
- * state is 'searching', 'match', 'nomatch', 'blocked' or 'error'.
+ * state is 'searching', 'match', 'nomatch', 'blocked', 'noaccess' or 'error'.
  */
 async function lookup(tabId, pageUrl, whisky) {
   const query = Whiskybase.buildQuery(whisky);
   const base = { pageUrl, query, searchUrl: Whiskybase.searchUrl(query) };
   if (!query) return setLookup(tabId, { ...base, state: 'error', error: 'Nothing to search for' });
+  if (!(await chrome.permissions.contains({ origins: Whiskybase.HOSTS }))) {
+    return setLookup(tabId, { ...base, state: 'noaccess' });
+  }
 
   const { blockedAt } = await chrome.storage.session.get('blockedAt');
   if (blockedAt && Date.now() - blockedAt < BLOCKED_PAUSE_MS) {
@@ -247,13 +250,19 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 // ---------------------------------------------------------------------------
 // Automatic checking: without it, the popup loads the detector when the toolbar
 // icon is clicked (activeTab). Turning it on in the popup grants the optional
-// access to all sites; the content script is registered while that is granted.
+// access to all sites and sets autoCheck in chrome.storage.local; the content
+// script is registered while both hold.
+//
+// Turning it off only clears autoCheck. Withdrawing the access to all sites
+// (permissions.remove) would also take the Whiskybase hosts with it, and Chrome
+// gives those back only on a new click and prompt.
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 const AUTO_SCRIPT = { id: 'detector', matches: ALL_SITES, js: ['src/detector.js', 'src/content.js'], runAt: 'document_idle' };
 
 async function syncAutoCheck() {
-  const on = await chrome.permissions.contains({ origins: ALL_SITES });
+  const { autoCheck } = await chrome.storage.local.get('autoCheck');
+  const on = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
   const registered = (await chrome.scripting.getRegisteredContentScripts({ ids: [AUTO_SCRIPT.id] })).length > 0;
   try {
     if (on && !registered) await chrome.scripting.registerContentScripts([AUTO_SCRIPT]);
@@ -265,5 +274,13 @@ async function syncAutoCheck() {
 
 chrome.runtime.onInstalled.addListener(syncAutoCheck);
 chrome.runtime.onStartup.addListener(syncAutoCheck);
-chrome.permissions.onAdded.addListener(syncAutoCheck);
 chrome.permissions.onRemoved.addListener(syncAutoCheck);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.autoCheck) syncAutoCheck();
+});
+// Chrome may close the popup for its permission prompt before the popup can
+// store the setting, so accepting the prompt turns it on here too.
+chrome.permissions.onAdded.addListener(async () => {
+  if (await chrome.permissions.contains({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
+  syncAutoCheck();
+});

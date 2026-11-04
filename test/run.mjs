@@ -387,6 +387,11 @@ check('bottle page: average shop price and number of shops', () => {
   assert.equal(unlisted.signedIn, false);
 });
 
+check('Whiskybase.HOSTS matches host_permissions in the manifest', () => {
+  const manifest = JSON.parse(readFileSync(join(here, '..', 'manifest.json'), 'utf8'));
+  assert.deepEqual(WB.HOSTS, manifest.host_permissions);
+});
+
 check('isBottlePhoto rejects the placeholder and the social card', () => {
   assert.ok(WB.isBottlePhoto('https://static.whiskybase.com/storage/whiskies/2/3/3907/450971-normal.png'));
   assert.ok(!WB.isBottlePhoto('https://static.whiskybase.com/storage/whiskies/default/normal.png?v7'));

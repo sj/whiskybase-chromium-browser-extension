@@ -52,11 +52,17 @@ The manifest has no content scripts, so the extension can't read pages unless as
   From there it works as before: the content script reports to the background,
   which sets the badge and starts the Whiskybase lookup.
 - **Automatic checking (opt-in):** the popup's **Check every page automatically**
-  requests the optional access to all `http`/`https` sites. While that is
-  granted, the background registers the same two files as a content script on
-  every page (`syncAutoCheck`); when it is withdrawn, from the popup or from
-  Chrome's site access settings, the script is unregistered. Pages already open
-  are checked on the next load or click.
+  requests the optional access to all `http`/`https` sites and sets `autoCheck`
+  in `chrome.storage.local`. While both hold, the background registers the same
+  two files as a content script on every page (`syncAutoCheck`). Pages already
+  open are checked on the next load or click.
+- **Turning it off** only clears `autoCheck` and keeps the access. Withdrawing
+  the access to all sites with `chrome.permissions.remove` also removes the
+  Whiskybase hosts, although they are required in the manifest, and Chrome only
+  gives those back on a new click and prompt. The access can be withdrawn in
+  Chrome's own settings for the extension (**Site access**).
+- **Without Whiskybase access** (after that, for example), the background
+  doesn't search (`noaccess`) and the popup offers **Allow access to Whiskybase**.
 
 A page can get the content script both ways; `content.js` then keeps one copy.
 
