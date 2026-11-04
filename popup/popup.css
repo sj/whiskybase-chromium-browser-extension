@@ -197,6 +197,9 @@ body.wide #wb {
 .wb-name {
   font-weight: 600;
 }
+.wb-series {
+  font-weight: normal;
+}
 .wb-fields {
   margin-top: 4px;
 }

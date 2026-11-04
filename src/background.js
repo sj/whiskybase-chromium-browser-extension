@@ -192,7 +192,7 @@ async function lookup(tabId, pageUrl, whisky) {
   if (!match) return;
   setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
 
-  // The number of ratings and the shop price are only on the bottle's own page.
+  // The number of ratings, the bottling series and the shop price are only on the bottle's own page.
   const details = await bottleDetails(match);
   const photo = await photoData([result.match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
   if (pageUrls.get(tabId) !== pageUrl) return;
@@ -204,6 +204,7 @@ async function lookup(tabId, pageUrl, whisky) {
       reviews: details.reviews != null ? details.reviews : null,
       price: details.price || null,
       shops: details.shops || null,
+      series: details.series || null,
       detailsNote: details.note,
       photo: photo.url || null,
       photoData: photo.data || null,

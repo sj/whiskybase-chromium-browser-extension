@@ -153,7 +153,7 @@ function ratingText(m) {
 
 const priceText = (m) => `${m.price} (${m.shops} ${m.shops === 1 ? 'shop' : 'shops'})`;
 
-// Photo on top, then the name and a table like the parsed data: ID, rating, price.
+// Photo on top, then the name (and series) and a table like the parsed data: ID, rating, price.
 function matchCard(m) {
   const card = el('div', { className: 'wb-match' });
   if (m.photoData || m.photo) {
@@ -171,7 +171,10 @@ function matchCard(m) {
   if (m.price && m.shops) rows.push(['Price estimate', priceText(m), 'wb-price']);
   const table = el('table', { className: 'wb-fields' });
   for (const [label, value, className] of rows) table.append(el('tr', { className }, el('th', {}, label), el('td', {}, value)));
-  card.append(el('p', { className: 'wb-name' }, m.text), table);
+  // The name in bold, then the bottling series (when Whiskybase has one) in brackets.
+  const name = el('p', { className: 'wb-name' }, m.text);
+  if (m.series) name.append(' ', el('span', { className: 'wb-series' }, `(${m.series})`));
+  card.append(name, table);
   return card;
 }
 

@@ -194,7 +194,8 @@
 
   /**
    * Details from a Whiskybase bottle page: the rating and how many ratings it
-   * is based on (from its JSON-LD aggregateRating), and the bottle photo: the
+   * is based on (from its JSON-LD aggregateRating), the bottling series, the
+   * shop price, and the bottle photo: the
    * JSON-LD image (the default photo), else the first photo in the page's
    * carousel (uploaded but not marked as default, e.g. only a label shot).
    * og:image is a social card, not the bottle.
@@ -208,6 +209,7 @@
       photo: null,
       price: null,
       shops: null,
+      series: null,
       // For explaining a missing price: was the page served signed in, and did it have a price block?
       signedIn: /href="[^"]*\/logout[?"]/i.test(html),
       priceBlock: /Average Shop Price\s*<\/p>/i.test(html),
@@ -249,6 +251,9 @@
         }
       }
     }
+    // "Bottling series" in the bottle's details, when Whiskybase has one.
+    const series = html.match(/<dt[^>]*>\s*Bottling series\s*<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/i);
+    if (series) out.series = stripTags(series[1]) || null;
     // Average Shop Price, only while shops list the bottle ("Available at N shops");
     // without listings the page shows the last known price instead.
     const shops = html.match(/Available at\s*(?:<strong>)?\s*(\d+)\s*(?:<\/strong>)?\s*shops?/i);

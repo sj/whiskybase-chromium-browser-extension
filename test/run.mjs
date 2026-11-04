@@ -234,6 +234,11 @@ const fixtureCases = [
     status: 'whisky',
     whisky: { distillery: 'GlenDronach', bottler: 'Kingsbury', vintage: 1991, age: 34, abv: 44.8 },
   },
+  {
+    file: 'hedonism-glendrnoach-14yo-boynsmill-house-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'GlenDronach', bottling: 'distillery', age: 14, abv: 46.8, volumeMl: 700 },
+  },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },
@@ -385,6 +390,16 @@ check('bottle page: average shop price and number of shops', () => {
   assert.equal(je.signedIn, true, 'saved while signed in');
   assert.equal(je.priceBlock, true);
   assert.equal(unlisted.signedIn, false);
+});
+
+check('bottle page: bottling series', () => {
+  const page = (f) => WB.analyseBottleHtml(readFileSync(join(here, 'fixtures', 'whiskybase', f), 'utf8'));
+  assert.equal(page('hedonism-glendrnoach-14yo-boynsmill-house-whiskybase-bottle-page-WB292924.html').series, 'Boynsmill House Edition');
+  assert.equal(page('masterofmalt.com-inchgower-murray-mcdavid-whiskybase-bottle-page.html').series, 'Cask Craft');
+  assert.equal(page('htfw.com-inchgower-cask-2289-whiskybase-bottle-page-WB304211.html').series, 'Private Cask Collection');
+  assert.equal(page('htfw.com-inchgower-james-eadie-cask-348039-whiskybase-bottle-page-WB210223.html').series, 'Sherry Cask Finish');
+  const none = WB.analyseBottleHtml('<dl><dt>Bottler</dt><dd>Distillery Bottling</dd><dt>Stated Age</dt><dd>14 years</dd></dl>');
+  assert.equal(none.series, null, 'most bottles have no series');
 });
 
 check('Whiskybase.HOSTS matches host_permissions in the manifest', () => {
