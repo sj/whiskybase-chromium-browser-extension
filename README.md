@@ -4,7 +4,7 @@ Recognises when the current web page shows a single bottle of whisky, pulls out
 its details, and looks the bottle up on whiskybase.com.
 
 
-![Screenshot (closeup)](https://github.com/sj/whiskybase-chromium-browser-extension/blob/main/screenshots/Fettercairn%2050%20-%20closeup.jpg)
+![Screenshot (closeup)](https://github.com/sj/whiskybase-chromium-browser-extension/blob/main/screenshots/fettercairn-50-closeup.jpg)
 
 
 This is an independent project: it is not affiliated with or endorsed by
