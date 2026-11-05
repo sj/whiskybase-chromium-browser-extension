@@ -2,7 +2,7 @@
 
 For each release, changes are listed below. When a release is published, the changelog for that particular version is added to the GitHub Release notes, below the install instructions.
 
-## Under development (not released yet)
+## 0.3.3
 
 - On Whiskybase itself, the extension no longer scans the page or looks anything up; the popup just says you're looking at Whiskybase.
 - Small textual change/clarification when there's no confident match but several candidates
