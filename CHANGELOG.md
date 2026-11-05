@@ -5,6 +5,7 @@ For each release, changes are listed below. When a release is published, the cha
 ## Under development (not released yet)
 
 - On Whiskybase itself, the extension no longer scans the page or looks anything up; the popup just says you're looking at Whiskybase.
+- When there's no confident match but several candidates, the popup asks for feedback on the detection and matching, instead of asking whether the bottle is on Whiskybase.
 
 ## 0.3.2
 

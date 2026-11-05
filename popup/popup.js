@@ -239,14 +239,12 @@ function renderWhiskybase() {
   } else if (lk.state === 'nomatch') {
     out.append(el('p', { className: 'wb-bad' }, lk.total ? 'No confident match. Best candidates:' : 'No results.'));
     if (lk.candidates.length) out.append(candidateList(lk.candidates));
+    // With several candidates, the question is less whether the bottle is on Whiskybase than which one it is.
+    const report = (text) => link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, text);
     out.append(
-      el(
-        'p',
-        { className: 'muted' },
-        'Is this bottle on Whiskybase after all? Let us know ',
-        link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here'),
-        '.'
-      )
+      lk.candidates.length > 1
+        ? el('p', { className: 'muted' }, 'If you think the detection or matching can be improved, ', report('let us know'), '.')
+        : el('p', { className: 'muted' }, 'Is this bottle on Whiskybase after all? Let us know ', report('here'), '.')
     );
   } else if (lk.state === 'noaccess') {
     out.append(
