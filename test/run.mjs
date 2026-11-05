@@ -37,6 +37,10 @@ const parserCases = [
   ['parseAbv', ['Alcoholpercentage: 43,0 %'], 43],
   ['parseAbv', ['ABV 57.1%'], 57.1],
   ['parseAbv', ['90 Proof'], 45],
+  ['parseAbv', ['bottled at 75° proof in the 1960s'], 43],
+  ['parseAbv', ['Strength 75 Proof Size 26⅔ fl.Ozs'], 43],
+  ['parseAbv', ['100° proof'], 57],
+  ['parseAbv', ['80° proof'], 45.7],
   ['parseAbv', ['20% off this week'], null],
   ['parseAbv', ['Single Malt Scotch Whisky | 70cl | 45.8%'], 45.8],
   ['parseAbv', ['52,3% 0,7 l'], 52.3],
@@ -54,6 +58,9 @@ const parserCases = [
   ['parseVolume', ['0,7 l'], 700],
   ['parseVolume', ['Size: 750ml'], 750],
   ['parseVolume', ['1.75 L'], 1750],
+  ['parseVolume', ['Bottle size 26⅔  fl.Ozs'], 750],
+  ['parseVolume', ['26 2/3 fl. oz'], 750],
+  ['parseVolume', ['25.4 fl oz'], 750],
   ['parseVolume', ['46% vol'], null],
   ['parseVolume', ['matured in a 200 litre barrel'], null],
   ['parseStandardVolume', ['Cask 14148 46% 70cl Sold'], 700],
@@ -66,8 +73,10 @@ const parserCases = [
   ['parseAge', ['Caol Ila 25 Jahre'], 25],
   ['parseAge', ['Ardbeg Uigeadail'], null],
   ['parseAge', ['Age: 12', true], 12],
+  ['parseAge', ['Aged for 17 years in American oak', true], 17],
   ['parseYears', ['Caol Ila 1998/2023'], { vintage: 1998, bottled: 2023 }],
   ['parseYears', ['Distilled 2008, bottled 2021'], { vintage: 2008, bottled: 2021 }],
+  ['parseYears', ["bottled at 75° proof in the 1960's"], { vintage: null, bottled: null }],
   ['matchDistillery', ['The GlenDronach 18 Allardice'], 'GlenDronach'],
   ['matchDistillery', ['Makers Mark 46'], "Maker's Mark"],
   ['matchDistillery', ['Laphroaig Quarter Cask'], 'Laphroaig'],
@@ -255,6 +264,88 @@ const fixtureCases = [
     status: 'whisky',
     // The heading is "Submit your bid for item #4838071"; the name comes from the page title.
     whisky: { name: 'Port Ellen', distillery: 'Port Ellen', bottler: 'Gordon & MacPhail', bottling: 'independent', age: 17, vintage: 1970, bottled: 1987, abv: 62.4, volumeMl: 750 },
+  },
+  // Shops
+  {
+    file: 'abbeywhisky.com-kilchoman-11-year-old-2007-cask-265-2007-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Kilchoman', bottling: 'distillery', age: 11, vintage: 2007, bottled: 2019, abv: 55.9, volumeMl: 700, caskNumber: '265' },
+  },
+  {
+    // "Alc. Content:" and "Bottle Size:" are inline labels (<p><em>…:</em> 43%</p>); the age is in the description.
+    file: 'dekanta.com-nikka-taketsuru-17-year-old-pure-malt-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Nikka', bottling: 'distillery', age: 17, abv: 43, volumeMl: 700 },
+  },
+  {
+    file: 'flaviar.com-kilkerran-12-year-old-product-page.html',
+    status: 'whisky',
+    whisky: { brand: 'Kilkerran', distillery: 'Glengyle', bottling: 'distillery', age: 12, abv: 46, volumeMl: 700 },
+  },
+  {
+    file: 'lfw.co.uk-hakushu-12-year-old-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Hakushu', bottling: 'distillery', age: 12, abv: 43, volumeMl: 700, gtin: '4901777228894' },
+  },
+  {
+    file: 'passievoorwhisky.nl-craigellachie-17-years-2009-2026-201-cask-strength-collection-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Craigellachie', bottler: 'Signatory Vintage', bottling: 'independent', age: 17, vintage: 2009, bottled: 2026, abv: 55.6, volumeMl: 700, caskNumber: '201' },
+  },
+  {
+    // "#78" is the 100 Proof Edition's number, not a cask; 100° UK proof is 57.1%.
+    file: 'thewhiskybarrel.com-benrinnes-13-year-old-2012-signatory-100-proof-edition-78-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Benrinnes', bottler: 'Signatory Vintage', bottling: 'independent', age: 13, vintage: 2012, abv: 57.1, volumeMl: 700, caskNumber: null },
+  },
+  {
+    file: 'thewhiskyworld.com-daftmill-15-year-old-fife-strength-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Daftmill', bottling: 'distillery', age: 15, abv: 56.3, volumeMl: 700 },
+  },
+  {
+    file: 'weinquelle.com-ardbeg-25-years-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Ardbeg', bottling: 'distillery', age: 25, abv: 46, volumeMl: 700 },
+  },
+  {
+    file: 'whisky.fr-benromach-25-ans-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Benromach', bottling: 'distillery', age: 25, abv: 46, volumeMl: 700, gtin: '5020613103740' },
+  },
+  {
+    file: 'whisky.nl-aberlour-triple-cask-70cl-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Aberlour', bottling: 'distillery', age: null, abv: 40, volumeMl: 700 },
+  },
+  // Auctions
+  {
+    // A 1960s British bottle: "75° proof" is 43%, and "26⅔ fl. oz" is 75cl; "the 1960's" is no bottling year.
+    file: 'just-whisky.co.uk-bowmore-18-years-old-sherriffs-1960s-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Bowmore', bottling: 'distillery', age: 18, abv: 43, volumeMl: 750, bottled: null },
+  },
+  {
+    file: 'prestigewhiskyauction.com-macallan-30-year-old-colour-collection-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Macallan', bottling: 'distillery', age: 30, abv: 43, volumeMl: 700 },
+  },
+  {
+    file: 'speysidewhiskyauctions.co.uk-macallan-18-years-old-1980-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Macallan', bottling: 'distillery', age: 18, vintage: 1980, bottled: 1998, abv: 43, volumeMl: 700 },
+  },
+  {
+    // "Bottler:" is an inline label (<li><strong>Bottler:</strong> Whisky-Doris</li>).
+    file: 'thegrandwhiskyauction.com-littlemill-24-year-old-1989-whisky-doris-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Littlemill', bottler: 'Whisky-Doris', bottling: 'independent', age: 24, vintage: 1989, abv: 51.7, volumeMl: 700 },
+  },
+  {
+    // The heading's third line ("70cl / 46.6%") is left out of the name.
+    file: 'whisky.auction-macallan-1968-fine-rare-33-year-old-product-page.html',
+    status: 'whisky',
+    whisky: { name: 'Macallan 1968 Fine & Rare 33 Year Old Bottled 2002 - Cask No.5913', distillery: 'Macallan', bottling: 'distillery', age: 33, vintage: 1968, bottled: 2002, abv: 46.6, volumeMl: 700, caskNumber: '5913' },
   },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },

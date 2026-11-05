@@ -6,6 +6,7 @@ For each release, changes are listed below. When a release is published, the cha
 
 - When a bottle is only possibly detected, the popup offers **Find this bottle on Whiskybase** to look it up anyway, and links to the README on how to let us know if the detection is wrong.
 - Better bottle names on auction pages whose heading only names the lot, such as whiskyauction.com (#13)
+- Better detection on more shops and auction sites, tested with pages from La Maison du Whisky, The Whisky World, The Whisky Barrel, Abbey Whisky, Loch Fyne Whiskies, Dekanta, Whisky.nl, Passie voor Whisky, Weinquelle Lühmann, Flaviar, Whisky.Auction, Just Whisky, The Grand Whisky Auction, Speyside Whisky Auctions and Prestige Whisky Auction. Among other things, the extension now reads the strength of old British bottles in UK proof ("75° proof" is 43%), and sizes in fluid ounces.
 
 ## 0.3.1
 

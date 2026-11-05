@@ -295,6 +295,12 @@ passed as options, so they are never stored in it:
 python3 test/scrub-fixture.py --name "First Last" --email you@example.org --username yourname --id 12345 test/fixtures/whiskybase/new-page.html
 ```
 
+Some pages hold other people's details, whoever saves them. Just Whisky's
+Next.js page data (`__NEXT_DATA__`), for example, includes bidders' and
+sellers' names, contact details, birth dates and bank details. The script
+replaces those fields wherever they appear in that data, so run it on every
+new fixture, signed in or not, and then search the page for email addresses.
+
 ### Fixing reported pages automatically
 
 The workflow [`.github/workflows/detector-issue.yml`](.github/workflows/detector-issue.yml)
