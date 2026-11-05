@@ -2,6 +2,8 @@
 
 const $ = (id) => document.getElementById(id);
 
+const README_URL = 'https://github.com/sj/whiskybase-chromium-browser-extension';
+
 const STATUS_TEXT = {
   whisky: 'Whisky bottle detected',
   possible: 'Possibly a whisky bottle',
@@ -41,10 +43,17 @@ function showStatus(cls, title, detail) {
 
 function render(result) {
   const { status, whisky, reasons } = result;
-  showStatus(status, STATUS_TEXT[status], status === 'none' ? '' : `Confidence: ${Math.round(result.confidence * 100)}%`);
-  // A detected bottle speaks for itself, and the heading already says when nothing was found.
+  showStatus(status, STATUS_TEXT[status], `Confidence: ${Math.round(result.confidence * 100)}%`);
   $('parsed-title').textContent = status === 'none' ? 'No whisky information detected' : 'Whisky information detected';
-  $('status').hidden = status === 'whisky' || status === 'none';
+  // A detected bottle speaks for itself; when nothing was found, the heading says so and the box asks for feedback.
+  $('status').hidden = status === 'whisky';
+  if (status === 'none') {
+    $('status').replaceChildren(
+      'This page does not seem to contain any information pertaining to a bottle of whisky. Do you think that’s incorrect? Let us know ',
+      link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here'),
+      '.'
+    );
+  }
 
   const table = $('fields');
   table.replaceChildren();
@@ -220,6 +229,15 @@ function renderWhiskybase() {
   } else if (lk.state === 'nomatch') {
     out.append(el('p', { className: 'wb-bad' }, lk.total ? 'No confident match. Best candidates:' : 'No results.'));
     if (lk.candidates.length) out.append(candidateList(lk.candidates));
+    out.append(
+      el(
+        'p',
+        { className: 'muted' },
+        'Is this bottle on Whiskybase after all? Let us know ',
+        link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here'),
+        '.'
+      )
+    );
   } else if (lk.state === 'noaccess') {
     out.append(
       el('p', { className: 'wb-bad' }, 'No access to Whiskybase.'),
