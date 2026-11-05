@@ -1,5 +1,6 @@
 // Release notes for a GitHub Release: the fixed text in .github/release-intro.md
-// ({version} is filled in), then the version's section from CHANGELOG.md, if any.
+// ({version} is filled in), then the version's section from CHANGELOG.md, if any,
+// with a link to the whole CHANGELOG.md on the main branch.
 //
 //   node scripts/release-notes.mjs 0.2.0 > notes.md
 //
@@ -21,10 +22,12 @@ export function changelogSection(changelog, version) {
   return (end < 0 ? rest : rest.slice(0, end)).join('\n').trim();
 }
 
+export const CHANGELOG_URL = 'https://github.com/sj/whiskybase-chromium-browser-extension/blob/main/CHANGELOG.md';
+
 export function releaseNotes(version, intro, changelog) {
   const parts = [intro.replaceAll('{version}', version.replace(/^v/, '')).trim()];
   const changes = changelogSection(changelog, version);
-  if (changes) parts.push(`## What's changed\n\n${changes}`);
+  if (changes) parts.push(`## What's changed since last version\n\n${changes}`, `All changes: [CHANGELOG.md](${CHANGELOG_URL})`);
   return parts.join('\n\n') + '\n';
 }
 
