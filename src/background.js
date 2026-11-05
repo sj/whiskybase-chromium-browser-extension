@@ -471,3 +471,23 @@ chrome.permissions.onAdded.addListener(async () => {
   if (await chrome.permissions.contains({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
   syncAutoCheck();
 });
+
+// --- Toolbar icon menu ------------------------------------------------------
+// Right-clicking the icon offers the project's README, next to Chrome's own entries.
+
+const REPO_URL = 'https://github.com/sj/whiskybase-chromium-browser-extension';
+const MENU_LINKS = {
+  about: ['More information about this extension', REPO_URL],
+  report: ['Report a problem with this extension', `${REPO_URL}/blob/main/README.md#did-your-bottle-not-get-detected-on-a-page`],
+};
+
+// Chrome keeps the entries across restarts, so they are (re)made on install and update only.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.removeAll(() => {
+    for (const [id, [title]] of Object.entries(MENU_LINKS)) chrome.contextMenus.create({ id, title, contexts: ['action'] });
+  });
+});
+chrome.contextMenus.onClicked.addListener((info) => {
+  const entry = MENU_LINKS[info.menuItemId];
+  if (entry) chrome.tabs.create({ url: entry[1] });
+});
