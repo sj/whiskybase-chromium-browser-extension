@@ -61,22 +61,21 @@ servers of its own, and doesn't send anything about you or the pages you visit
 to anyone, except for the Whiskybase lookups described below.
 
 - **Reading pages.** The extension reads the page you're on to look for details
-  of a whisky bottle. By default it only does so when you click its icon; with
-  **Check every page automatically** turned on, it reads every page as it loads.
+  of a whisky bottle. By default it only does so when you click its icon; if you click
+  **Check every page automatically**, it will request extra permissions in order to reads every page as it loads.
   This happens entirely inside your browser.
 - **Whiskybase lookups.** When the extension is confident it has found a bottle,
-  or when you click **Manual search**, it searches Whiskybase for it, then
+  or when you click **Manual search**, it searches Whiskybase for it. If you click the extension's icon, it then
   fetches the matching bottle's page and photo. These requests contain only the
   search terms made from the bottle's details (such as distillery, name, age and
   ABV) and the Whiskybase pages for the match. The address of the page you're on
   is not sent. The requests go to whiskybase.com
-  directly from your browser with your Whiskybase cookies, just like visiting
+  directly from your browser with your Whiskybase cookies, as if you were visiting
   the site yourself. So if you are logged in to Whiskybase, Whiskybase can see
   that these searches came from your account.
 - **Storage.** Results are kept in the browser's session storage while you
   browse, so the same bottle isn't looked up twice. They are cleared when you
-  close the browser. Only your settings, such as **Check every page
-  automatically**, are stored permanently.
+  close the browser. Only the extension's settings are stored permanently.
 - **Links.** The About & feedback links and the right-click menu entries just
   open GitHub pages in a new tab when you click them.
 
