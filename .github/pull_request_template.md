@@ -1,5 +1,5 @@
 <!--
-Thanks for the fix! For detector fixes, the checklist below keeps the tests
+Thanks for your contribution! For detector fixes, the checklist below keeps the tests
 covering the page. For other changes, delete what doesn't apply.
 -->
 
@@ -9,7 +9,7 @@ covering the page. For other changes, delete what doesn't apply.
 
 Fixes #<!-- issue number -->
 
-## Detector fixes
+## For detector/parser fixes only
 
 - [ ] The page is added to `test/fixtures/` (and its Whiskybase page to `test/fixtures/whiskybase/`, if there is one), named after the site and the bottle, e.g. `hedonism-glendronach-14yo-boynsmill-house-product-page.html`.
 - [ ] `test/run.mjs` has an expectation for the page, with the details from the issue (at least distillery and ABV).
