@@ -190,6 +190,10 @@ function renderWhiskybase() {
 
   const out = $('wb-result');
   out.replaceChildren();
+  // After a failed search, "Search on Whiskybase" takes its place.
+  $('wb-run').hidden = !!lk && (lk.state === 'blocked' || lk.state === 'waiting' || (lk.state === 'error' && !!lk.query));
+  // The check message takes the column's heading, so it lines up with the one on the left.
+  $('wb-title').textContent = lk && lk.state === 'blocked' ? 'Whiskybase wants a quick check first' : 'Whiskybase match';
 
   if (!lk) {
     const auto = r.status === 'whisky' && r.confidence >= 0.9;
@@ -200,6 +204,11 @@ function renderWhiskybase() {
     out.append(el('p', { className: 'muted' }, 'Searching Whiskybase…'));
   } else if (lk.state === 'match') {
     out.append(matchCard(lk.match), matchDetails(lk));
+    // The bottle page (reviews, series, price, photo) is fetched now that the match is shown.
+    if (!lk.match.detailed) {
+      out.append(el('p', { className: 'muted' }, 'Loading details from Whiskybase…'));
+      chrome.runtime.sendMessage({ type: 'whisky:details', tabId: currentTabId });
+    }
   } else if (lk.state === 'nomatch') {
     out.append(el('p', { className: 'wb-bad' }, lk.total ? 'No confident match. Best candidates:' : 'No results.'));
     if (lk.candidates.length) out.append(candidateList(lk.candidates));
@@ -211,22 +220,53 @@ function renderWhiskybase() {
     );
   } else if (lk.state === 'blocked') {
     out.append(
-      el('p', { className: 'wb-bad' }, lk.paused ? 'Paused after a Cloudflare check.' : 'Blocked by the Cloudflare check.'),
-      el('p', {}, 'Open the search, pass the check there yourself, then try again: ', link(lk.searchUrl, 'open search')),
-      retryButton()
+      el(
+        'p',
+        {},
+        'Whiskybase uses Cloudflare to manage incoming traffic. Every now and then it stops the extension’s searches. ' +
+          'Open the search on Whiskybase and pass the check there if one shows up: the result then appears here as well.'
+      ),
+      openSearchButton(),
+      retryButton('wb-retry wb-secondary')
+    );
+  } else if (lk.state === 'waiting') {
+    out.append(
+      el('p', { className: 'muted' }, 'Waiting for the Whiskybase tab…'),
+      el('p', {}, 'Pass the check there if one shows up. The result appears here once the search results have loaded.'),
+      switchTabButton(lk.searchTabId)
     );
   } else {
-    out.append(el('p', { className: 'wb-bad' }, `Search failed: ${lk.error || 'unknown error'}`), retryButton());
+    out.append(el('p', { className: 'wb-bad' }, `Search failed: ${lk.error || 'unknown error'}`));
+    // Whatever went wrong, the search may still work in a tab of its own.
+    if (lk.query) out.append(openSearchButton(), retryButton('wb-retry wb-secondary'));
+    else out.append(retryButton());
   }
 }
 
 // Asks the background to search Whiskybase again for this page.
-function retryButton() {
-  const button = el('button', { type: 'button', className: 'wb-retry' }, 'Try again');
+function retryButton(className = 'wb-retry') {
+  const button = el('button', { type: 'button', className }, 'Try again');
   button.addEventListener('click', () => {
     button.disabled = true;
     chrome.runtime.sendMessage({ type: 'whisky:retry', tabId: currentTabId, url: currentResult.url, whisky: currentResult.whisky });
   });
+  return button;
+}
+
+// After a failed search (a Cloudflare check, say): the background opens the
+// search in a tab and reads the results from it once they load there.
+function openSearchButton() {
+  const button = el('button', { type: 'button', className: 'wb-retry wb-primary' }, 'Search on Whiskybase');
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    chrome.runtime.sendMessage({ type: 'whisky:open-search', tabId: currentTabId, url: currentResult.url, whisky: currentResult.whisky });
+  });
+  return button;
+}
+
+function switchTabButton(tabId) {
+  const button = el('button', { type: 'button', className: 'wb-retry' }, 'Go to the Whiskybase tab');
+  button.addEventListener('click', () => chrome.tabs.update(tabId, { active: true }));
   return button;
 }
 
@@ -325,6 +365,17 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.autoCheck) showAutoCheck();
 });
 
+// --- Debugging ------------------------------------------------------------------
+// Set from the service worker's console (see background.js); only then is this shown.
+
+async function showDebug() {
+  $('debug-note').hidden = !(await chrome.storage.local.get('debugSimulateCloudflareBlock')).debugSimulateCloudflareBlock;
+}
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.debugSimulateCloudflareBlock) showDebug();
+});
+
 $('rescan').addEventListener('click', () => scan(true));
 showAutoCheck();
+showDebug();
 scan(false);

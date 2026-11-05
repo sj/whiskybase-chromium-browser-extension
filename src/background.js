@@ -5,7 +5,14 @@
  *  - shows the detection result as a per-tab badge on the toolbar icon
  *    (Chrome resets tab-specific badges on navigation);
  *  - for confident detections, looks the bottle up on Whiskybase and stores
- *    the outcome per tab in chrome.storage.session, where the popup reads it.
+ *    the outcome per tab in chrome.storage.session, where the popup reads it;
+ *  - when Cloudflare stops a search, opens it in a tab for the user and reads
+ *    the results from that tab once they load; while the checks go on, that
+ *    tab (while it stays on Whiskybase) does the requests instead.
+ *
+ * Debugging: `chrome.storage.local.set({ debugSimulateCloudflareBlock: true })` in this
+ * worker's DevTools console makes every Whiskybase page request act as if
+ * Cloudflare stopped it (see DEVELOPMENT.md); `false` turns it off again.
  */
 'use strict';
 
@@ -20,8 +27,8 @@ const BADGES = {
 
 const AUTO_MIN_CONFIDENCE = 0.9; // detections below this are only searched on request
 const CACHE_MS = 60 * 60 * 1000; // reuse a search result for an hour
-const MIN_GAP_MS = 2000; // at least this long between requests to Whiskybase
-const BLOCKED_PAUSE_MS = 2 * 60 * 1000; // no automatic searches this long after a Cloudflare check
+const MIN_GAP_MS = 3000; // at least this long between requests to Whiskybase
+const BLOCKED_PAUSE_MS = 2 * 60 * 1000; // no requests of the background's own this long after a Cloudflare check
 
 // Last page URL reported per tab, to drop lookups that finish after navigating away.
 const pageUrls = new Map();
@@ -39,8 +46,13 @@ function setBadge(tabId, key, name) {
 // ---------------------------------------------------------------------------
 // Whiskybase search: cached, throttled, one request at a time
 
+async function simulatingBlocks() {
+  return !!(await chrome.storage.local.get('debugSimulateCloudflareBlock')).debugSimulateCloudflareBlock;
+}
+
 /** Fetches a Whiskybase page and runs `analyse` on its HTML; 'blocked' on a Cloudflare check. */
 async function fetchPage(url, analyse) {
+  if (await simulatingBlocks()) return { state: 'blocked', url, status: 403 };
   const wait = lastRequestAt + MIN_GAP_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastRequestAt = Date.now();
@@ -55,16 +67,30 @@ async function fetchPage(url, analyse) {
   }
 }
 
-/** Cached, throttled, one-at-a-time fetch; `analyse` must return plain data. */
+async function pausedAfterCheck() {
+  const { blockedAt } = await chrome.storage.session.get('blockedAt');
+  return !!blockedAt && Date.now() - blockedAt < BLOCKED_PAUSE_MS;
+}
+
+/**
+ * Cached, throttled, one-at-a-time fetch; `analyse` must return plain data.
+ * When Cloudflare stops the request, or requests are paused after a check, the
+ * helper tab (below) does it instead if there is one.
+ */
 async function cachedFetch(key, url, analyse) {
   const cached = (await chrome.storage.session.get(key))[key];
-  if (cached && Date.now() - cached.at < CACHE_MS) return { ...cached.value, cached: true };
+  // While simulating blocks, cached pages would hide them.
+  if (cached && Date.now() - cached.at < CACHE_MS && !(await simulatingBlocks())) return { ...cached.value, cached: true };
 
-  const run = queue.then(() => fetchPage(url, analyse));
+  const run = queue.then(async () => {
+    const direct = (await pausedAfterCheck()) ? { state: 'blocked', url, paused: true } : await fetchPage(url, analyse);
+    if (direct.state !== 'blocked') return direct;
+    if (!direct.paused) await chrome.storage.session.set({ blockedAt: Date.now() });
+    return (await fetchInHelperTab(url, analyse)) || direct;
+  });
   queue = run.catch(() => {});
   const value = await run;
   if (value.state === 'ok') await chrome.storage.session.set({ [key]: { at: Date.now(), value } });
-  if (value.state === 'blocked') await chrome.storage.session.set({ blockedAt: Date.now() });
   return value;
 }
 
@@ -158,10 +184,12 @@ async function setLookup(tabId, lookup) {
 }
 
 /**
- * Searches Whiskybase for the detected bottle and stores the outcome:
- * state is 'searching', 'match', 'nomatch', 'blocked', 'noaccess' or 'error'.
+ * Searches Whiskybase for the detected bottle and stores the outcome: state is
+ * 'searching', 'match', 'nomatch', 'blocked', 'waiting' (for a search tab the
+ * user opened after a failed search), 'noaccess' or 'error'. `searched` is a search
+ * outcome already in hand (read from such a tab).
  */
-async function lookup(tabId, pageUrl, whisky) {
+async function lookup(tabId, pageUrl, whisky, searched) {
   const query = Whiskybase.buildQuery(whisky);
   const base = { pageUrl, query, searchUrl: Whiskybase.searchUrl(query) };
   if (!query) return setLookup(tabId, { ...base, state: 'error', error: 'Nothing to search for' });
@@ -169,16 +197,13 @@ async function lookup(tabId, pageUrl, whisky) {
     return setLookup(tabId, { ...base, state: 'noaccess' });
   }
 
-  const { blockedAt } = await chrome.storage.session.get('blockedAt');
-  if (blockedAt && Date.now() - blockedAt < BLOCKED_PAUSE_MS) {
-    return setLookup(tabId, { ...base, state: 'blocked', paused: true });
-  }
-
-  await setLookup(tabId, { ...base, state: 'searching' });
-  const r = await search(query);
+  if (!searched) await setLookup(tabId, { ...base, state: 'searching' });
+  const r = searched || (await search(query));
   if (pageUrls.get(tabId) !== pageUrl) return; // navigated away meanwhile
 
-  if (r.state !== 'ok') return setLookup(tabId, { ...base, state: r.state, error: r.error, status: r.status });
+  if (r.state !== 'ok') {
+    return setLookup(tabId, { ...base, state: r.state, error: r.error, status: r.status });
+  }
   const { match, ranked } = Whiskybase.matchResults(whisky, r.results);
   const result = {
     ...base,
@@ -189,28 +214,181 @@ async function lookup(tabId, pageUrl, whisky) {
     candidates: ranked.slice(0, 5).map(brief),
   };
   await setLookup(tabId, result);
-  if (!match) return;
-  setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
+  if (match) setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
+}
 
-  // The number of ratings, the bottling series and the shop price are only on the bottle's own page.
-  const details = await bottleDetails(match);
-  const photo = await photoData([result.match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
-  if (pageUrls.get(tabId) !== pageUrl) return;
-  await setLookup(tabId, {
-    ...result,
-    match: {
-      ...result.match,
-      rating: details.rating || result.match.rating,
-      reviews: details.reviews != null ? details.reviews : null,
-      price: details.price || null,
-      shops: details.shops || null,
-      series: details.series || null,
-      detailsNote: details.note,
-      photo: photo.url || null,
-      photoData: photo.data || null,
-      photoNote: photo.note || null,
-    },
-  });
+/**
+ * The number of ratings, the bottling series, the shop price and the photo,
+ * which are only on the bottle's own page. They are fetched when the popup
+ * shows the match rather than for every page with one, to keep the requests
+ * to Whiskybase (and with them Cloudflare's checks) down.
+ */
+const detailing = new Set();
+async function addDetails(tabId) {
+  const key = `lookup:${tabId}`;
+  const lk = (await chrome.storage.session.get(key))[key];
+  if (!lk || lk.state !== 'match' || lk.match.detailed || detailing.has(tabId)) return;
+  detailing.add(tabId);
+  try {
+    const details = await bottleDetails(lk.match);
+    const photo = await photoData([lk.match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
+    const now = (await chrome.storage.session.get(key))[key];
+    if (!now || now.state !== 'match' || now.pageUrl !== lk.pageUrl || now.match.id !== lk.match.id) return;
+    await setLookup(tabId, {
+      ...now,
+      match: {
+        ...now.match,
+        detailed: true,
+        rating: details.rating || now.match.rating,
+        reviews: details.reviews != null ? details.reviews : null,
+        price: details.price || null,
+        shops: details.shops || null,
+        series: details.series || null,
+        detailsNote: details.note,
+        photo: photo.url || null,
+        photoData: photo.data || null,
+        photoNote: photo.note || null,
+      },
+    });
+  } finally {
+    detailing.delete(tabId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// After a failed search (a Cloudflare check, say): the popup asks to open the
+// search in a tab, where the user passes the check if one shows up. Once that tab has loaded the
+// results, they are read from it and matched for the original tab. The tabs
+// are kept as searchTab:<search tab id> in chrome.storage.session, since the
+// worker may be stopped while the user is busy with the check.
+
+async function openSearch(tabId, pageUrl, whisky) {
+  const query = Whiskybase.buildQuery(whisky);
+  const searchUrl = Whiskybase.searchUrl(query);
+  // A new tab even when there is a helper tab: the user may be using that one.
+  const tab = await chrome.tabs.create({ url: searchUrl, openerTabId: tabId });
+  // The failed lookup, to go back to if the tab doesn't bring results.
+  const before = (await chrome.storage.session.get(`lookup:${tabId}`))[`lookup:${tabId}`] || null;
+  await chrome.storage.session.set({ [`searchTab:${tab.id}`]: { tabId, pageUrl, whisky, query, before } });
+  await setLookup(tabId, { pageUrl, query, searchUrl, state: 'waiting', searchTabId: tab.id });
+}
+
+/**
+ * The search results in a Whiskybase tab. The page is fetched again from
+ * inside the tab, as the page itself would, because the rendered page no
+ * longer has the full results data the server sent; the rendered page is the
+ * fallback. Null if the tab cannot be read.
+ */
+async function readSearchTab(searchTabId) {
+  try {
+    const [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId: searchTabId },
+      func: async () => {
+        const dom = document.documentElement.outerHTML;
+        try {
+          const res = await fetch(location.href, { credentials: 'include' });
+          return { served: await res.text(), dom };
+        } catch (e) {
+          return { served: '', dom };
+        }
+      },
+    });
+    const served = Whiskybase.analyseSearchHtml(result.served);
+    return result.served && !served.challenge ? served : Whiskybase.analyseSearchHtml(result.dom);
+  } catch (e) {
+    return null;
+  }
+}
+
+// Back to the failed lookup when the search tab is closed or leaves the search.
+async function dropSearchTab(searchTabId, pending) {
+  await chrome.storage.session.remove(`searchTab:${searchTabId}`);
+  const key = `lookup:${pending.tabId}`;
+  const lk = (await chrome.storage.session.get(key))[key];
+  if (lk && lk.state === 'waiting' && lk.searchTabId === searchTabId) {
+    const before = pending.before && pending.before.pageUrl === lk.pageUrl ? pending.before : null;
+    await setLookup(pending.tabId, before || { pageUrl: lk.pageUrl, query: lk.query, searchUrl: lk.searchUrl, state: 'blocked' });
+  }
+}
+
+chrome.tabs.onUpdated.addListener(async (searchTabId, info, tab) => {
+  // Leaving Whiskybase in the helper tab ends its job. (Chrome only shows the
+  // extension URLs on sites it has access to, so another site shows as none.)
+  if ((info.url || info.status === 'loading') && !(tab.url || '').startsWith(WHISKYBASE_PAGES)) {
+    const { helperTab: h } = await chrome.storage.session.get('helperTab');
+    if (h && h.tabId === searchTabId) await chrome.storage.session.remove('helperTab');
+  }
+  if (info.status !== 'complete') return;
+  const key = `searchTab:${searchTabId}`;
+  const pending = (await chrome.storage.session.get(key))[key];
+  if (!pending) return;
+  const q = (tab.url || '').startsWith(Whiskybase.SEARCH_URL) && new URL(tab.url).searchParams.get('q');
+  if (q !== pending.query) return dropSearchTab(searchTabId, pending);
+
+  const page = await readSearchTab(searchTabId);
+  if (!page || page.challenge) return; // still on the check: the tab loads again once it is passed
+  await chrome.storage.session.remove(key);
+  await chrome.storage.session.set({ helperTab: { tabId: searchTabId } });
+  const value = { state: 'ok', url: tab.url, status: 200, page };
+  await chrome.storage.session.set({ [`search:${pending.query}`]: { at: Date.now(), value } });
+
+  const lk = (await chrome.storage.session.get(`lookup:${pending.tabId}`))[`lookup:${pending.tabId}`];
+  if (!lk || lk.pageUrl !== pending.pageUrl) return; // the original tab moved on meanwhile
+  pageUrls.set(pending.tabId, pending.pageUrl);
+  lookup(pending.tabId, pending.pageUrl, pending.whisky, { ...value, total: page.total, results: page.whiskies });
+});
+
+// ---------------------------------------------------------------------------
+// Helper tab: the search tab the user got through the check in. While it stays
+// open on www.whiskybase.com (on any page), requests that Cloudflare stops, or
+// that fall in the pause after a check, are done from inside it, as the
+// Whiskybase page itself would. Nothing in the tab changes. Once requests from
+// the background go through again, it isn't used, and once it is closed or
+// leaves Whiskybase, it is let go. No other Whiskybase tab is ever used.
+// Kept as helperTab: { tabId } in chrome.storage.session.
+
+const WHISKYBASE_PAGES = 'https://www.whiskybase.com/';
+
+/** The helper tab, while it is still open on Whiskybase; null otherwise. */
+async function helperTab() {
+  const { helperTab: h } = await chrome.storage.session.get('helperTab');
+  if (!h) return null;
+  try {
+    const tab = await chrome.tabs.get(h.tabId);
+    if ((tab.url || '').startsWith(WHISKYBASE_PAGES)) return tab;
+  } catch (e) {
+    // Closed.
+  }
+  await chrome.storage.session.remove('helperTab');
+  return null;
+}
+
+/** Like fetchPage, from inside the helper tab; null without one. */
+async function fetchInHelperTab(url, analyse) {
+  const tab = await helperTab();
+  if (!tab) return null;
+  let result;
+  try {
+    [{ result }] = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: async (u) => {
+        try {
+          const res = await fetch(u, { credentials: 'include' });
+          return { status: res.status, ok: res.ok, mitigated: !!res.headers.get('cf-mitigated'), html: await res.text() };
+        } catch (e) {
+          return { error: String(e) };
+        }
+      },
+      args: [url],
+    });
+  } catch (e) {
+    return null; // e.g. the tab is loading another page
+  }
+  if (!result || result.error) return null;
+  const page = analyse(result.html);
+  if (page.challenge || result.mitigated) return { state: 'blocked', url, status: result.status };
+  if (!result.ok) return { state: 'error', url, status: result.status, error: `HTTP ${result.status}` };
+  return { state: 'ok', url, status: result.status, page };
 }
 
 // ---------------------------------------------------------------------------
@@ -229,6 +407,10 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
     return;
   }
 
+  const fromPopup = (sender.url || '').startsWith(chrome.runtime.getURL('popup/'));
+  if (msg.type === 'whisky:open-search' && fromPopup) return void openSearch(msg.tabId, msg.url, msg.whisky);
+  if (msg.type === 'whisky:details' && fromPopup) return void addDetails(msg.tabId);
+
   if (msg.type !== 'whisky:detection' || !sender.tab || sender.frameId !== 0) return;
   const tabId = sender.tab.id;
   const { status, whisky, confidence, url } = msg.result;
@@ -243,9 +425,13 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   }
 });
 
-chrome.tabs.onRemoved.addListener((tabId) => {
+chrome.tabs.onRemoved.addListener(async (tabId) => {
   pageUrls.delete(tabId);
   chrome.storage.session.remove(`lookup:${tabId}`);
+  const pending = (await chrome.storage.session.get(`searchTab:${tabId}`))[`searchTab:${tabId}`];
+  if (pending) dropSearchTab(tabId, pending);
+  const { helperTab: h } = await chrome.storage.session.get('helperTab');
+  if (h && h.tabId === tabId) chrome.storage.session.remove('helperTab');
 });
 
 // ---------------------------------------------------------------------------
