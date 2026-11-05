@@ -218,7 +218,7 @@ PATH). Add `-v` (`node test/run.mjs -v`) to see every signal for each fixture.
 To fix a page that is detected wrongly, save it as a fixture, add an expectation
 in `test/run.mjs`, and adjust the detector. Fixtures are copies of other
 websites' pages and are not covered by the project's MIT licence (see
-[`LICENCE.md`](LICENCE.md)).
+[`LICENSE.md`](LICENSE.md)).
 
 The GitHub Actions workflow [`.github/workflows/test.yml`](.github/workflows/test.yml)
 runs the tests on every push to any branch and on every pull request.

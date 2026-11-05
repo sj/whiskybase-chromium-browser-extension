@@ -49,6 +49,6 @@ The extension only reaches out to Whiskybase if and when it has detected a whisk
 
 ## Licence
 
-The extension is released under the [MIT licence](LICENCE.md). The saved web
+The extension is released under the [MIT licence](LICENSE.md). The saved web
 pages in `test/fixtures/` and the images in `screenshots/` show other websites,
 whose content belongs to their owners; they are not covered by the licence.
