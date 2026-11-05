@@ -238,3 +238,73 @@ passed as options, so they are never stored in it:
 ```bash
 python3 test/scrub-fixture.py --name "First Last" --email you@example.org --username yourname --id 12345 test/fixtures/whiskybase/new-page.html
 ```
+
+### Fixing reported pages automatically
+
+The workflow [`.github/workflows/detector-issue.yml`](.github/workflows/detector-issue.yml)
+(**Fix detector from issue**) has a Claude agent work on a **Page detected
+wrongly** issue: it adds the page as a fixture (and the Whiskybase page under
+`test/fixtures/whiskybase/`), adds an expectation in `test/run.mjs` from the
+issue's details, and changes `src/detector.js` until `npm test` passes. The
+workflow then opens a pull request from the branch `detector/issue-<number>`,
+filled in from the pull request template, that fixes the issue. When the agent
+can't make the tests pass, or the report can't be used (no zip attached, for
+example), it comments on the issue instead.
+
+**Setup**, once, on GitHub:
+
+1. **Secret:** add an Anthropic API key as the repository secret
+   `ANTHROPIC_API_KEY` (**Settings > Secrets and variables > Actions > New
+   repository secret**). Only the agent's job gets it.
+2. **Label:** the repository needs the label `detector`, which the issue form
+   adds to new reports (**Issues > Labels > New label**).
+3. **Pull requests:** under **Settings > Actions > General > Workflow
+   permissions**, tick **Allow GitHub Actions to create and approve pull
+   requests**. Without it the workflow can comment but not open pull requests.
+4. The workflow must be on the default branch (`main`): GitHub only runs issue
+   and comment triggers from there.
+
+**Starting it:**
+
+- **Your own issues** (from the repository's owner, members and
+  collaborators): it starts when the issue is opened with the `detector`
+  label, or when you add the label later.
+- **Anyone else's issue:** it never starts on its own. Read the issue first,
+  then post a comment that starts with `/fix-detector`.
+- **By hand, or again:** comment `/fix-detector` again, or open **Actions**,
+  pick **Fix detector from issue**, click **Run workflow** and enter the issue
+  number. A new run for an issue cancels one still running, and updates the
+  pull request (its branch is pushed with `--force`) if one is open. Edit the
+  issue first if its details or attachments were wrong.
+
+**Untrusted input.** The issue and its attachments come from anyone, so the
+workflow treats them as data and limits what the agent can do:
+
+- The first job reads the issue form with
+  [`.github/scripts/detector-issue-input.py`](.github/scripts/detector-issue-input.py),
+  without secrets: the fields go into a JSON file, and the zips (only from
+  GitHub's own attachment storage) are unpacked in memory, keeping only the
+  page's `.html` file. Fixture names are made from the page URL, with only
+  letters, digits, dots and hyphens.
+- The pages are added as fixtures and cleaned with the structural rules of
+  `test/scrub-fixture.py` before the agent starts; the agent then looks for
+  names, emails, usernames and account IDs that remain and scrubs them with
+  the same script.
+- The agent's prompt names the files and says they are data; no issue text is
+  in it. It has no web access and no GitHub write access, can only edit
+  `src/detector.js`, `test/run.mjs` and `test/fixtures/`, and can only run
+  `npm test`, `node test/run.mjs` and `test/scrub-fixture.py`. Secrets are
+  removed from the commands it runs.
+- A separate job checks the changes on a fresh runner (only the detector,
+  added lines in `test/run.mjs` with an expectation for the new page, and the
+  new fixtures) and runs `npm test`. The last job, the only one that can push,
+  comment or open pull requests, applies the changes without running them,
+  and writes the pull request with
+  [`.github/scripts/detector-issue-report.py`](.github/scripts/detector-issue-report.py).
+
+**Reviewing its pull requests:** check the fixtures for personal information
+(the description lists the domains of any email addresses in them) and review
+the detector change like any other. The Tests workflow doesn't start for pull
+requests opened by GitHub Actions; close and reopen the pull request to run
+it. Each run uses Claude Opus with up to 100 turns, which costs API credit;
+the agent's job times out after an hour.
