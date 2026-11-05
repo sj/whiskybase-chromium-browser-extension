@@ -167,6 +167,7 @@
     ['Whisky-Fässle', 'Whisky Fassle'],
     ['First Cask'],
     ['Little Brown Dog Spirits', 'Little Brown Dog'],
+    ['Whisky-Doris', 'Whisky Doris'],
   ];
 
   // Owners of distilleries: a brand like this means a distillery bottling.
@@ -330,7 +331,16 @@
     return null;
   }
 
-  const PROOF_RE = /\b(\d{2,3}(?:\.\d)?)\s*(?:°\s*)?proof\b/i;
+  const PROOF_RE = /\b(\d{2,3}(?:\.\d)?)\s*(°\s*)?proof\b/i;
+  // Old British bottles: "75° proof", or sizes in imperial fluid ounces ("26⅔ fl. oz").
+  const UK_PROOF_HINT_RE = /\b(?:uk|british|imperial)\s+proof\b|\bfl\.?\s*ozs?\b|\b26\s*(?:⅔|2\/3)/i;
+
+  /** ABV for a proof figure: UK proof is 4/7 of it (labels round 75° to 43%), US proof half. */
+  function proofAbv(proof, uk) {
+    if (!uk) return Math.round(proof * 5) / 10;
+    const abv = (proof * 4) / 7;
+    return Math.abs(abv - Math.round(abv)) <= 0.15 ? Math.round(abv) : Math.round(abv * 10) / 10;
+  }
 
   /** ABV in percent. `loose` also accepts a bare "46%" (only safe on product names). */
   function parseAbv(text, loose) {
@@ -346,13 +356,30 @@
     const p = text.match(PROOF_RE);
     if (p) {
       const v = num(p[1]);
-      if (v >= 60 && v <= 160) return Math.round(v * 5) / 10;
+      if (v >= 60 && v <= 160) return proofAbv(v, !!p[2] || UK_PROOF_HINT_RE.test(text));
     }
     return null;
   }
 
   const VOLUME_RE = /(?:^|[^\d.,])(\d+(?:[.,]\d+)?)\s*(ml|cl|ltr|liter|litre|lt|l)(?![a-z])/gi;
   const VOLUME_FACTOR = { ml: 1, cl: 10, l: 1000, lt: 1000, ltr: 1000, liter: 1000, litre: 1000 };
+
+  // "26⅔ fl. oz" (UK, 75cl), "25.4 fl oz" (US, 750 ml): fluid ounces, imperial or US.
+  const FL_OZ_RE = /\b(\d{1,2}(?:[.,]\d+)?)\s*(⅔|⅓|\s2\/3|\s1\/3)?\s*(?:fl\.?\s*ozs?\.?|fluid\s+ounces?)(?![a-z])/i;
+  const OZ_ML = [28.413, 29.574];
+  const BOTTLE_SIZES = [50, 100, 200, 350, 375, 500, 700, 750, 1000, 1125, 1500, 1750];
+
+  /** A bottle size in fluid ounces, as the nearest common size in millilitres (within 3%). */
+  function parseFluidOunces(text) {
+    const m = text.match(FL_OZ_RE);
+    if (!m) return null;
+    const oz = num(m[1]) + (m[2] ? (/⅔|2\/3/.test(m[2]) ? 2 / 3 : 1 / 3) : 0);
+    for (const factor of OZ_ML) {
+      const size = BOTTLE_SIZES.find((ml) => Math.abs(oz * factor - ml) <= ml * 0.03);
+      if (size) return size;
+    }
+    return null;
+  }
 
   /** Bottle volume in millilitres. */
   function parseVolume(text) {
@@ -361,7 +388,7 @@
       const ml = Math.round(num(m[1]) * VOLUME_FACTOR[m[2].toLowerCase()]);
       if (ml >= 20 && ml <= 4500) return ml;
     }
-    return null;
+    return parseFluidOunces(text);
   }
 
   const STANDARD_VOLUMES = [500, 700, 1000];
@@ -379,7 +406,7 @@
   const AGE_RE =
     /\b(\d{1,2})[\s-]*(?:years?|yrs?\.?|y\.?o\.?|jaar|jarige|jahre|j[äa]hrig|ans|a[ñn]os|anni)(?![a-z])(?:[\s-]*old)?/i;
   const AGE_LABEL_RE =
-    /\b(?:age|alter|leeftijd|[âa]ge|edad)\s*[:-]\s*(\d{1,2})\b|\baged\s+(\d{1,2})\s*(?:years?|yrs?\.?)(?![a-z])/i;
+    /\b(?:age|alter|leeftijd|[âa]ge|edad)\s*[:-]\s*(\d{1,2})\b|\baged\s+(?:for\s+)?(\d{1,2})\s*(?:years?|yrs?\.?)(?![a-z])/i;
 
   /** Age statement in years. `labelled` only accepts "Age: 12" / "Aged 12 years" style (for spec tables). */
   function parseAge(text, labelled) {
@@ -390,7 +417,8 @@
     return v >= 3 && v <= 80 ? v : null;
   }
 
-  const YEAR = '((?:19|20)\\d{2})';
+  // A year, but not a decade ("the 1960s", "1960's").
+  const YEAR = "((?:19|20)\\d{2})(?!'?s\\b)";
   const VINTAGE_RE = new RegExp(
     '\\b(?:vintage|distilled|dist\\.?|destilliert|gedestilleerd|distillation|jahrgang)\\s*[:-]?\\s*' + YEAR + '\\b',
     'i'
@@ -583,6 +611,9 @@
   // A lot number in front of the name: "#4838071 - Port Ellen", "Lot 123: Port Ellen".
   const LOT_PREFIX_RE = /^(?:(?:lot|item)\s*(?:no\.?|number)?\s*#?|#)\s*\d+\s*[-–—:]\s*/i;
 
+  // Size and strength at the end of a name, shown as fields of their own: "… 33 Year Old 70cl / 46.6%".
+  const SIZE_ABV_SUFFIX_RE = /[\s,|–-]*\d+(?:[.,]\d+)?\s*(?:ml|cl|l)\s*[/|,]\s*\d{2}(?:[.,]\d{1,2})?\s*%(?:\s*vol\.?)?$/i;
+
   /** Strips the site name, a lot number and suffixes like " | Shop" or " - review" from a page title. */
   function cleanTitle(title, siteName) {
     let parts = clean(title)
@@ -764,6 +795,25 @@
     return pairs;
   }
 
+  /**
+   * [label, value] pairs written inline: a bold or italic label ending in a colon,
+   * then the value ("<li><strong>Bottler:</strong> Whisky-Doris</li>",
+   * "<p><em>Alc. Content:</em> 43%</p>").
+   */
+  function inlinePairs(doc) {
+    const pairs = [];
+    for (const label of doc.querySelectorAll('li > strong, li > b, li > em, p > strong, p > b, p > em')) {
+      if (pairs.length >= 100) break;
+      const line = label.parentElement;
+      if (line.firstChild !== label && clean(line.firstChild.textContent)) continue;
+      const key = clean(label.textContent);
+      if (!/^[^:]{2,40}:$/.test(key) || line.closest('header, nav, footer') || inOtherProducts(line)) continue;
+      const value = clean(textOf(line, 300)).slice(key.length).trim();
+      if (value && value.length <= 200) pairs.push([key.replace(/:$/, ''), value]);
+    }
+    return pairs;
+  }
+
   /** First value of a pair whose label matches `keyRe`, run through `parse`. */
   function pairField(pairs, keyRe, parse = clean) {
     for (const [key, value] of pairs) {
@@ -810,8 +860,8 @@
   // strength, age, size, bottle count or year.
   const CASK_PLAIN_RE =
     /\bcask\s+(?!(?:19|20)\d{2}\b)(\d{2,6})\b(?!\s*(?:%|years?\b|yo\b|y\.o\.|cl\b|ml\b|l\b|litres?\b|liters?\b|bottles?\b))/i;
-  // "RMW Exclusive #8238" in a product name.
-  const NAME_HASH_RE = /(?:^|\s)#\s?(\d{2,6})\b/;
+  // "RMW Exclusive #8238" in a product name, but not a series number ("100 Proof Edition #78", "Batch #5").
+  const NAME_HASH_RE = /(?<!\b(?:edition|batch|release|chapter|series|volume|vol\.?|no\.?)\s?)(?:^|\s)#\s?(\d{2,6})\b/i;
 
   function countCartButtons(doc) {
     let n = 0;
@@ -826,6 +876,7 @@
     const ld = readJsonLd(doc);
     const md = readMicrodata(doc);
     const siteName = meta(doc, 'og:site_name');
+    const inline = inlinePairs(doc);
     return {
       url: opts.url || (doc.location && doc.location.href) || '',
       title: clean(doc.title),
@@ -838,8 +889,9 @@
       products: [...ld.products, ...md.products],
       listing: ld.listing || md.listing,
       cartButtons: countCartButtons(doc),
-      specText: specText(doc),
-      specPairs: specPairs(doc),
+      // Inline pairs also count as spec text, for the ABV and size they hold.
+      specText: [specText(doc), ...inline.map(([k, v]) => `${k}: ${v}`)].join('\n'),
+      specPairs: [...specPairs(doc), ...inline],
       bodyText: textOf(doc.body, 30000),
     };
   }
@@ -1005,7 +1057,7 @@
       score,
       url: s.url,
       whisky: {
-        name,
+        name: name.replace(SIZE_ABV_SUFFIX_RE, '') || name,
         brand: displayBrand,
         distillery,
         bottler: bottler.bottler,
