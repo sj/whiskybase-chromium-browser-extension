@@ -2,7 +2,7 @@
 
 Browser extension that recognises when the current web page contains details for a bottle of whisky, tries to automatically recognise the relevant details from the page, and looks the bottle up on whiskybase.com. This extension works on all Chromium-based browsers, including: Google Chrome, Microsoft Edge, Brave, Chromium, Opera, and Vivaldi.
 
-🌐 [Download here from the Google Chrome Store](https://chromewebstore.google.com/detail/bottle-lookup-for-whiskybase/nngkmbiongkmhiiiblajjiokfllneomm)<br/><br/><br/>
+🌐 [Download here from the Google Chrome Store](https://chromewebstore.google.com/detail/bottle-lookup-for-whiskybase/nngkmbiongkmhiiiblajjiokfllneomm) (see further down for other installation options)<br/><br/><br/>
 
 
 ![Screenshot (closeup)](https://github.com/sj/whiskybase-chromium-browser-extension/blob/main/screenshots/fettercairn-50-closeup.jpg)
