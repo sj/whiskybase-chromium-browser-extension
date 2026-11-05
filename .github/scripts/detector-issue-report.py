@@ -4,7 +4,7 @@
 
 RESULT_JSON is detector-issue-input.py's result, AGENT_JSON the agent's
 structured output (may be missing or empty). The rest comes from the
-environment: ISSUE, FIXTURE, WB_FIXTURE, FIX_RESULT (the fix job's result),
+environment: ISSUE, FIXTURE, FIX_RESULT (the fix job's result),
 PASSED ("true" when the verify job's checks and tests passed) and RUN_URL.
 
 Prints "action=pr" or "action=comment" for $GITHUB_OUTPUT and writes to
@@ -43,7 +43,7 @@ def emails_in_patch(path):
     return sorted({d.lower() for d in found} - {'example.com', 'example.org'})
 
 
-def pr_body(issue, summary, fixtures, domains, run_url):
+def pr_body(issue, summary, fixture, domains, run_url):
     with open(TEMPLATE, encoding='utf-8') as f:
         t = f.read()
     t = re.sub(r'\A<!--.*?-->\s*', '', t, flags=re.S)
@@ -54,17 +54,16 @@ def pr_body(issue, summary, fixtures, domains, run_url):
     # Checked by the workflow; personal data is left for the reviewer to confirm.
     section = re.sub(r'- \[ \] (?=The page is added|`test/run.mjs` has|`npm test` passes)', '- [x] ', section)
     t = head + sep + section + sep2 + tail
-    files = '\n'.join(f'- `{f}`' for f in fixtures)
-    privacy = (f'Email addresses in the new fixtures are at: {", ".join(domains)}. Check that none is a visitor\'s.'
-               if domains else 'The new fixtures contain no email addresses.')
+    privacy = (f'Email addresses in the new fixture are at: {", ".join(domains)}. Check that none is a visitor\'s.'
+               if domains else 'The new fixture contains no email addresses.')
     return (t.rstrip() + '\n\n## Opened by the detector workflow\n\n'
             f'Made by a Claude agent from issue #{issue} ([workflow run]({run_url})). '
-            'The workflow checked that only `src/detector.js`, `test/run.mjs` and the new fixtures changed, '
+            'The workflow checked that only `src/detector.js`, `test/run.mjs` and the new fixture changed, '
             'and ran `npm test` on a fresh runner.\n\n'
-            f'New fixtures:\n\n{files}\n\n'
+            f'New fixture: `{fixture}`\n\n'
             'Before merging:\n\n'
-            '- Check the fixtures for personal information (names, email addresses, usernames, account IDs). '
-            f'They were cleaned with the structural rules of `test/scrub-fixture.py`, and the agent looked for what remained. {privacy}\n'
+            '- Check the fixture for personal information (names, email addresses, usernames, account IDs). '
+            f'It was cleaned with the structural rules of `test/scrub-fixture.py`, and the agent looked for what remained. {privacy}\n'
             '- Review the detector change; the agent worked from the issue and the page, which are untrusted input.\n'
             '- The Tests workflow does not start for pull requests opened by GitHub Actions: '
             'close and reopen this pull request, or push to its branch, to run it.\n\n'
@@ -82,12 +81,9 @@ def main():
     retry = 'A maintainer can run it again with a comment that starts with `/fix-detector`.'
 
     if result.get('ok') and agent.get('fixed') is True and env.get('PASSED') == 'true':
-        fixtures = [f'test/fixtures/{env["FIXTURE"]}']
-        if env.get('WB_FIXTURE'):
-            fixtures.append(f'test/fixtures/whiskybase/{env["WB_FIXTURE"]}')
         patch = os.path.join(os.path.dirname(agent_path), 'changes.patch')
-        body = pr_body(issue, summary, fixtures, emails_in_patch(patch), env['RUN_URL'])
-        page = re.sub(r'(-product-page)?\.html$', '', env['FIXTURE'])
+        body = pr_body(issue, summary, f'test/fixtures/{env["FIXTURE"]}', emails_in_patch(patch), env['RUN_URL'])
+        page = re.sub(r'(-product-page)?(-WB\d+)?(-issue-\d+)?\.html$', '', env['FIXTURE'])
         title = f'Detector: fix {page}'
         with open(os.path.join(out_dir, 'title.txt'), 'w', encoding='utf-8') as f:
             f.write(title)
