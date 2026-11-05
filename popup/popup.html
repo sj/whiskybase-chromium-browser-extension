@@ -8,18 +8,21 @@
   <body>
     <div class="layout">
       <main class="parsed">
-        <header class="col-head">
-          <h2 id="parsed-title">Whisky information detected</h2>
-          <button id="rescan" type="button" title="Scan this page again">Re-scan</button>
-        </header>
+        <div class="col-body">
+          <header class="col-head">
+            <h2 id="parsed-title">Whisky information detected</h2>
+            <button id="rescan" type="button" title="Scan this page again">Re-scan</button>
+          </header>
 
-        <section id="status" class="status status-loading">Scanning…</section>
+          <section id="status" class="status status-loading">Scanning…</section>
 
-        <table id="fields" hidden></table>
+          <table id="fields" hidden></table>
+        </div>
 
         <details id="why" hidden>
-          <summary>Details of parsed data <span id="score"></span></summary>
+          <summary>Details of parsed data</summary>
           <ul id="reasons" class="reasons"></ul>
+          <p id="accept" class="accept"></p>
           <p id="no-reasons" class="muted" hidden>
             No data pertaining to whisky detected on this page. The extension automatically tries to detect
             information like distillery, ABV, and vintage. Try it on your favourite online whisky shop or auction house!
@@ -28,9 +31,14 @@
       </main>
 
       <aside id="wb" hidden>
-        <h2 id="wb-title">Whiskybase match</h2>
-        <div id="wb-result"></div>
-        <button id="wb-run" type="button" class="wb-manual">Manual search</button>
+        <div id="wb-body" class="col-body">
+          <header id="wb-head" class="col-head">
+            <h2 id="wb-title">Whiskybase match</h2>
+          </header>
+          <div id="wb-result"></div>
+          <button id="wb-run" type="button" class="wb-manual">Manual search</button>
+        </div>
+        <div id="wb-foot"></div>
       </aside>
     </div>
 
