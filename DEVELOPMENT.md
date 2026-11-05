@@ -84,16 +84,63 @@ A page can get the content script both ways; `content.js` then keeps one copy.
   writes it, e.g. **WB233907**), the rating with the number of reviews it is
   based on, and, when shops list the bottle, the price estimate (Whiskybase's
   Average Shop Price) with the number of shops. The review count, series and price are
-  only on the bottle's own page, so a match costs one more request; the photo host is behind Cloudflare too, so the
+  only on the bottle's own page, which is fetched only when the popup shows the
+  match (not for every page with one, to keep requests down); the photo host is behind Cloudflare too, so the
   background fetches the photo (trying its other sizes if one fails) and hands
   it to the popup as data. When there is no photo, **Details of Whiskybase match**
   says why.
 - **Badge:** **WB** (blue) when a match is found.
-- **Politeness:** results are cached per query for an hour, requests are at least
-  2 seconds apart and one at a time, and after a Cloudflare check automatic
-  searches pause for 2 minutes. When the popup says **Blocked by the Cloudflare
-  check** or **Paused after a Cloudflare check**, open the search, pass the
-  check yourself, and click **Try again** (which also ends the pause).
+- **Politeness:** results are cached per query for an hour, and requests are at
+  least 3 seconds apart and one at a time.
+
+### Cloudflare checks
+
+Whiskybase is behind Cloudflare, which now and then stops the background's
+requests with a check that only a person in a browser tab can pass.
+
+- **Pause:** after a check, the background sends no requests of its own for
+  2 minutes. **Try again** in the popup ends the pause.
+- **Search on Whiskybase:** while a lookup is blocked, the popup says **Whiskybase
+  wants a quick check first** and offers this button. It offers it after any other
+  failed search too (with **Search failed** and the reason), since the search may
+  still work in a tab of its own. It opens the search in a new
+  tab, where the user passes the check if one shows up; meanwhile the lookup is
+  **waiting**. When the tab has loaded the results, the background reads them from
+  it (fetching the page again from inside the tab, since the rendered page no
+  longer has the embedded results data), matches them for the original tab and
+  caches the search. Closing the tab, or searching for something else in it, before
+  then puts the lookup back to how it failed.
+- **Helper tab:** that tab then becomes the helper tab. While it stays open on
+  www.whiskybase.com (on any page), requests are done from inside it
+  instead, as the Whiskybase page itself would. Nothing in the tab changes. That
+  covers searches and bottle pages, but not photos, which are on another host.
+  Once the background's own requests go through again, the tab isn't used. When
+  it's closed or leaves Whiskybase, it stops being a helper tab. No other
+  Whiskybase tab is ever used, and **Search on Whiskybase** always opens a new tab,
+  which then becomes the helper tab.
+
+#### Simulating Cloudflare checks
+
+To see the blocked state without being blocked, open the extension's service
+worker console (`chrome://extensions` → Developer mode → **service worker** under
+the extension) and run:
+
+```js
+chrome.storage.local.set({ debugSimulateCloudflareBlock: true })
+```
+
+Every Whiskybase page request from the background then acts as if Cloudflare
+stopped it, without being sent, and the cache is skipped. **Search on Whiskybase**
+and the helper tab still work for real, since they don't use the background's
+requests, so with a helper tab open every search goes through it. Photos are not
+affected. The popup shows a small orange debug line while the flag is on, so you
+don't forget. Turn it off with:
+
+```js
+chrome.storage.local.set({ debugSimulateCloudflareBlock: false })
+```
+
+There is no setting for it in the popup, so users never see it.
 
 
 

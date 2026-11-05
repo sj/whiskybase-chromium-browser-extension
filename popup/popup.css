@@ -218,6 +218,26 @@ body.wide #wb {
   width: 100%;
   margin-top: 10px;
 }
+.wb-manual[hidden] {
+  display: none;
+}
+.wb-primary {
+  padding: 4px 10px;
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+  font-weight: 600;
+}
+.wb-secondary {
+  margin-top: 6px;
+  border-color: transparent;
+  color: var(--muted);
+}
+.debug-note {
+  margin: 6px 0 0;
+  font-size: 11px;
+  color: var(--maybe);
+}
 .wb-details {
   margin-top: 8px;
 }

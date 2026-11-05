@@ -28,7 +28,7 @@
       </main>
 
       <aside id="wb" hidden>
-        <h2>Whiskybase match</h2>
+        <h2 id="wb-title">Whiskybase match</h2>
         <div id="wb-result"></div>
         <button id="wb-run" type="button" class="wb-manual">Manual search</button>
       </aside>
@@ -46,6 +46,7 @@
         </svg>
       </span>
     </footer>
+    <p id="debug-note" class="debug-note" hidden>Debug: every Whiskybase request acts as if Cloudflare stopped it.</p>
 
     <script src="../src/whiskybase.js"></script>
     <script src="popup.js"></script>
