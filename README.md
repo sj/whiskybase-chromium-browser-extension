@@ -23,7 +23,7 @@ The easiest way to install this browser extension is through the Chrome Web Stor
 
 Don't forget to pin the extension (puzzle-piece icon → pin) so you can see the icon in your browser toolbar (top right).
 
-## Installation using an official release from GitHub
+### Installation using an official release from GitHub
 
 1. Download `whiskybase-chromium-browser-extension-<version>.zip` from [the latest release published on this repository](https://github.com/sj/whiskybase-chromium-browser-extension/releases/latest).
 2. Unzip the downloaded file in a location of your choosing
@@ -31,7 +31,7 @@ Don't forget to pin the extension (puzzle-piece icon → pin) so you can see the
 4. Click **Load unpacked** and select the location at which you've just extracted the release zip file.
 5. Don't forget to pin the extension (puzzle-piece icon → pin) so you can see its badge.
 
-## Advanced installation instructions: using a development version
+### Advanced installation instructions: using a development version
 
 Follow the instructions above, but instead of downloading a release zip file: clone the Git repository to a location of your choosing. Then select that directory when you click **Load unpacked**.
 
@@ -46,7 +46,13 @@ The extension only reaches out to Whiskybase if and when it has detected a whisk
 
 Did the extension miss a bottle on a page? Or did it get its details wrong? Or was it unable to match it to the right Whiskybase entry? Please
 [open a GitHub issue](https://github.com/sj/whiskybase-chromium-browser-extension/issues/new?template=detector.yml)
-with the **Bottle detected wrongly on page** form. It asks for a saved copy of the page, the bottle's distillery and ABV, and any other details you know.
+with the **Bottle detected wrongly on page** form (you will need a GitHub account). It asks for a saved copy of the page, the bottle's distillery and ABV, and any other details you know.
+
+
+## Any other issues?
+
+If anything else is wrong, or if you have any suggestions that could make this extension better? Let us know by [reporting an issue here](https://github.com/sj/whiskybase-chromium-browser-extension/issues/new/choose) (you will need a GitHub account).
+
 
 ## Licence
 
