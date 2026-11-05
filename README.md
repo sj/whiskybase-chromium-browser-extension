@@ -47,6 +47,13 @@ Whiskybase has no public API, so the extension uses Whiskybase's own search. It 
 
 The extension only reaches out to Whiskybase if and when it has detected a whisky bottle with at least 90% confidence. You can always perform a manual search straight from the extension; this will open a new tab with Whiskybase search results.
 
+## A page detected wrongly?
+
+If the extension misses a bottle on a page, or gets its details wrong, please
+[open an issue](https://github.com/sj/whiskybase-chromium-browser-extension/issues/new?template=detector.yml)
+with the **Page detected wrongly** form. It asks for a saved copy of the page
+(zipped), the bottle's distillery and ABV, and any other details you know.
+
 ## Licence
 
 The extension is released under the [MIT licence](LICENSE.md). The saved web

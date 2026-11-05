@@ -220,6 +220,14 @@ in `test/run.mjs`, and adjust the detector. Fixtures are copies of other
 websites' pages and are not covered by the project's MIT licence (see
 [`LICENSE.md`](LICENSE.md)).
 
+Users report such pages with the **Page detected wrongly** issue form
+([`.github/ISSUE_TEMPLATE/detector.yml`](.github/ISSUE_TEMPLATE/detector.yml)):
+the zipped page, the bottle's distillery and ABV (required), its other details
+if known, and optionally its Whiskybase entry. The form's field ids are meant to
+stay stable, so reports can be processed automatically. The pull request
+template ([`.github/pull_request_template.md`](.github/pull_request_template.md))
+has the matching checklist: fixture, expectation, scrubbing, `npm test`.
+
 The GitHub Actions workflow [`.github/workflows/test.yml`](.github/workflows/test.yml)
 runs the tests on every push to any branch and on every pull request.
 

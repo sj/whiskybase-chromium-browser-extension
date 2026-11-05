@@ -1,0 +1,168 @@
+# Issue form for a page where the extension detects a bottle wrongly, or not at
+# all. The ids and labels below are kept stable so the reports can be read by a
+# script or an agent later on.
+name: Page detected wrongly
+description: The extension misses a whisky bottle on a page, or gets its details wrong.
+title: "Detector: "
+labels: ["detector"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this! A saved copy of the page lets us add it to the tests and fix the detector for it.
+
+        **Saving the page:** open the bottle's page, wait until it has fully loaded, then press Ctrl+S (⌘+S on a Mac) and save it as **Webpage, Complete**. Only the `.html` file is needed. GitHub doesn't accept `.html` attachments, so **zip it** before attaching it.
+
+        **Personal information:** if you're signed in on the site, the saved page can contain your name, email address and account details. Please save it while signed out, or remove those details first.
+
+  - type: input
+    id: page-url
+    attributes:
+      label: Page URL
+      description: The address of the page the detection fails on.
+      placeholder: https://www.example-shop.com/glendronach-14-year-old
+    validations:
+      required: true
+
+  - type: textarea
+    id: page-html
+    attributes:
+      label: Saved page (zipped HTML)
+      description: Drag the zipped `.html` file of the page here.
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What the extension shows
+      description: What's missing or wrong? You can paste what the popup shows, including **Details of parsed data**.
+      placeholder: "ABV shows 52.8%, but this bottle is 44.8%."
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ### The bottle's actual details
+        As on the page or the label. Distillery and ABV are needed; fill in whatever else you know.
+
+  - type: input
+    id: distillery
+    attributes:
+      label: Distillery
+      placeholder: GlenDronach
+    validations:
+      required: true
+
+  - type: input
+    id: abv
+    attributes:
+      label: ABV (%)
+      placeholder: "46.8"
+    validations:
+      required: true
+
+  - type: input
+    id: name
+    attributes:
+      label: Bottle name
+      placeholder: Glendronach 14 Year Old Boynsmill House Edition
+    validations:
+      required: false
+
+  - type: input
+    id: bottler
+    attributes:
+      label: Bottler
+      description: Leave empty for a distillery (official) bottling.
+      placeholder: Murray McDavid
+    validations:
+      required: false
+
+  - type: input
+    id: age
+    attributes:
+      label: Age (years)
+      placeholder: "14"
+    validations:
+      required: false
+
+  - type: input
+    id: vintage
+    attributes:
+      label: Vintage (year distilled)
+      placeholder: "2009"
+    validations:
+      required: false
+
+  - type: input
+    id: bottled
+    attributes:
+      label: Bottled (year)
+      placeholder: "2023"
+    validations:
+      required: false
+
+  - type: input
+    id: volume
+    attributes:
+      label: Volume
+      placeholder: 70 cl
+    validations:
+      required: false
+
+  - type: input
+    id: cask-number
+    attributes:
+      label: Cask number
+      placeholder: "348039"
+    validations:
+      required: false
+
+  - type: textarea
+    id: other-details
+    attributes:
+      label: Other details
+      description: Anything else, such as the barcode (EAN), cask type or series.
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        ### Whiskybase (optional)
+        If you know the bottle's Whiskybase entry, it helps to check that the lookup finds it.
+
+  - type: input
+    id: whiskybase-url
+    attributes:
+      label: Whiskybase entry
+      placeholder: https://www.whiskybase.com/whiskies/whisky/292924
+    validations:
+      required: false
+
+  - type: textarea
+    id: whiskybase-html
+    attributes:
+      label: Saved Whiskybase page (zipped HTML)
+      description: Saved and zipped the same way. If you were signed in on Whiskybase, this page contains your name, email address and username, so save it signed out if you can.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: On `chrome://extensions`, under the extension's name.
+      placeholder: 0.2.0
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Personal information
+      options:
+        - label: The attached pages were saved while signed out, or I removed my personal details from them.
+          required: true
