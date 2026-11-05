@@ -578,7 +578,12 @@
     return (text.match(new RegExp(WHISKY_SRC, 'gi')) || []).length;
   }
 
-  /** Strips the site name and suffixes like " | Shop" or " - review" from a page title. */
+  // Auction headings that name the lot rather than the bottle: "Submit your bid for item #4838071", "Lot 123".
+  const LOT_HEADING_RE = /^(?:(?:submit|place)\s+(?:your|a)\s+bid\s+(?:for|on)\s+)?(?:lot|item)\s*(?:no\.?|number)?\s*#?\s*\d+$/i;
+  // A lot number in front of the name: "#4838071 - Port Ellen", "Lot 123: Port Ellen".
+  const LOT_PREFIX_RE = /^(?:(?:lot|item)\s*(?:no\.?|number)?\s*#?|#)\s*\d+\s*[-–—:]\s*/i;
+
+  /** Strips the site name, a lot number and suffixes like " | Shop" or " - review" from a page title. */
   function cleanTitle(title, siteName) {
     let parts = clean(title)
       .split(/\s+[|–—·•»]\s+/)
@@ -589,7 +594,8 @@
       const kept = parts.filter((p) => norm(p) !== site);
       if (kept.length) parts = kept;
     }
-    return (parts[0] || '').replace(/\s*[-:–—]\s*(?:review|tasting\s+notes?|recensie|proefnotities)\b.*$/i, '');
+    if (LOT_HEADING_RE.test(parts[0] || '')) return '';
+    return (parts[0] || '').replace(LOT_PREFIX_RE, '').replace(/\s*[-:–—]\s*(?:review|tasting\s+notes?|recensie|proefnotities)\b.*$/i, '');
   }
 
   // ---------------------------------------------------------------------------
