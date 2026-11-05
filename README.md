@@ -5,7 +5,7 @@ Browser extension that recognises when the current web page contains details for
 🌐 [Download here from the Google Chrome Store](https://chromewebstore.google.com/detail/bottle-lookup-for-whiskybase/nngkmbiongkmhiiiblajjiokfllneomm) (see further down for other installation options)<br/><br/><br/>
 
 
-![Screenshot (closeup)](https://github.com/sj/whiskybase-chromium-browser-extension/blob/main/screenshots/fettercairn-50-closeup.jpg)
+![Screenshot (closeup)](screenshots/fettercairn-50-closeup.jpg)
 
 
 
@@ -53,6 +53,32 @@ with the **Bottle detected wrongly on page** form (you will need a GitHub accoun
 
 If anything else is wrong, or if you have any suggestions that could make this extension better? Let us know by [reporting an issue here](https://github.com/sj/whiskybase-chromium-browser-extension/issues/new/choose) (you will need a GitHub account).
 
+
+## Privacy
+
+The extension doesn't collect, track or share anything. It has no analytics, no
+servers of its own, and doesn't send anything about you or the pages you visit
+to anyone, except for the Whiskybase lookups described below.
+
+- **Reading pages.** The extension reads the page you're on to look for details
+  of a whisky bottle. By default it only does so when you click its icon; with
+  **Check every page automatically** turned on, it reads every page as it loads.
+  This happens entirely inside your browser.
+- **Whiskybase lookups.** When the extension is confident it has found a bottle,
+  or when you click **Manual search**, it searches Whiskybase for it, then
+  fetches the matching bottle's page and photo. These requests contain only the
+  search terms made from the bottle's details (such as distillery, name, age and
+  ABV) and the Whiskybase pages for the match. The address of the page you're on
+  is not sent. The requests go to whiskybase.com
+  directly from your browser with your Whiskybase cookies, just like visiting
+  the site yourself. So if you are logged in to Whiskybase, Whiskybase can see
+  that these searches came from your account.
+- **Storage.** Results are kept in the browser's session storage while you
+  browse, so the same bottle isn't looked up twice. They are cleared when you
+  close the browser. Only your settings, such as **Check every page
+  automatically**, are stored permanently.
+- **Links.** The About & feedback links and the right-click menu entries just
+  open GitHub pages in a new tab when you click them.
 
 ## Licence
 

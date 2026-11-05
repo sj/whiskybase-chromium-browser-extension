@@ -7,6 +7,7 @@ For each release, changes are listed below. When a release is published, the cha
 - When no bottle is detected on a page, or a detected bottle isn't matched to Whiskybase, the popup links to the README on how to let us know.
 - A few updates to the detector/parser (e.g. #9)
 - An **About & feedback** link at the bottom of the popup, and **More information about this extension** and **Report a problem with this extension** in the menu when you right-click the extension's icon.
+- Chore: add a Privacy section to the README
 
 ## 0.3.0
 
