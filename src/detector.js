@@ -770,6 +770,7 @@
   }
 
   const BRAND_KEY_RE = /^(?:brand|merk|marke|marque|marca)$/i;
+  const DISTILLERY_KEY_RE = /^(?:distillery|distilleerderij|brennerei|destillerie|distillerie|destiler[ií]a)$/i;
   const CATEGORY_KEY_RE =
     /^(?:spirit|type|category|categorie|kategorie|soort|style|(?:product|production|whisky|drink)\s+type)$/i;
   const AGE_KEY_RE = /^(?:age|alter|leeftijd|[âa]ge|edad)$/i;
@@ -861,12 +862,18 @@
     let context = 0;
     const nameHasWhisky = WHISKY_RE.test(nameText);
     const subBrand = matchSubBrand(nameText);
-    const distillery = matchDistillery(nameText) || (subBrand && subBrand.distillery);
+    const nameDistillery = matchDistillery(nameText) || (subBrand && subBrand.distillery);
+    // Auction sites often have a generic heading ("Submit your bid for item #…")
+    // and give the distillery only in a labelled "Distillery:" field.
+    const specDistillery = nameDistillery ? null : pairField(s.specPairs, DISTILLERY_KEY_RE, matchDistillery);
+    const distillery = nameDistillery || specDistillery;
     if (STRONG_WHISKY_RE.test(nameText)) context += add(3, 'Product name mentions whisky');
     else if (nameHasWhisky) context += add(2, 'Product name mentions bourbon/scotch');
-    if (distillery) {
+    if (nameDistillery) {
       const via = subBrand && !matchDistillery(nameText) ? ` (via brand ${subBrand.brand})` : '';
       context += add(3, `Known distillery/brand in name: ${distillery}${via}`);
+    } else if (specDistillery) {
+      context += add(3, `Known distillery in product details: ${distillery}`);
     }
     const bottlerInName = matchBottler(nameText);
     if (bottlerInName && !distillery) context += add(3, `Known independent bottler in name: ${bottlerInName}`);
