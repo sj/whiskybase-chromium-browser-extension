@@ -44,10 +44,9 @@ The extension only reaches out to Whiskybase if and when it has detected a whisk
 
 ## Did your bottle not get detected on a page?
 
-If the extension misses a bottle on a page, or gets its details wrong, please
+Did the extension miss a bottle on a page? Or did it get its details wrong? Or was it unable to match it to the right Whiskybase entry? Please
 [open a GitHub issue](https://github.com/sj/whiskybase-chromium-browser-extension/issues/new?template=detector.yml)
-with the **Bottle detected wrongly on page** form. It asks for a saved copy of the page
-(zipped), the bottle's distillery and ABV, and any other details you know.
+with the **Bottle detected wrongly on page** form. It asks for a saved copy of the page, the bottle's distillery and ABV, and any other details you know.
 
 ## Licence
 
