@@ -40,7 +40,7 @@ Follow the instructions above, but instead of downloading a release zip file: cl
 
 Whiskybase has no public API, so the extension uses Whiskybase's own search. It does this in the background, using your browser's cookies for Whiskybase. You don't have to be logged in to Whiskybase for this browser extension to work, but logging in might help with search rate limiting.
 
-The extension only reaches out to Whiskybase if and when it has detected a whisky bottle with at least 90% confidence. You can always perform a manual Whiskybase search straight from the extension; this will open a new tab with Whiskybase search results.
+The extension only reaches out to Whiskybase if and when it has detected a whisky bottle with at least 90% confidence. For a less certain detection, the extension offers a **Find this bottle on Whiskybase** button instead. You can always perform a manual Whiskybase search straight from the extension; this will open a new tab with Whiskybase search results.
 
 ## Did your bottle not get detected on a page?
 
@@ -65,7 +65,7 @@ to anyone, except for the Whiskybase lookups described below.
   **Check every page automatically**, it will request extra permissions in order to reads every page as it loads.
   This happens entirely inside your browser.
 - **Whiskybase lookups.** When the extension is confident it has found a bottle,
-  or when you click **Manual search**, it searches Whiskybase for it. If you click the extension's icon, it then
+  or when you click **Find this bottle on Whiskybase** or **Manual search**, it searches Whiskybase for it. If you click the extension's icon, it then
   fetches the matching bottle's page and photo. These requests contain only the
   search terms made from the bottle's details (such as distillery, name, age and
   ABV) and the Whiskybase pages for the match. The address of the page you're on
