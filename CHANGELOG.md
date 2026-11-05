@@ -4,8 +4,10 @@ For each release, changes are listed below. When a release is published, the cha
 
 ## 0.2.1 (not released yet)
 
-- Smoother release process with release notes automated 
 
+- Smoother release process with release notes automated 
+- Chore: add MIT licence
+- Chore: add GitHub issue template for fixing errors in the detector/parser, and set up Claude integration for that type of issue
 
 ## 0.2.0
 
