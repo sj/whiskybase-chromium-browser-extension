@@ -117,7 +117,7 @@ npm run package
 
 builds `dist/whiskybase-chromium-browser-extension/` and
 `dist/whiskybase-chromium-browser-extension-<version>.zip`,
-containing only what the extension needs (manifest, `src/`, `popup/`, PNG icons).
+containing only what the extension needs (manifest, licence, `src/`, `popup/`, PNG icons).
 
 The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
 runs only when started by hand: on GitHub, open **Actions**, pick **Package
@@ -216,7 +216,9 @@ Parser tests run in Node; the fixture pages in `test/fixtures/` run through the
 detector in headless Chromium/Chrome (set `CHROME_BIN` if it isn't on your
 PATH). Add `-v` (`node test/run.mjs -v`) to see every signal for each fixture.
 To fix a page that is detected wrongly, save it as a fixture, add an expectation
-in `test/run.mjs`, and adjust the detector.
+in `test/run.mjs`, and adjust the detector. Fixtures are copies of other
+websites' pages and are not covered by the project's MIT licence (see
+[`LICENCE.md`](LICENCE.md)).
 
 The GitHub Actions workflow [`.github/workflows/test.yml`](.github/workflows/test.yml)
 runs the tests on every push to any branch and on every pull request.

@@ -10,7 +10,7 @@ version=$(node -p "require('./manifest.json').version")
 name="whiskybase-chromium-browser-extension"
 rm -rf dist
 mkdir -p "dist/$name"
-cp -r manifest.json src popup "dist/$name/"
+cp -r manifest.json LICENCE.md src popup "dist/$name/"
 mkdir -p "dist/$name/icons"
 cp icons/*.png "dist/$name/icons/"
 

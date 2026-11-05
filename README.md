@@ -46,3 +46,9 @@ page and unzip it. Then follow the steps below, picking the unzipped folder at
 Whiskybase has no public API, so the extension uses Whiskybase's own search. It does this in the background, using your browser's cookies for Whiskybase. You don't have to be logged in to Whiskybase for this extension to work, but logging in might help with search rate limiting.
 
 The extension only reaches out to Whiskybase if and when it has detected a whisky bottle with at least 90% confidence. You can always perform a manual search straight from the extension; this will open a new tab with Whiskybase search results.
+
+## Licence
+
+The extension is released under the [MIT licence](LICENCE.md). The saved web
+pages in `test/fixtures/` and the images in `screenshots/` show other websites,
+whose content belongs to their owners; they are not covered by the licence.
