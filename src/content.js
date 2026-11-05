@@ -16,6 +16,8 @@
   // reload of the extension, its runtime loses its id and the new copy takes over.
   const earlier = globalThis.__bottleLookupRuntime;
   if (earlier && earlier.id) return;
+  // Whiskybase's own pages have nothing to look up (and include the extension's search tabs).
+  if (/(?:^|\.)whiskybase\.com$/i.test(location.hostname)) return;
   globalThis.__bottleLookupRuntime = chrome.runtime;
 
   const RESCAN_DELAY_MS = 800;

@@ -239,14 +239,12 @@ function renderWhiskybase() {
   } else if (lk.state === 'nomatch') {
     out.append(el('p', { className: 'wb-bad' }, lk.total ? 'No confident match. Best candidates:' : 'No results.'));
     if (lk.candidates.length) out.append(candidateList(lk.candidates));
+    // With several candidates, the question is less whether the bottle is on Whiskybase than which one it is.
+    const report = (text) => link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, text);
     out.append(
-      el(
-        'p',
-        { className: 'muted' },
-        'Is this bottle on Whiskybase after all? Let us know ',
-        link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here'),
-        '.'
-      )
+      lk.candidates.length > 1
+        ? el('p', { className: 'muted' }, 'If you think the detection or matching can be improved, ', report('let us know'), '.')
+        : el('p', { className: 'muted' }, 'Is this bottle on Whiskybase after all? Let us know ', report('here'), '.')
     );
   } else if (lk.state === 'noaccess') {
     out.append(
@@ -364,6 +362,17 @@ async function scan(rescan) {
   currentTabId = tab.id;
   const key = `lookup:${tab.id}`;
   currentLookup = (await chrome.storage.session.get(key))[key] || null;
+  // Whiskybase itself: nothing to scan, and nothing to look up.
+  if (Whiskybase.isWhiskybasePage(tab.url)) {
+    $('fields').hidden = true;
+    $('why').hidden = true;
+    $('rescan').hidden = true;
+    $('parsed-title').textContent = 'Whiskybase';
+    $('status').hidden = false;
+    $('status').className = 'status';
+    $('status').textContent = 'You’re looking at Whiskybase — no more information to show.';
+    return;
+  }
   try {
     currentResult = await detection(tab.id, rescan);
     render(currentResult);

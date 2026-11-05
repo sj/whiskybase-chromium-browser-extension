@@ -12,6 +12,12 @@
   const WHISKY_URL = 'https://www.whiskybase.com/whiskies/whisky/';
   // The hosts the extension needs access to: pages, and bottle photos (as host_permissions in manifest.json).
   const HOSTS = ['https://www.whiskybase.com/*', 'https://static.whiskybase.com/*'];
+  // Whiskybase's own pages (www, shop, …) are never scanned or looked up.
+  const OWN_PAGES = ['*://whiskybase.com/*', '*://*.whiskybase.com/*'];
+
+  function isWhiskybasePage(url) {
+    return /^https?:\/\/(?:[a-z0-9-]+\.)*whiskybase\.com(?::\d+)?(?:[/?#]|$)/i.test(url || '');
+  }
 
   function clean(s) {
     return (s == null ? '' : String(s)).replace(/\s+/g, ' ').trim();
@@ -380,7 +386,7 @@
     return { match: confident ? best : null, ranked };
   }
 
-  const api = { MIN_SCORE, MIN_MARGIN, buildQuery, searchUrl, displayId, analyseSearchHtml, analyseBottleHtml, isBottlePhoto, isPhotoOf, photoVariants, matchResults, scoreResult, SEARCH_URL, WHISKY_URL, HOSTS };
+  const api = { MIN_SCORE, MIN_MARGIN, buildQuery, searchUrl, displayId, analyseSearchHtml, analyseBottleHtml, isBottlePhoto, isPhotoOf, photoVariants, matchResults, scoreResult, isWhiskybasePage, SEARCH_URL, WHISKY_URL, HOSTS, OWN_PAGES };
   root.Whiskybase = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
