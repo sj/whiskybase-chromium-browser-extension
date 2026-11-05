@@ -240,6 +240,11 @@ const fixtureCases = [
     status: 'whisky',
     whisky: { distillery: 'GlenDronach', bottling: 'distillery', age: 14, abv: 46.8, volumeMl: 700 },
   },
+  {
+    file: 'littlebrowndogspirits.com-balblair-2014-calvados-cask-finish-product-page.html',
+    status: 'whisky',
+    whisky: { distillery: 'Balblair', bottler: /^Little Brown Dog/, bottling: 'independent', vintage: 2014, bottled: 2026, age: 12, abv: 56.1, volumeMl: 700 },
+  },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },
