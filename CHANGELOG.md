@@ -5,6 +5,7 @@ For each release, changes are listed below. When a release is published, the cha
 ## Under development (not released yet)
 
 - When a bottle is only possibly detected, the popup offers **Find this bottle on Whiskybase** to look it up anyway, and links to the README on how to let us know if the detection is wrong.
+- Better bottle names on auction pages whose heading only names the lot, such as whiskyauction.com (#13)
 
 ## 0.3.1
 
