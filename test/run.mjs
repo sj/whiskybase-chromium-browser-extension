@@ -253,7 +253,8 @@ const fixtureCases = [
   {
     file: 'whiskyauction.com-4838071-product-page-WB36642.html',
     status: 'whisky',
-    whisky: { distillery: 'Port Ellen', bottler: 'Gordon & MacPhail', bottling: 'independent', age: 17, vintage: 1970, bottled: 1987, abv: 62.4, volumeMl: 750 },
+    // The heading is "Submit your bid for item #4838071"; the name comes from the page title.
+    whisky: { name: 'Port Ellen', distillery: 'Port Ellen', bottler: 'Gordon & MacPhail', bottling: 'independent', age: 17, vintage: 1970, bottled: 1987, abv: 62.4, volumeMl: 750 },
   },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
