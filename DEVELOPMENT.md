@@ -61,6 +61,11 @@ The manifest has no content scripts, so the extension can't read pages unless as
   in `chrome.storage.local`. While both hold, the background registers the same
   two files as a content script on every page (`syncAutoCheck`). Pages already
   open are checked on the next load or click.
+- **Whiskybase itself** is never scanned: the automatic content script excludes
+  `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
+  stops at once there, the background ignores detections from there, and the
+  popup only says the page is Whiskybase (`Whiskybase.isWhiskybasePage`). This
+  also keeps the extension's own search and helper tabs from being scanned.
 - **Turning it off** only clears `autoCheck` and keeps the access. Withdrawing
   the access to all sites with `chrome.permissions.remove` also removes the
   Whiskybase hosts, although they are required in the manifest, and Chrome only

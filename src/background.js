@@ -419,6 +419,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type !== 'whisky:detection' || !sender.tab || sender.frameId !== 0) return;
   const tabId = sender.tab.id;
   const { status, whisky, confidence, url } = msg.result;
+  if (Whiskybase.isWhiskybasePage(url)) return;
   setBadge(tabId, status, whisky.name);
 
   const previousUrl = pageUrls.get(tabId);
@@ -450,7 +451,13 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 // gives those back only on a new click and prompt.
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
-const AUTO_SCRIPT = { id: 'detector', matches: ALL_SITES, js: ['src/detector.js', 'src/content.js'], runAt: 'document_idle' };
+const AUTO_SCRIPT = {
+  id: 'detector',
+  matches: ALL_SITES,
+  excludeMatches: Whiskybase.OWN_PAGES,
+  js: ['src/detector.js', 'src/content.js'],
+  runAt: 'document_idle',
+};
 
 async function syncAutoCheck() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
@@ -458,6 +465,8 @@ async function syncAutoCheck() {
   const registered = (await chrome.scripting.getRegisteredContentScripts({ ids: [AUTO_SCRIPT.id] })).length > 0;
   try {
     if (on && !registered) await chrome.scripting.registerContentScripts([AUTO_SCRIPT]);
+    // A registration from an older version keeps its old settings until updated.
+    if (on && registered) await chrome.scripting.updateContentScripts([AUTO_SCRIPT]);
     if (!on && registered) await chrome.scripting.unregisterContentScripts({ ids: [AUTO_SCRIPT.id] });
   } catch (e) {
     console.warn('Automatic checking:', e); // e.g. two changes at once; the next one syncs again

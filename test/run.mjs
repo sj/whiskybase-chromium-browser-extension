@@ -463,6 +463,13 @@ check('buildQuery uses the vintage year', () => {
   assert.equal(WB.buildQuery({ distillery: 'Ardbeg', abv: 46 }), 'Ardbeg 46%');
 });
 
+check('isWhiskybasePage: Whiskybase and its subdomains only', () => {
+  for (const url of ['https://www.whiskybase.com/whiskies/whisky/233907', 'https://whiskybase.com/', 'https://shop.whiskybase.com/en/', 'http://www.whiskybase.com?x=1'])
+    assert.equal(WB.isWhiskybasePage(url), true, url);
+  for (const url of ['https://www.masterofmalt.com/?ref=whiskybase.com', 'https://notwhiskybase.com/', 'https://whiskybase.com.example.org/', '', undefined])
+    assert.equal(WB.isWhiskybasePage(url), false, String(url));
+});
+
 const SEARCH_MM = 'whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-search-results.html';
 check('search results: photo, rating, unrated and placeholder photos', () => {
   const byId = Object.fromEntries(searchPage(SEARCH_MM).whiskies.map((w) => [w.id, w]));

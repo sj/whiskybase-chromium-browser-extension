@@ -364,6 +364,17 @@ async function scan(rescan) {
   currentTabId = tab.id;
   const key = `lookup:${tab.id}`;
   currentLookup = (await chrome.storage.session.get(key))[key] || null;
+  // Whiskybase itself: nothing to scan, and nothing to look up.
+  if (Whiskybase.isWhiskybasePage(tab.url)) {
+    $('fields').hidden = true;
+    $('why').hidden = true;
+    $('rescan').hidden = true;
+    $('parsed-title').textContent = 'Whiskybase';
+    $('status').hidden = false;
+    $('status').className = 'status';
+    $('status').textContent = 'You’re looking at Whiskybase — no more information to show.';
+    return;
+  }
   try {
     currentResult = await detection(tab.id, rescan);
     render(currentResult);

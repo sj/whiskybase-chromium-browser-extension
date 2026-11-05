@@ -2,6 +2,10 @@
 
 For each release, changes are listed below. When a release is published, the changelog for that particular version is added to the GitHub Release notes, below the install instructions.
 
+## Under development (not released yet)
+
+- On Whiskybase itself, the extension no longer scans the page or looks anything up; the popup just says you're looking at Whiskybase.
+
 ## 0.3.2
 
 - When a bottle is only possibly detected, the popup offers **Find this bottle on Whiskybase** to look it up anyway, and links to the README on how to let us know if the detection is wrong.
