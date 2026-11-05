@@ -16,7 +16,7 @@ const verbose = process.argv.includes('-v');
 const require = createRequire(import.meta.url);
 const D = require('../src/detector.js');
 const WB = require('../src/whiskybase.js');
-const { changelogSection, releaseNotes } = await import('../scripts/release-notes.mjs');
+const { changelogSection, releaseNotes, CHANGELOG_URL } = await import('../scripts/release-notes.mjs');
 
 let failures = 0;
 function check(label, fn) {
@@ -413,7 +413,10 @@ check('release notes: install text, then the version\'s CHANGELOG section', () =
   assert.equal(changelogSection(changelog, '0.2.1'), '- one\n- two', 'not 0.2.10, and up to the next section');
   assert.equal(changelogSection(changelog, 'v0.2.0'), '- zero', 'with or without v, last section');
   assert.equal(changelogSection(changelog, '0.3.0'), '');
-  assert.equal(releaseNotes('0.2.1', 'Get {version}.zip', changelog), "Get 0.2.1.zip\n\n## What's changed\n\n- one\n- two\n");
+  assert.equal(
+    releaseNotes('0.2.1', 'Get {version}.zip', changelog),
+    `Get 0.2.1.zip\n\n## What's changed since last version\n\n- one\n- two\n\nAll changes: [CHANGELOG.md](${CHANGELOG_URL})\n`
+  );
   assert.equal(releaseNotes('0.3.0', 'Get {version}.zip', changelog), 'Get 0.3.0.zip\n', 'only the install text without a section');
   assert.equal(releaseNotes('0.3.0', 'Get {version}.zip', ''), 'Get 0.3.0.zip\n', 'or without a CHANGELOG.md');
 });

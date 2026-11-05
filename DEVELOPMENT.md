@@ -238,10 +238,11 @@ The workflow writes the notes with
   [`.github/release-intro.md`](.github/release-intro.md); `{version}` is
   replaced with the release's version. Edit this file to change the text for
   all future releases.
-- **Below that, under "What's changed",** the version's section of
-  `CHANGELOG.md`: from its `## 0.2.1` heading (`## v0.2.1` and
-  `## [0.2.1] - 2026-11-20` work too) to the next `## ` heading. Without such a
-  section, the notes are only the install instructions.
+- **Below that, under "What's changed since last version",** the version's
+  section of `CHANGELOG.md`: from its `## 0.2.1` heading (`## v0.2.1` and
+  `## [0.2.1] - 2026-11-20` work too) to the next `## ` heading, followed by a
+  link to the whole `CHANGELOG.md` on the main branch. Without such a section,
+  the notes are only the install instructions.
 
 ## Tests
 
