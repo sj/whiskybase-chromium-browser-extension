@@ -274,6 +274,7 @@ body.wide #wb {
 /* Automatic checking, below both columns; its explanation is the info icon's tooltip. */
 .auto {
   display: flex;
+  flex-wrap: wrap; /* in the narrow popup, About & feedback goes to a line of its own */
   align-items: center;
   gap: 6px;
   margin-top: 12px;
@@ -282,6 +283,7 @@ body.wide #wb {
 }
 .auto label {
   display: flex;
+  white-space: nowrap;
   align-items: center;
   gap: 6px;
   cursor: pointer;
@@ -298,4 +300,9 @@ body.wide #wb {
 .info:hover,
 .info:focus-visible {
   opacity: 1;
+}
+.about {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--muted);
 }
