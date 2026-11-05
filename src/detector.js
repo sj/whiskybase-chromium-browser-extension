@@ -166,6 +166,7 @@
     ['Golden Cask'],
     ['Whisky-Fässle', 'Whisky Fassle'],
     ['First Cask'],
+    ['Little Brown Dog Spirits', 'Little Brown Dog'],
   ];
 
   // Owners of distilleries: a brand like this means a distillery bottling.
@@ -376,14 +377,15 @@
 
   const AGE_RE =
     /\b(\d{1,2})[\s-]*(?:years?|yrs?\.?|y\.?o\.?|jaar|jarige|jahre|j[äa]hrig|ans|a[ñn]os|anni)(?![a-z])(?:[\s-]*old)?/i;
-  const AGE_LABEL_RE = /\b(?:age|alter|leeftijd|[âa]ge|edad)\s*[:-]\s*(\d{1,2})\b/i;
+  const AGE_LABEL_RE =
+    /\b(?:age|alter|leeftijd|[âa]ge|edad)\s*[:-]\s*(\d{1,2})\b|\baged\s+(\d{1,2})\s*(?:years?|yrs?\.?)(?![a-z])/i;
 
-  /** Age statement in years. `labelled` only accepts "Age: 12" style (for spec tables). */
+  /** Age statement in years. `labelled` only accepts "Age: 12" / "Aged 12 years" style (for spec tables). */
   function parseAge(text, labelled) {
     if (!text) return null;
     const m = text.match(labelled ? AGE_LABEL_RE : AGE_RE);
     if (!m) return null;
-    const v = parseInt(m[1], 10);
+    const v = parseInt(m[1] || m[2], 10);
     return v >= 3 && v <= 80 ? v : null;
   }
 
