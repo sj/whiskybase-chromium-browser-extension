@@ -5,6 +5,7 @@ For each release, changes are listed below. When a release is published, the cha
 ## Under development (not released yet)
 
 - When no bottle is detected on a page, or a detected bottle isn't matched to Whiskybase, the popup links to the README on how to let us know.
+- A few updates to the detector/parser (e.g. #9)
 
 ## 0.3.0
 
