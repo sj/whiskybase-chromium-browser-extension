@@ -13,8 +13,6 @@ Once you've installed the extension: navigate to a page describing a bottle of w
 
 By default, the extension only analyses the current web page when you click its icon, but you can easily tell it to do so automatically for every page that loads. When the extension is triggered, the icon in the toolbar shows whether it was able to recognise any information, and whether it was able to link it to a bottle on Whiskybase.com. Click the extension icon to see the extracted details: distillery, bottle name, bottler, age, ABV, volume, vintage/bottled year, cask number, etc. 
 
-If and when a whisky bottle is detected on a webpage, the extension will automatically try and find the bottle's Whiskybase entry. 
-
 **Please note**: This is an independent project; it is not affiliated with nor endorsed by Whiskybase. 
 
 ## Installation instructions
@@ -38,13 +36,13 @@ Don't forget to pin the extension (puzzle-piece icon → pin) so you can see the
 Follow the instructions above, but instead of downloading a release zip file: clone the Git repository to a location of your choosing. Then select that directory when you click **Load unpacked**.
 
 
-## Whiskybase lookup
+## Some notes on the Whiskybase lookup
 
 Whiskybase has no public API, so the extension uses Whiskybase's own search. It does this in the background, using your browser's cookies for Whiskybase. You don't have to be logged in to Whiskybase for this browser extension to work, but logging in might help with search rate limiting.
 
 The extension only reaches out to Whiskybase if and when it has detected a whisky bottle with at least 90% confidence. You can always perform a manual Whiskybase search straight from the extension; this will open a new tab with Whiskybase search results.
 
-## A page detected wrongly?
+## Did your bottle not get detected on a page?
 
 If the extension misses a bottle on a page, or gets its details wrong, please
 [open a GitHub issue](https://github.com/sj/whiskybase-chromium-browser-extension/issues/new?template=detector.yml)
