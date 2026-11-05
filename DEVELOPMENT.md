@@ -40,6 +40,8 @@ an independent bottler; for a distillery bottling or an unknown bottler it is le
 
 A page counts as **whisky** with at least 3 context points, 2 bottle points and
 6 points in total, and as **possible** with at least 2, 1 and 4. Listing pages never count.
+**Details of parsed data** in the popup lists the points, and ends with whether
+the page was accepted as a whisky bottle and its score.
 
 
 ## When pages are checked
@@ -76,8 +78,9 @@ A page can get the content script both ways; `content.js` then keeps one copy.
   cask, size, distillery/brand, bottler, and name/series words; clear
   contradictions cost more than agreement earns). A **match** needs at least 6
   points and a lead of 3 over the runner-up; otherwise the popup lists the best
-  candidates. **Details of Whiskybase match** shows the best result's points,
-  why it was or wasn't accepted, the query, and the other candidates.
+  candidates. **Details of Whiskybase match** shows the query (with the number
+  of results, linking to the search), the best result's points, why it was or
+  wasn't accepted, and the other candidates.
 - **Match details:** the popup shows the parsed data on the left and Whiskybase
   on the right: the bottle photo and name (followed by its bottling series in
   brackets, when Whiskybase has one), then rows for the ID (as Whiskybase

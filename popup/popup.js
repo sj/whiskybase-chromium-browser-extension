@@ -40,7 +40,7 @@ function showStatus(cls, title, detail) {
 }
 
 function render(result) {
-  const { status, whisky, reasons, score } = result;
+  const { status, whisky, reasons } = result;
   showStatus(status, STATUS_TEXT[status], status === 'none' ? '' : `Confidence: ${Math.round(result.confidence * 100)}%`);
   // A detected bottle speaks for itself, and the heading already says when nothing was found.
   $('parsed-title').textContent = status === 'none' ? 'No whisky information detected' : 'Whisky information detected';
@@ -72,7 +72,8 @@ function render(result) {
     list.append(li);
   }
   $('no-reasons').hidden = reasons.length > 0;
-  $('score').textContent = `(score: ${score})`;
+  $('accept').textContent = `${result.status === 'whisky' ? 'Accepted' : 'Not accepted'}: scored ${result.score} points.`;
+  $('accept').hidden = !reasons.length;
   $('why').hidden = false;
 
   renderWhiskybase();
@@ -117,25 +118,24 @@ function reasonList(reasons) {
 }
 
 /**
- * "Details of Whiskybase match" (only for a confident match): how it scored,
- * how that compares with the thresholds and the runner-up, and what was
- * searched for.
+ * "Details of Whiskybase match" (only for a confident match): what was
+ * searched for, how the match scored, and the other candidates.
  */
 function matchDetails(lk) {
-  const [best, second] = lk.candidates;
+  const [best] = lk.candidates;
   const body = el('div', {});
   body.append(
-    el('p', {}, 'Match ', link(best.url, Whiskybase.displayId(best.id)), ` scored ${best.score}:`),
-    reasonList(best.reasons),
     el(
       'p',
       {},
-      `Accepted: needs at least ${Whiskybase.MIN_SCORE} points` +
-        (second
-          ? ` and ${Whiskybase.MIN_MARGIN} more than the next best (${Whiskybase.displayId(second.id)}: ${second.score}, a lead of ${best.score - second.score}).`
-          : '.')
+      `Searched for “${lk.query}” (`,
+      link(lk.searchUrl, `${lk.total} ${lk.total === 1 ? 'result' : 'results'}`),
+      `${lk.cached ? ', cached' : ''}). Match `,
+      link(best.url, Whiskybase.displayId(best.id)),
+      ':'
     ),
-    el('p', {}, `Searched for “${lk.query}”: ${lk.total} ${lk.total === 1 ? 'result' : 'results'}${lk.cached ? ' (cached)' : ''} · `, link(lk.searchUrl, 'open search'))
+    reasonList(best.reasons),
+    el('p', {}, `Accepted: scored ${best.score} points.`)
   );
   if (lk.match.detailsNote) body.append(el('p', {}, lk.match.detailsNote));
   if (lk.match.photoNote) body.append(el('p', {}, lk.match.photoNote));
@@ -187,9 +187,15 @@ function renderWhiskybase() {
   const lk = currentLookup && currentLookup.pageUrl === r.url ? currentLookup : null;
   currentQuery = (lk && lk.query) || Whiskybase.buildQuery(r.whisky);
   $('wb-run').title = `Search Whiskybase for “${currentQuery}”`;
+  // With a match, the button sits in the heading, mirroring Re-scan on the left; otherwise below.
+  const inHead = !!lk && lk.state === 'match';
+  if (inHead) $('wb-head').append($('wb-run'));
+  else $('wb-body').append($('wb-run'));
+  $('wb-run').classList.toggle('wb-manual', !inHead);
 
   const out = $('wb-result');
   out.replaceChildren();
+  $('wb-foot').replaceChildren();
   // After a failed search, "Search on Whiskybase" takes its place.
   $('wb-run').hidden = !!lk && (lk.state === 'blocked' || lk.state === 'waiting' || (lk.state === 'error' && !!lk.query));
   // The check message takes the column's heading, so it lines up with the one on the left.
@@ -203,7 +209,9 @@ function renderWhiskybase() {
   } else if (lk.state === 'searching') {
     out.append(el('p', { className: 'muted' }, 'Searching Whiskybase…'));
   } else if (lk.state === 'match') {
-    out.append(matchCard(lk.match), matchDetails(lk));
+    out.append(matchCard(lk.match));
+    // Below both columns' content, level with Details of parsed data.
+    $('wb-foot').append(matchDetails(lk));
     // The bottle page (reviews, series, price, photo) is fetched now that the match is shown.
     if (!lk.match.detailed) {
       out.append(el('p', { className: 'muted' }, 'Loading details from Whiskybase…'));
