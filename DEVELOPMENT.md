@@ -53,6 +53,9 @@ The manifest has no content scripts, so the extension can't read pages unless as
   loads `src/detector.js` and `src/content.js` into it with `chrome.scripting`.
   From there it works as before: the content script reports to the background,
   which sets the badge and starts the Whiskybase lookup.
+  The lookup starts by itself only for a detection with at least 90% confidence
+  (`AUTO_MIN_CONFIDENCE`); for others the popup offers **Find this bottle on
+  Whiskybase**, which sends `whisky:lookup` to start the same lookup.
 - **Automatic checking (opt-in):** the popup's **Check every page automatically**
   requests the optional access to all `http`/`https` sites and sets `autoCheck`
   in `chrome.storage.local`. While both hold, the background registers the same

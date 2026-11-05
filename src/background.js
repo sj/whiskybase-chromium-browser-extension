@@ -408,6 +408,11 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   }
 
   const fromPopup = (sender.url || '').startsWith(chrome.runtime.getURL('popup/'));
+  // "Find this bottle on Whiskybase": a detection not confident enough to be looked up by itself.
+  if (msg.type === 'whisky:lookup' && fromPopup) {
+    pageUrls.set(msg.tabId, msg.url);
+    return void lookup(msg.tabId, msg.url, msg.whisky);
+  }
   if (msg.type === 'whisky:open-search' && fromPopup) return void openSearch(msg.tabId, msg.url, msg.whisky);
   if (msg.type === 'whisky:details' && fromPopup) return void addDetails(msg.tabId);
 

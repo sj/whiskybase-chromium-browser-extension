@@ -45,14 +45,18 @@ function render(result) {
   const { status, whisky, reasons } = result;
   showStatus(status, STATUS_TEXT[status], `Confidence: ${Math.round(result.confidence * 100)}%`);
   $('parsed-title').textContent = status === 'none' ? 'No whisky information detected' : 'Whisky information detected';
-  // A detected bottle speaks for itself; when nothing was found, the heading says so and the box asks for feedback.
+  // A detected bottle speaks for itself; otherwise the box asks for feedback (and, when
+  // nothing was found, the heading already says so).
   $('status').hidden = status === 'whisky';
+  const here = link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here');
   if (status === 'none') {
     $('status').replaceChildren(
       'This page does not seem to contain any information pertaining to a bottle of whisky. Do you think that’s incorrect? Let us know ',
-      link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here'),
+      here,
       '.'
     );
+  } else if (status === 'possible') {
+    $('status').append('. Did the extension get this wrong? Let us know ', here, '.');
   }
 
   const table = $('fields');
@@ -205,15 +209,21 @@ function renderWhiskybase() {
   const out = $('wb-result');
   out.replaceChildren();
   $('wb-foot').replaceChildren();
-  // After a failed search, "Search on Whiskybase" takes its place.
-  $('wb-run').hidden = !!lk && (lk.state === 'blocked' || lk.state === 'waiting' || (lk.state === 'error' && !!lk.query));
+  // Not searched automatically, "Find on Whiskybase" takes its place until it has been tried;
+  // after a failed search, "Search on Whiskybase" does.
+  const auto = r.status === 'whisky' && r.confidence >= 0.9;
+  $('wb-run').hidden = lk
+    ? lk.state === 'blocked' || lk.state === 'waiting' || (lk.state === 'error' && !!lk.query)
+    : !auto;
   // The check message takes the column's heading, so it lines up with the one on the left.
   $('wb-title').textContent = lk && lk.state === 'blocked' ? 'Whiskybase wants a quick check first' : 'Whiskybase match';
 
-  if (!lk) {
-    const auto = r.status === 'whisky' && r.confidence >= 0.9;
+  if (!lk && auto) {
+    out.append(el('p', { className: 'muted' }, 'Searching Whiskybase…'));
+  } else if (!lk) {
     out.append(
-      el('p', { className: 'muted' }, auto ? 'Searching Whiskybase…' : 'Not searched automatically (confidence below 90%). Use Manual search.')
+      el('p', { className: 'muted' }, 'Not looked up automatically, as the extension isn’t sure about this bottle (confidence below 90%).'),
+      findButton()
     );
   } else if (lk.state === 'searching') {
     out.append(el('p', { className: 'muted' }, 'Searching Whiskybase…'));
@@ -267,6 +277,16 @@ function renderWhiskybase() {
     if (lk.query) out.append(openSearchButton(), retryButton('wb-retry wb-secondary'));
     else out.append(retryButton());
   }
+}
+
+// Asks the background to look this page's bottle up, as it does by itself for confident detections.
+function findButton() {
+  const button = el('button', { type: 'button', className: 'wb-retry wb-primary' }, 'Find this bottle on Whiskybase');
+  button.addEventListener('click', () => {
+    button.disabled = true;
+    chrome.runtime.sendMessage({ type: 'whisky:lookup', tabId: currentTabId, url: currentResult.url, whisky: currentResult.whisky });
+  });
+  return button;
 }
 
 // Asks the background to search Whiskybase again for this page.
