@@ -214,7 +214,8 @@
 
   // Sections showing other products ("You may also like", recently viewed, ...).
   // Their ABVs, ages and years belong to those bottles, so page text leaves them out.
-  const OTHER_PRODUCTS_RE = /recommend|related|upsell|up-sell|cross-?sell|also-?like|also-?bought|recently-?viewed/i;
+  const OTHER_PRODUCTS_RE =
+    /recommend|related|upsell|up-sell|cross-?sell|also-?like|also-?bought|recently-?viewed|frequently-?bought|bought-?together|more-?from/i;
   function isOtherProducts(node) {
     if (node === node.ownerDocument.body) return false;
     const cls = typeof node.className === 'string' ? node.className : '';
@@ -738,14 +739,17 @@
       const dd = dt.nextElementSibling;
       if (dd && dd.tagName.toUpperCase() === 'DD' && !inOtherProducts(dt)) pairs.push([textOf(dt, 100), textOf(dd, 200)]);
     }
-    const labels = doc.querySelectorAll('[class*="label" i], [class*="name" i], [class*="key" i]');
+    const labels = doc.querySelectorAll(
+      '[class*="label" i], [class*="name" i], [class*="key" i], [class*="__type" i], [class*="__title" i]'
+    );
     for (const label of labels) {
       if (pairs.length >= 400) break;
       const value = label.nextElementSibling;
       if (!value || label.closest('header, nav, footer') || inOtherProducts(label)) continue;
-      // "label" classes are explicit; "name"/"key" only count when followed by a "value".
+      // "label" classes are explicit; "name"/"key"/"type"/"title" only count when
+      // followed by a "value" or "data" (e.g. .product-facts__type + .product-facts__data).
       const cls = (el) => el.getAttribute('class') || '';
-      if (!/label/i.test(cls(label)) && !/value/i.test(cls(value))) continue;
+      if (!/label/i.test(cls(label)) && !/value|__data\b/i.test(cls(value))) continue;
       const key = textOf(label, 100);
       // A value block with its own heading (name + description) is represented by the heading.
       const text = textOf(value.querySelector('h1, h2, h3, h4, h5, h6, .title') || value, 200);

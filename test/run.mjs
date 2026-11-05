@@ -245,6 +245,11 @@ const fixtureCases = [
     status: 'whisky',
     whisky: { distillery: 'Balblair', bottler: /^Little Brown Dog/, bottling: 'independent', vintage: 2014, bottled: 2026, age: 12, abv: 56.1, volumeMl: 700 },
   },
+  {
+    file: 'thewhiskyexchange.com-macallan-a-night-on-earth-in-scotland-erica-dorn-2022-release-product-page-WB221057.html',
+    status: 'whisky',
+    whisky: { distillery: 'Macallan', bottling: 'distillery', bottled: 2022, vintage: null, caskNumber: null, abv: 43, volumeMl: 700 },
+  },
   { file: 'category-listing.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },
