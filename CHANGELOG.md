@@ -2,11 +2,12 @@
 
 For each release, changes are listed below. When a release is published, the changelog for that particular version is added to the GitHub Release notes, below the install instructions.
 
-## Under development (not released yet)
+## 0.3.0
 
 - When a search fails for whatever reason, the popup offers **Search on Whiskybase**: it opens the search in a tab, and once search results are available, the result appears in the browser extension too. For as long as needed, the extension does its searches through that Whiskybase tab (as long as the tab stays open on Whiskybase).
 - Fewer requests to Whiskybase: the bottle page (reviews, series, price, photo) is only fetched when you open the extension, and requests are spaced further apart. This should reduce traffic and load.
-- Smoother release process with release notes automated 
+- Smoother release process with release notes automated
+- UX improvements (#6)
 - Chore: add MIT licence
 - Chore: add GitHub issue template for fixing errors in the detector/parser, and set up Claude integration for that type of issue
 
