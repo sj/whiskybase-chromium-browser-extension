@@ -2,7 +2,7 @@
 
 For each release, changes are listed below. When a release is published, the changelog for that particular version is added to the GitHub Release notes, below the install instructions.
 
-## Under development (not released yet)
+## 0.3.1
 
 - When no bottle is detected on a page, or a detected bottle isn't matched to Whiskybase, the popup links to the README on how to let us know.
 - A few updates to the detector/parser (e.g. #9)
