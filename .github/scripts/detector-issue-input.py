@@ -1,8 +1,8 @@
-"""Turn a "Page detected wrongly" issue into input for the detector workflow.
+"""Turn a "Bottle detected wrongly on page" issue into input for the detector workflow.
 
 Reads the issue as returned by the GitHub API (JSON), takes the issue form's
-fields as plain data, downloads the zipped pages it links to and unpacks the
-.html file from each zip in memory. Nothing in the issue is ever run or used
+fields as plain data, downloads the zipped page it links to and unpacks the
+.html file from the zip in memory. Nothing in the issue is ever run or used
 as a path:
 
     python3 -I .github/scripts/detector-issue-input.py issue.json OUT_DIR OWNER/REPO
@@ -11,7 +11,6 @@ Writes to OUT_DIR (which must be new or empty):
   result.json      {"ok": true, ...} or {"ok": false, "error": "..."}
   fields.json      the form's fields by id, as strings
   page.html        the saved page
-  whiskybase.html  the saved Whiskybase page, if attached
 
 Problems with the report itself (missing attachment, bad zip, ...) give
 "ok": false and exit 0, so the workflow can tell the reporter; only bugs
@@ -33,16 +32,12 @@ LABELS = {
     'What the extension shows': 'what-happened',
     'Distillery': 'distillery',
     'ABV (%)': 'abv',
-    'Bottle name': 'name',
     'Bottler': 'bottler',
     'Age (years)': 'age',
     'Vintage (year distilled)': 'vintage',
-    'Bottled (year)': 'bottled',
-    'Volume': 'volume',
-    'Cask number': 'cask-number',
     'Other details': 'other-details',
-    'Whiskybase entry': 'whiskybase-url',
-    'Saved Whiskybase page (zipped HTML)': 'whiskybase-html',
+    'Whiskybase entry (optional)': 'whiskybase-url',
+    'Whiskybase entry': 'whiskybase-url',  # its label in older issues
     'Extension version': 'version',
 }
 LONG_FIELDS = {'what-happened', 'other-details'}
@@ -124,18 +119,22 @@ def slug(text, limit):
     return s[:limit].rstrip('-')
 
 
-def fixture_names(page_url, wb_url, number):
+def whiskybase_id(text):
+    # A bottle's Whiskybase URL, or its ID as Whiskybase writes it (WB292924).
+    m = (re.fullmatch(r'(?:https?://)?(?:www\.)?whiskybase\.com/whiskies/whisky/(\d+)(?:[/?#].*)?', text, re.I)
+         or re.fullmatch(r'WB\s*(\d+)', text, re.I))
+    return m.group(1) if m else ''
+
+
+def fixture_name(page_url, wb_id, number):
     u = urllib.parse.urlsplit(page_url)
     host = (u.hostname or '').removeprefix('www.')
     if u.scheme not in ('http', 'https') or not re.fullmatch(r'[a-z0-9.-]+\.[a-z]{2,}', host):
         raise ReportError('The page URL is not a valid http(s) address.')
     parts = [p for p in u.path.split('/') if p]
     bottle = slug(re.sub(r'\.(?:html?|php|aspx?)$', '', parts[-1], flags=re.I), 80) if parts else ''
-    base = f'{host}-{bottle or f"issue-{number}"}'
-    page = f'{base}-product-page.html'
-    m = re.fullmatch(r'https?://(?:www\.)?whiskybase\.com/whiskies/whisky/(\d+)(?:[/?#].*)?', wb_url)
-    wb = f'{base}-whiskybase-bottle-page-WB{m.group(1)}.html' if m else f'{base}-whiskybase-bottle-page.html'
-    return page, wb
+    # Like the Whiskybase fixtures, the name ends in the bottle's ID when known.
+    return f'{host}-{bottle or f"issue-{number}"}-product-page' + (f'-WB{wb_id}' if wb_id else '') + '.html'
 
 
 def main():
@@ -145,15 +144,16 @@ def main():
         sys.exit(f'{out_dir} is not empty')
     with open(issue_path, encoding='utf-8') as f:
         issue = json.load(f)
-    result = {'ok': False, 'error': '', 'fixture': '', 'whiskybase_fixture': ''}
+    result = {'ok': False, 'error': '', 'fixture': ''}
     try:
         if 'detector' not in [label['name'] for label in issue.get('labels', [])]:
             raise ReportError('The issue does not have the "detector" label.')
         fields = parse_form(issue.get('body') or '')
         for required in ('page-url', 'distillery', 'abv'):
             if not fields[required]:
-                raise ReportError(f'The issue has no "{required}" field; was it opened with the "Page detected wrongly" form?')
-        result['fixture'], wb_name = fixture_names(fields['page-url'], fields['whiskybase-url'], issue['number'])
+                raise ReportError(f'The issue has no "{required}" field; was it opened with the "Bottle detected wrongly on page" form?')
+        fields['whiskybase-id'] = whiskybase_id(fields['whiskybase-url'])
+        result['fixture'] = fixture_name(fields['page-url'], fields['whiskybase-id'], issue['number'])
 
         url = attachment_url(fields['page-html'], repo)
         if not url:
@@ -161,15 +161,8 @@ def main():
         with open(os.path.join(out_dir, 'page.html'), 'w', encoding='utf-8') as f:
             f.write(html_from_zip(download(url), 'saved page'))
 
-        url = attachment_url(fields['whiskybase-html'], repo)
-        if url:
-            with open(os.path.join(out_dir, 'whiskybase.html'), 'w', encoding='utf-8') as f:
-                f.write(html_from_zip(download(url), 'Whiskybase page'))
-            result['whiskybase_fixture'] = wb_name
-
-        # The attachments are in the files; their links are of no use to the agent.
-        for field in ('page-html', 'whiskybase-html'):
-            fields[field] = 'attached' if attachment_url(fields[field], repo) else ''
+        # The page is in its own file; the link is of no use to the agent.
+        fields['page-html'] = 'attached'
         with open(os.path.join(out_dir, 'fields.json'), 'w', encoding='utf-8') as f:
             json.dump(fields, f, indent=2, ensure_ascii=False)
         result['ok'] = True

@@ -220,11 +220,13 @@ in `test/run.mjs`, and adjust the detector. Fixtures are copies of other
 websites' pages and are not covered by the project's MIT licence (see
 [`LICENSE.md`](LICENSE.md)).
 
-Users report such pages with the **Page detected wrongly** issue form
-([`.github/ISSUE_TEMPLATE/detector.yml`](.github/ISSUE_TEMPLATE/detector.yml)):
-the zipped page, the bottle's distillery and ABV (required), its other details
-if known, and optionally its Whiskybase entry. The form's field ids are meant to
-stay stable, so reports can be processed automatically. The pull request
+Users report such pages with the **Bottle detected wrongly on page** issue
+form ([`.github/ISSUE_TEMPLATE/detector.yml`](.github/ISSUE_TEMPLATE/detector.yml)):
+the zipped page, the bottle's distillery and ABV (required), its bottler, age,
+vintage and other details if known, and optionally its Whiskybase URL. The
+form's field ids and labels are meant to stay stable, so reports can be
+processed automatically; `.github/scripts/detector-issue-input.py` reads the
+fields by their labels. The pull request
 template ([`.github/pull_request_template.md`](.github/pull_request_template.md))
 has the matching checklist: fixture, expectation, scrubbing, `npm test`.
 
@@ -242,9 +244,8 @@ python3 test/scrub-fixture.py --name "First Last" --email you@example.org --user
 ### Fixing reported pages automatically
 
 The workflow [`.github/workflows/detector-issue.yml`](.github/workflows/detector-issue.yml)
-(**Fix detector from issue**) has a Claude agent work on a **Page detected
-wrongly** issue: it adds the page as a fixture (and the Whiskybase page under
-`test/fixtures/whiskybase/`), adds an expectation in `test/run.mjs` from the
+(**Fix detector from issue**) has a Claude agent work on a **Bottle detected
+wrongly on page** issue: it adds the page as a fixture, adds an expectation in `test/run.mjs` from the
 issue's details, and changes `src/detector.js` until `npm test` passes. The
 workflow then opens a pull request from the branch `detector/issue-<number>`,
 filled in from the pull request template, that fixes the issue. When the agent
@@ -275,18 +276,20 @@ example), it comments on the issue instead.
   pick **Fix detector from issue**, click **Run workflow** and enter the issue
   number. A new run for an issue cancels one still running, and updates the
   pull request (its branch is pushed with `--force`) if one is open. Edit the
-  issue first if its details or attachments were wrong.
+  issue first if its details or attachment were wrong.
 
-**Untrusted input.** The issue and its attachments come from anyone, so the
+**Untrusted input.** The issue and its attachment come from anyone, so the
 workflow treats them as data and limits what the agent can do:
 
 - The first job reads the issue form with
   [`.github/scripts/detector-issue-input.py`](.github/scripts/detector-issue-input.py),
-  without secrets: the fields go into a JSON file, and the zips (only from
-  GitHub's own attachment storage) are unpacked in memory, keeping only the
-  page's `.html` file. Fixture names are made from the page URL, with only
-  letters, digits, dots and hyphens.
-- The pages are added as fixtures and cleaned with the structural rules of
+  without secrets: the fields go into a JSON file, and the zip (only from
+  GitHub's own attachment storage) is unpacked in memory, keeping only the
+  page's `.html` file. The fixture's name is made from the page URL, with
+  only letters, digits, dots and hyphens, and ends in the bottle's Whiskybase
+  ID when the issue gives its Whiskybase URL, e.g.
+  `example-shop.com-glenfarclas-15-year-old-product-page-WB292924.html`.
+- The page is added as a fixture and cleaned with the structural rules of
   `test/scrub-fixture.py` before the agent starts; the agent then looks for
   names, emails, usernames and account IDs that remain and scrubs them with
   the same script.
@@ -298,13 +301,13 @@ workflow treats them as data and limits what the agent can do:
   installs it before the agent starts.
 - A separate job checks the changes on a fresh runner (only the detector,
   added lines in `test/run.mjs` with an expectation for the new page, and the
-  new fixtures) and runs `npm test`. The last job, the only one that can push,
+  new fixture) and runs `npm test`. The last job, the only one that can push,
   comment or open pull requests, applies the changes without running them,
   and writes the pull request with
   [`.github/scripts/detector-issue-report.py`](.github/scripts/detector-issue-report.py).
 
-**Reviewing its pull requests:** check the fixtures for personal information
-(the description lists the domains of any email addresses in them) and review
+**Reviewing its pull requests:** check the fixture for personal information
+(the description lists the domains of any email addresses in it) and review
 the detector change like any other. The Tests workflow doesn't start for pull
 requests opened by GitHub Actions; close and reopen the pull request to run
 it. Each run uses Claude Opus with up to 100 turns, which costs API credit;
