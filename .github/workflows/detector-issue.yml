@@ -172,6 +172,21 @@ jobs:
           echo "fixture=$fixture" >> "$GITHUB_OUTPUT"
           echo "whiskybase_fixture=$wb_fixture" >> "$GITHUB_OUTPUT"
 
+      # The action's own install (from downloads.claude.ai, three quick tries)
+      # can fail, so install the same version from npm, with more time between
+      # tries. Keep the version equal to the one the action pins
+      # (installClaudeCode in its src/entrypoints/run.ts) when updating it.
+      - name: Install Claude Code
+        id: install
+        run: |
+          for attempt in 1 2 3; do
+            npm install -g --no-audit --no-fund @anthropic-ai/claude-code@2.1.318 && break
+            [ "$attempt" = 3 ] && exit 1
+            sleep 30
+          done
+          claude --version
+          echo "path=$(command -v claude)" >> "$GITHUB_OUTPUT"
+
       - name: Fix the detector
         id: claude
         continue-on-error: true
@@ -180,6 +195,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           # The job's own read-only token, instead of the Claude GitHub app's.
           github_token: ${{ github.token }}
+          path_to_claude_code_executable: ${{ steps.install.outputs.path }}
           prompt: |
             You are fixing the whisky bottle detector of this browser extension
             for GitHub issue #${{ needs.prepare.outputs.issue }}, a report of a
@@ -275,6 +291,14 @@ jobs:
           name: detector-fix
           path: ${{ runner.temp }}/detector-fix/
           retention-days: 14
+
+      # After the upload, so finish can still comment on the issue; this only
+      # marks the run as failed.
+      - name: Fail if the agent did not run
+        if: steps.claude.outcome == 'failure'
+        run: |
+          echo "::error::The Claude Code action failed; see the Fix the detector step."
+          exit 1
 
   verify:
     needs: [prepare, fix]

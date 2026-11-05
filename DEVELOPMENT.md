@@ -307,4 +307,7 @@ workflow treats them as data and limits what the agent can do:
 the detector change like any other. The Tests workflow doesn't start for pull
 requests opened by GitHub Actions; close and reopen the pull request to run
 it. Each run uses Claude Opus with up to 100 turns, which costs API credit;
-the agent's job times out after an hour.
+the agent's job times out after an hour. The workflow installs Claude Code from npm
+before the action runs, at the version the action itself pins; when you update
+the action, update that version too (see the comment at **Install Claude
+Code**).
