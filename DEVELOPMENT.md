@@ -294,7 +294,8 @@ workflow treats them as data and limits what the agent can do:
   in it. It has no web access and no GitHub write access, can only edit
   `src/detector.js`, `test/run.mjs` and `test/fixtures/`, and can only run
   `npm test`, `node test/run.mjs` and `test/scrub-fixture.py`. Secrets are
-  removed from the commands it runs.
+  removed from the commands it runs, which needs bubblewrap; the workflow
+  installs it before the agent starts.
 - A separate job checks the changes on a fresh runner (only the detector,
   added lines in `test/run.mjs` with an expectation for the new page, and the
   new fixtures) and runs `npm test`. The last job, the only one that can push,
@@ -307,7 +308,4 @@ workflow treats them as data and limits what the agent can do:
 the detector change like any other. The Tests workflow doesn't start for pull
 requests opened by GitHub Actions; close and reopen the pull request to run
 it. Each run uses Claude Opus with up to 100 turns, which costs API credit;
-the agent's job times out after an hour. The workflow installs Claude Code from npm
-before the action runs, at the version the action itself pins; when you update
-the action, update that version too (see the comment at **Install Claude
-Code**).
+the agent's job times out after an hour.
