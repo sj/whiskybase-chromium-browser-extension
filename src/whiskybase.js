@@ -166,7 +166,7 @@
   }
 
   /**
-   * What a search response contains: whether it is a Cloudflare challenge, and
+   * What a search response contains: whether it is a check page rather than results, and
    * the whisky results. Results come from the embedded search data when present
    * (with all fields), otherwise from links to whisky pages ({ id, url, text }).
    * Works on the raw HTML string, so it also runs in the service worker.

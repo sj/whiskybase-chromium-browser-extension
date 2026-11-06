@@ -257,7 +257,7 @@ function renderWhiskybase() {
       el(
         'p',
         {},
-        'Whiskybase uses Cloudflare to manage incoming traffic. Every now and then it stops the extension’s searches. ' +
+        'Every now and then, a search on Whiskybase fails, for instance due to rate limiting or other checks. ' +
           'Open the search on Whiskybase and pass the check there if one shows up: the result then appears here as well.'
       ),
       openSearchButton(),
@@ -297,7 +297,7 @@ function retryButton(className = 'wb-retry') {
   return button;
 }
 
-// After a failed search (a Cloudflare check, say): the background opens the
+// After a failed search (rate limiting or another check, say): the background opens the
 // search in a tab and reads the results from it once they load there.
 function openSearchButton() {
   const button = el('button', { type: 'button', className: 'wb-retry wb-primary' }, 'Search on Whiskybase');
@@ -424,10 +424,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // Set from the service worker's console (see background.js); only then is this shown.
 
 async function showDebug() {
-  $('debug-note').hidden = !(await chrome.storage.local.get('debugSimulateCloudflareBlock')).debugSimulateCloudflareBlock;
+  $('debug-note').hidden = !(await chrome.storage.local.get('debugSimulateSearchFailure')).debugSimulateSearchFailure;
 }
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.debugSimulateCloudflareBlock) showDebug();
+  if (area === 'local' && changes.debugSimulateSearchFailure) showDebug();
 });
 
 $('rescan').addEventListener('click', () => scan(true));

@@ -96,7 +96,7 @@ A page can get the content script both ways; `content.js` then keeps one copy.
   based on, and, when shops list the bottle, the price estimate (Whiskybase's
   Average Shop Price) with the number of shops. The review count, series and price are
   only on the bottle's own page, which is fetched only when the popup shows the
-  match (not for every page with one, to keep requests down); the photo host is behind Cloudflare too, so the
+  match (not for every page with one, to keep requests down); the photo host applies rate limiting and other checks too, so the
   background fetches the photo (trying its other sizes if one fails) and hands
   it to the popup as data. When there is no photo, **Details of Whiskybase match**
   says why.
@@ -104,10 +104,10 @@ A page can get the content script both ways; `content.js` then keeps one copy.
 - **Politeness:** results are cached per query for an hour, and requests are at
   least 3 seconds apart and one at a time.
 
-### Cloudflare checks
+### Rate limiting and other checks
 
-Whiskybase is behind Cloudflare, which now and then stops the background's
-requests with a check that only a person in a browser tab can pass.
+Now and then, the background's requests to Whiskybase fail, for instance on a
+check that only a person in a browser tab can pass.
 
 - **Pause:** after a check, the background sends no requests of its own for
   2 minutes. **Try again** in the popup ends the pause.
@@ -130,25 +130,25 @@ requests with a check that only a person in a browser tab can pass.
   Whiskybase tab is ever used, and **Search on Whiskybase** always opens a new tab,
   which then becomes the helper tab.
 
-#### Simulating Cloudflare checks
+#### Simulating search failures
 
 To see the blocked state without being blocked, open the extension's service
 worker console (`chrome://extensions` → Developer mode → **service worker** under
 the extension) and run:
 
 ```js
-chrome.storage.local.set({ debugSimulateCloudflareBlock: true })
+chrome.storage.local.set({ debugSimulateSearchFailure: true })
 ```
 
-Every Whiskybase page request from the background then acts as if Cloudflare
-stopped it, without being sent, and the cache is skipped. **Search on Whiskybase**
+Every Whiskybase page request from the background then acts as if it
+failed, without being sent, and the cache is skipped. **Search on Whiskybase**
 and the helper tab still work for real, since they don't use the background's
 requests, so with a helper tab open every search goes through it. Photos are not
 affected. The popup shows a small orange debug line while the flag is on, so you
 don't forget. Turn it off with:
 
 ```js
-chrome.storage.local.set({ debugSimulateCloudflareBlock: false })
+chrome.storage.local.set({ debugSimulateSearchFailure: false })
 ```
 
 There is no setting for it in the popup, so users never see it.

@@ -6,13 +6,13 @@
  *    (Chrome resets tab-specific badges on navigation);
  *  - for confident detections, looks the bottle up on Whiskybase and stores
  *    the outcome per tab in chrome.storage.session, where the popup reads it;
- *  - when Cloudflare stops a search, opens it in a tab for the user and reads
+ *  - when a search on Whiskybase fails, opens it in a tab for the user and reads
  *    the results from that tab once they load; while the checks go on, that
  *    tab (while it stays on Whiskybase) does the requests instead.
  *
- * Debugging: `chrome.storage.local.set({ debugSimulateCloudflareBlock: true })` in this
+ * Debugging: `chrome.storage.local.set({ debugSimulateSearchFailure: true })` in this
  * worker's DevTools console makes every Whiskybase page request act as if
- * Cloudflare stopped it (see DEVELOPMENT.md); `false` turns it off again.
+ * it failed (see DEVELOPMENT.md); `false` turns it off again.
  */
 'use strict';
 
@@ -28,7 +28,7 @@ const BADGES = {
 const AUTO_MIN_CONFIDENCE = 0.9; // detections below this are only searched on request
 const CACHE_MS = 60 * 60 * 1000; // reuse a search result for an hour
 const MIN_GAP_MS = 3000; // at least this long between requests to Whiskybase
-const BLOCKED_PAUSE_MS = 2 * 60 * 1000; // no requests of the background's own this long after a Cloudflare check
+const BLOCKED_PAUSE_MS = 2 * 60 * 1000; // no requests of the background's own this long after rate limiting or another check
 
 // Last page URL reported per tab, to drop lookups that finish after navigating away.
 const pageUrls = new Map();
@@ -47,10 +47,10 @@ function setBadge(tabId, key, name) {
 // Whiskybase search: cached, throttled, one request at a time
 
 async function simulatingBlocks() {
-  return !!(await chrome.storage.local.get('debugSimulateCloudflareBlock')).debugSimulateCloudflareBlock;
+  return !!(await chrome.storage.local.get('debugSimulateSearchFailure')).debugSimulateSearchFailure;
 }
 
-/** Fetches a Whiskybase page and runs `analyse` on its HTML; 'blocked' on a Cloudflare check. */
+/** Fetches a Whiskybase page and runs `analyse` on its HTML; 'blocked' when it fails on a check. */
 async function fetchPage(url, analyse) {
   if (await simulatingBlocks()) return { state: 'blocked', url, status: 403 };
   const wait = lastRequestAt + MIN_GAP_MS - Date.now();
@@ -74,7 +74,7 @@ async function pausedAfterCheck() {
 
 /**
  * Cached, throttled, one-at-a-time fetch; `analyse` must return plain data.
- * When Cloudflare stops the request, or requests are paused after a check, the
+ * When the request to Whiskybase fails, or requests are paused after a check, the
  * helper tab (below) does it instead if there is one.
  */
 async function cachedFetch(key, url, analyse) {
@@ -130,7 +130,7 @@ async function fetchPhoto(url) {
 
 /**
  * The bottle photo as a data: URL, trying each candidate URL and its other
- * sizes. Whiskybase's image host is behind Cloudflare too, so photos are
+ * sizes. Whiskybase's image host applies rate limiting and other checks too, so photos are
  * fetched like the pages (with the browser's cookies) rather than loaded by
  * the popup directly. Returns { url, data } or { note } saying why there is none.
  */
@@ -159,7 +159,7 @@ async function photoData(urls) {
 async function bottleDetails(match) {
   const r = await cachedFetch(`bottle:${match.id}`, match.url, Whiskybase.analyseBottleHtml);
   if (r.state !== 'ok') {
-    const why = r.state === 'blocked' ? 'a Cloudflare check' : r.error || 'unknown error';
+    const why = r.state === 'blocked' ? 'rate limiting or another check' : r.error || 'unknown error';
     return { note: `The Whiskybase bottle page could not be loaded (${why}), so the number of reviews and the price estimate are missing.` };
   }
   return { ...r.page, note: r.page.price ? null : missingPriceNote(r.page) };
@@ -221,7 +221,7 @@ async function lookup(tabId, pageUrl, whisky, searched) {
  * The number of ratings, the bottling series, the shop price and the photo,
  * which are only on the bottle's own page. They are fetched when the popup
  * shows the match rather than for every page with one, to keep the requests
- * to Whiskybase (and with them Cloudflare's checks) down.
+ * to Whiskybase (and with them rate limiting and other checks) down.
  */
 const detailing = new Set();
 async function addDetails(tabId) {
@@ -256,7 +256,7 @@ async function addDetails(tabId) {
 }
 
 // ---------------------------------------------------------------------------
-// After a failed search (a Cloudflare check, say): the popup asks to open the
+// After a failed search (rate limiting or another check, say): the popup asks to open the
 // search in a tab, where the user passes the check if one shows up. Once that tab has loaded the
 // results, they are read from it and matched for the original tab. The tabs
 // are kept as searchTab:<search tab id> in chrome.storage.session, since the
@@ -340,7 +340,7 @@ chrome.tabs.onUpdated.addListener(async (searchTabId, info, tab) => {
 
 // ---------------------------------------------------------------------------
 // Helper tab: the search tab the user got through the check in. While it stays
-// open on www.whiskybase.com (on any page), requests that Cloudflare stops, or
+// open on www.whiskybase.com (on any page), requests that fail, or
 // that fall in the pause after a check, are done from inside it, as the
 // Whiskybase page itself would. Nothing in the tab changes. Once requests from
 // the background go through again, it isn't used, and once it is closed or
@@ -398,7 +398,7 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   if (!msg) return;
 
   // "Try again" in the popup: the user asks to search once more, so the pause
-  // after a Cloudflare check no longer applies.
+  // after rate limiting or another check no longer applies.
   if (msg.type === 'whisky:retry' && (sender.url || '').startsWith(chrome.runtime.getURL('popup/'))) {
     chrome.storage.session.remove('blockedAt').then(() => {
       pageUrls.set(msg.tabId, msg.url);
