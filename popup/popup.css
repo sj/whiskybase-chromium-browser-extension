@@ -181,6 +181,7 @@ body.wide #wb {
   grid-row: span 2;
   display: grid;
   grid-template-rows: subgrid;
+  grid-template-columns: minmax(0, 1fr); /* lets the one-line name shrink to the column */
   align-self: stretch;
 }
 body.wide #wb {
@@ -208,6 +209,9 @@ body.wide #wb {
 }
 .wb-name {
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* Starts the card level with the parsed data's table on the left, so that the
    photo lines up with the table's top, or (without a photo) the name with its

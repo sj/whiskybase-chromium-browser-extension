@@ -224,8 +224,11 @@ function matchCard(m) {
   const table = el('table', { className: 'wb-fields' });
   for (const [label, value, className] of rows) table.append(el('tr', { className }, el('th', {}, label), el('td', {}, ...[value].flat())));
   // The name in bold, then the bottling series (when Whiskybase has one) in brackets.
+  // Kept to one line, so the series arriving later doesn't push the rest down;
+  // the tooltip has it in full.
   const name = el('p', { className: 'wb-name' }, m.text);
   if (m.series) name.append(' ', el('span', { className: 'wb-series' }, `(${m.series})`));
+  name.title = name.textContent;
   card.append(name, table);
   return card;
 }
