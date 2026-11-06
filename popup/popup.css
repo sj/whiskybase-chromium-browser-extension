@@ -232,6 +232,20 @@ body.wide #wb {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
+/* Copies the ID; faint until hovered, like the info icon. */
+.copy {
+  display: inline-flex;
+  vertical-align: -2px;
+  margin-left: 4px;
+  padding: 1px;
+  border: none;
+  color: var(--muted);
+  opacity: 0.6;
+}
+.copy:hover,
+.copy:focus-visible {
+  opacity: 1;
+}
 
 .wb-manual,
 .wb-retry {
