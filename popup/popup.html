@@ -57,6 +57,21 @@
     </footer>
     <p id="debug-note" class="debug-note" hidden>Debug: act as if every background request to Whiskybase failed (in order to test fallback functionality).</p>
 
+    <!-- Shown in the photo's place when Whiskybase has no photo of the bottle. -->
+    <template id="no-photo">
+      <div class="wb-no-photo">
+        <svg viewBox="0 0 80 160" width="60" height="120" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round">
+            <path d="M32 6h16v8h-16z" />
+            <path d="M33 14v26c0 6-17 12-17 28v82a4 4 0 0 0 4 4h40a4 4 0 0 0 4-4v-82c0-16-17-22-17-28v-26" />
+            <path d="M16 86h48v40h-48z" />
+          </g>
+          <path d="M26 100h28M30 110h20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+        </svg>
+        <span>No photo available</span>
+      </div>
+    </template>
+
     <script src="../src/whiskybase.js"></script>
     <script src="popup.js"></script>
   </body>

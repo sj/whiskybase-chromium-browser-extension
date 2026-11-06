@@ -98,8 +98,10 @@ A page can get the content script both ways; `content.js` then keeps one copy.
   only on the bottle's own page, which is fetched only when the popup shows the
   match (not for every page with one, to keep requests down); the photo host applies rate limiting and other checks too, so the
   background fetches the photo (trying its other sizes if one fails) and hands
-  it to the popup as data. When there is no photo, **Details of Whiskybase match**
-  says why.
+  it to the popup as data. Until the bottle page is in, the photo's 220px and the
+  price row are kept free, each with a spinner. When there is no photo, a generic
+  bottle picture takes its place, and **Details of Whiskybase match** says why;
+  without a price, the row says N/A.
 - **Badge:** **WB** (blue) when a match is found.
 - **Politeness:** results are cached per query for an hour, and requests are at
   least 3 seconds apart and one at a time.
