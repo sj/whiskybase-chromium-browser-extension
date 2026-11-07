@@ -65,8 +65,12 @@
 
   const MARK_DELAY_MS = 1000;
   const BADGE_ATTR = 'data-bottle-lookup';
+  // CSS anchor positioning (Chrome 125 and later) keeps a badge on its image
+  // however the page moves the image about afterwards.
+  const ANCHORS = CSS.supports('anchor-name', '--a');
   let lastAsked = null;
   let markTimer = null;
+  let anchorCount = 0;
 
   // Links that show an image, by href. Without `all`, only those without a badge yet.
   function imageLinks(all) {
@@ -92,10 +96,13 @@
     return `WB${bottle.id}: ${bottle.text}${ratings}`;
   }
 
-  // On the image's top left corner. Measured rather than left to CSS, since the
-  // box it is placed in may be inline (a plain link round the image), where
-  // top/left don't line up with the image.
+  // On the image's top left corner. Without anchor positioning it is measured
+  // rather than left to CSS, since the box it is placed in may be inline (a
+  // plain link round the image), where top/left don't line up with the image;
+  // measured again when the image loads or the window is resized, which misses
+  // other changes to the page's layout.
   function placeBadge(host) {
+    if (ANCHORS) return;
     const img = host.parentElement && host.parentElement.querySelector('img');
     if (!img) return;
     host.style.top = host.style.left = '0px';
@@ -116,6 +123,13 @@
       host = document.createElement('span');
       host.setAttribute(BADGE_ATTR, '');
       host.style.cssText = 'all: initial; position: absolute; z-index: 2147483647;';
+      if (ANCHORS) {
+        const name = `--bottle-lookup-${++anchorCount}`;
+        img.style.setProperty('anchor-name', name);
+        host.style.setProperty('position-anchor', name);
+        host.style.top = 'calc(anchor(top) + 6px)';
+        host.style.left = 'calc(anchor(left) + 6px)';
+      }
       host.attachShadow({ mode: 'open' }).innerHTML =
         '<style>span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px 2px 3px; ' +
         'border-radius: 10px; background: rgba(31, 26, 22, 0.85); color: #fff; ' +
