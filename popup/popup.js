@@ -421,9 +421,9 @@ function renderShown(shown) {
   $('status').hidden = false;
   $('status').className = 'status';
   $('status').replaceChildren(
-    'You clicked the badge of a bottle on this list, matched before on ',
+    'You clicked the badge of a particular bottle in a list. This bottle was matched to Whiskybase before on ',
     link(shown.href, 'its own page'),
-    '. Re-scan to look at this page instead.'
+    '. The badge only appears for bottles in the list that have been matched before.'
   );
   $('fields').hidden = true;
   $('why').hidden = true;
