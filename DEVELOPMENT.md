@@ -176,15 +176,43 @@ chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
 
 
 
+## Bottles matched before, on lists of bottles
+
+When a lookup finds a match, the background also stores it under the page's
+address, as `known:<key>` in session storage with the Whiskybase ID, name and
+rating (the rating is updated once the bottle page is in). The key, from
+[`src/known-pages.js`](src/known-pages.js), leaves out the scheme, `www.`, a
+trailing slash, the `#fragment` and tracking parameters (`utm_…`, `gclid` and
+the like), and sorts the other parameters, so that a list's link to the page
+gets the same key as the page itself. A later lookup on the page without a
+match removes it.
+
+On every page it runs on, `content.js` collects the links that show an image
+and asks the background (`whisky:known`) which of them point to such a page;
+the page's own address is left out. Each of those images gets a small badge on
+its top left corner: the extension's icon and the rating, with the bottle's ID
+and name as tooltip. The badge is in a shadow root, so the page's styles don't
+reach it and the detector doesn't read it. Links added later (more results,
+infinite scrolling) are picked up after a second; coming back to the tab
+updates all badges, since a bottle may have been looked up in another tab.
+**Nothing is looked up for this**: it only uses what is stored, so no request
+goes to Whiskybase.
+
+Since it runs in the content script, lists only get badges on pages the
+content script is on: every page with automatic checking on, otherwise the page
+whose toolbar icon was clicked. The stored matches are gone when the browser
+closes.
+
 ## Files
 
 | Path | Role |
 | ---- | ---- |
 | `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
-| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content |
+| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content; marks images that link to bottles matched before |
 | `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's right-click menu entries |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
+| `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
 | `test/` | Parser unit tests and fixture pages |
 

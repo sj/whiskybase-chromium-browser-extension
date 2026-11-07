@@ -6,6 +6,7 @@ For each release, changes are listed below. When a release is published, the cha
 
 - A small copy icon next to the Whiskybase ID copies it (e.g. WB233907) to the clipboard.
 - The popup no longer jumps around while the Whiskybase details load: the space for the photo and the price estimate is kept free from the start, with a spinner until they arrive. Without a photo, a generic bottle picture is shown; without a price, N/A. A long name and bottling series stay on one line, with the full text as a tooltip.
+- On lists of bottles (a shop's whisky section, say), the photos of bottles matched to Whiskybase earlier in the browser session get a small badge with the extension's icon and the Whiskybase rating. It only uses what the extension already looked up: nothing is looked up for it.
 
 ## 0.3.3
 

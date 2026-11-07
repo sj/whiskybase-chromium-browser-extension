@@ -18,7 +18,7 @@
  */
 'use strict';
 
-importScripts('whiskybase.js');
+importScripts('whiskybase.js', 'known-pages.js');
 
 const BADGES = {
   match: { text: 'WB', color: '#1f5fa8', title: 'Found on Whiskybase' },
@@ -218,7 +218,47 @@ async function lookup(tabId, pageUrl, whisky, searched) {
     candidates: ranked.slice(0, 5).map(brief),
   };
   await setLookup(tabId, result);
+  await rememberMatch(pageUrl, match);
   if (match) setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
+}
+
+// ---------------------------------------------------------------------------
+// Bottles matched before, by page address (known:<key>), so that a list of
+// bottles linking to those pages can show them with their rating (content.js).
+// Only what is stored here is used for that: nothing is looked up. Kept in
+// session storage, like the lookups, so it is gone when the browser closes.
+
+async function rememberMatch(pageUrl, match) {
+  const key = KnownPages.key(pageUrl);
+  if (!key) return;
+  if (match) await chrome.storage.session.set({ [`known:${key}`]: { id: match.id, text: match.text, rating: match.rating || null } });
+  else await chrome.storage.session.remove(`known:${key}`);
+}
+
+/** The stored matches for the links in `hrefs` (except the page itself), by href. */
+async function knownBottles(hrefs, pageUrl) {
+  const own = KnownPages.key(pageUrl);
+  const keys = new Map();
+  for (const href of hrefs.slice(0, 2000)) {
+    const key = KnownPages.key(href);
+    if (key && key !== own) keys.set(href, `known:${key}`);
+  }
+  if (!keys.size) return {};
+  const stored = await chrome.storage.session.get([...new Set(keys.values())]);
+  const known = {};
+  for (const [href, key] of keys) if (stored[key]) known[href] = stored[key];
+  return known;
+}
+
+// The extension's icon for the badges on the page, as data: so that the icon
+// doesn't have to be a web-accessible resource.
+let iconData = null;
+async function badgeIcon() {
+  if (!iconData) {
+    const bytes = new Uint8Array(await (await fetch(chrome.runtime.getURL('icons/icon32.png'))).arrayBuffer());
+    iconData = `data:image/png;base64,${btoa(String.fromCharCode(...bytes))}`;
+  }
+  return iconData;
 }
 
 /**
@@ -255,6 +295,8 @@ async function addDetails(tabId) {
         photoNote: photo.note || null,
       },
     });
+    // The bottle page has the latest rating.
+    if (details.rating) await rememberMatch(now.pageUrl, { ...now.match, rating: details.rating });
   } finally {
     detailing.delete(tabId);
   }
@@ -399,7 +441,7 @@ async function fetchInHelperTab(url, analyse) {
 // ---------------------------------------------------------------------------
 // Messages
 
-chrome.runtime.onMessage.addListener((msg, sender) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
 
   // "Try again" in the popup: the user asks to search once more, so the pause
@@ -420,6 +462,15 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   }
   if (msg.type === 'whisky:open-search' && fromPopup) return void openSearch(msg.tabId, msg.url, msg.whisky);
   if (msg.type === 'whisky:details' && fromPopup) return void addDetails(msg.tabId);
+
+  // A page's links to bottles matched before, from content.js.
+  if (msg.type === 'whisky:known' && sender.tab && Array.isArray(msg.hrefs)) {
+    Promise.all([knownBottles(msg.hrefs, sender.url || sender.tab.url), badgeIcon()]).then(
+      ([known, icon]) => sendResponse({ known, icon }),
+      () => sendResponse(null)
+    );
+    return true;
+  }
 
   if (msg.type !== 'whisky:detection' || !sender.tab || sender.frameId !== 0) return;
   const tabId = sender.tab.id;

@@ -13,6 +13,8 @@ Once you've installed the extension: navigate to a page describing a bottle of w
 
 By default, the extension only analyses the current web page when you click its icon, but you can easily tell it to do so automatically for every page that loads. When the extension is triggered, the icon in the toolbar shows whether it was able to recognise any information, and whether it was able to link it to a bottle on Whiskybase.com. Click the extension icon to see the extracted details: distillery, bottle name, bottler, age, ABV, volume, vintage/bottled year, cask number, etc. 
 
+Browsing a long list of bottles, such as a shop's whisky section? With automatic checking on, the photos of bottles that the extension has matched to Whiskybase before (in the same browser session) get a small badge with the extension's icon and the bottle's Whiskybase rating. This only uses what the extension already knows: nothing is looked up on Whiskybase for it.
+
 **Please note**: This is an independent project; it is not affiliated with nor endorsed by Whiskybase. 
 
 ## Installation instructions
@@ -74,8 +76,10 @@ to anyone, except for the Whiskybase lookups described below.
   the site yourself. So if you are logged in to Whiskybase, Whiskybase can see
   that these searches came from your account.
 - **Storage.** Results are kept in the browser's session storage while you
-  browse, so the same bottle isn't looked up twice. They are cleared when you
-  close the browser. Only the extension's settings are stored permanently.
+  browse, so the same bottle isn't looked up twice. That includes the address
+  of each page with a matched bottle, so that lists of bottles linking to it can
+  show its rating. They are cleared when you close the browser. Only the
+  extension's settings are stored permanently.
 - **Links.** The About & feedback links and the right-click menu entries just
   open GitHub pages in a new tab when you click them.
 
