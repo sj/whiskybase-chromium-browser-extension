@@ -13,6 +13,8 @@ Once you've installed the extension: navigate to a page describing a bottle of w
 
 By default, the extension only analyses the current web page when you click its icon, but you can easily tell it to do so automatically for every page that loads. When the extension is triggered, the icon in the toolbar shows whether it was able to recognise any information, and whether it was able to link it to a bottle on Whiskybase.com. Click the extension icon to see the extracted details: distillery, bottle name, bottler, age, ABV, volume, vintage/bottled year, cask number, etc. 
 
+On the Scotch Malt Whisky Society's own site (smws.com), the extension also adds the distillery's name after each bottle code on the page: "3.369" shows as "3.369 (Bowmore)".
+
 **Please note**: This is an independent project; it is not affiliated with nor endorsed by Whiskybase. 
 
 ## Installation instructions

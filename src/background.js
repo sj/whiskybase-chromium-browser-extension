@@ -460,7 +460,7 @@ const AUTO_SCRIPT = {
   id: 'detector',
   matches: ALL_SITES,
   excludeMatches: Whiskybase.OWN_PAGES,
-  js: ['src/detector.js', 'src/content.js'],
+  js: ['src/detector.js', 'src/smws.js', 'src/content.js'],
   runAt: 'document_idle',
 };
 

@@ -398,7 +398,7 @@ async function detection(tabId, rescan) {
   } catch (e) {
     // Not loaded yet (or left over from before the extension was reloaded).
   }
-  await chrome.scripting.executeScript({ target: { tabId }, files: ['src/detector.js', 'src/content.js'] });
+  await chrome.scripting.executeScript({ target: { tabId }, files: ['src/detector.js', 'src/smws.js', 'src/content.js'] });
   return ask();
 }
 
