@@ -98,8 +98,10 @@ A page can get the content script both ways; `content.js` then keeps one copy.
   only on the bottle's own page, which is fetched only when the popup shows the
   match (not for every page with one, to keep requests down); the photo host applies rate limiting and other checks too, so the
   background fetches the photo (trying its other sizes if one fails) and hands
-  it to the popup as data. When there is no photo, **Details of Whiskybase match**
-  says why.
+  it to the popup as data. Until the bottle page is in, the photo's 220px and the
+  price row are kept free, each with a spinner. When there is no photo, a generic
+  bottle picture takes its place, and **Details of Whiskybase match** says why;
+  without a price, the row says N/A.
 - **Badge:** **WB** (blue) when a match is found.
 - **Politeness:** results are cached per query for an hour, and requests are at
   least 3 seconds apart and one at a time.
@@ -152,6 +154,25 @@ chrome.storage.local.set({ debugSimulateSearchFailure: false })
 ```
 
 There is no setting for it in the popup, so users never see it.
+
+#### Simulating slow data loads
+
+To see the popup while the bottle details (photo, price, review count, series)
+are still loading, run this in the same console:
+
+```js
+chrome.storage.local.set({ debugSimulateSlowDataLoads: true })
+```
+
+The background then waits 5 seconds before fetching the bottle page, so the
+spinners stay up long enough to look at. The details are kept with the match
+once loaded, so to see it again, open a page with another bottle (or the same
+page in a new tab). The popup shows its own orange debug line while the flag is
+on. Turn it off with:
+
+```js
+chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
+```
 
 
 

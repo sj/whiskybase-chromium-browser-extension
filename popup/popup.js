@@ -203,29 +203,38 @@ function ratingText(m) {
   return `${m.rating.toFixed(2)} / 100${n}`;
 }
 
-const priceText = (m) => `${m.price} (${m.shops} ${m.shops === 1 ? 'shop' : 'shops'})`;
+// Only bottles that shops currently list have a price.
+const priceText = (m) => (m.price && m.shops ? `${m.price} (${m.shops} ${m.shops === 1 ? 'shop' : 'shops'})` : 'N/A');
+
+const spinner = (label) => el('span', { className: 'spinner', role: 'status', ariaLabel: label });
+const noPhoto = () => $('no-photo').content.firstElementChild.cloneNode(true);
 
 // Photo on top, then the name (and series) and a table like the parsed data: ID, rating, price.
+// The photo and price come with the bottle page, after the match is shown, so
+// their space is kept from the start, with a spinner until then.
 function matchCard(m) {
   const card = el('div', { className: 'wb-match' });
-  if (m.photoData || m.photo) {
-    const img = el('img', { src: m.photoData || m.photo, alt: m.text, className: 'wb-photo' });
-    const a = link(m.url, img);
-    a.className = 'wb-photo-link';
-    img.addEventListener('error', () => a.remove());
-    card.append(a);
+  const photo = link(m.url, m.detailed ? noPhoto() : spinner('Loading photo'));
+  photo.className = 'wb-photo-link';
+  if (m.photoData) {
+    const img = el('img', { src: m.photoData, alt: m.text, className: 'wb-photo' });
+    img.addEventListener('error', () => img.replaceWith(noPhoto()));
+    photo.replaceChildren(img);
   }
+  card.append(photo);
   const rows = [
     ['Whiskybase ID', [link(m.url, Whiskybase.displayId(m.id)), copyButton(Whiskybase.displayId(m.id))], 'wb-id'],
     ['Rating', ratingText(m), 'wb-rating'],
+    ['Price estimate', m.detailed ? priceText(m) : spinner('Loading price'), 'wb-price'],
   ];
-  // Only for bottles that shops currently list.
-  if (m.price && m.shops) rows.push(['Price estimate', priceText(m), 'wb-price']);
   const table = el('table', { className: 'wb-fields' });
   for (const [label, value, className] of rows) table.append(el('tr', { className }, el('th', {}, label), el('td', {}, ...[value].flat())));
   // The name in bold, then the bottling series (when Whiskybase has one) in brackets.
+  // Kept to one line, so the series arriving later doesn't push the rest down;
+  // the tooltip has it in full.
   const name = el('p', { className: 'wb-name' }, m.text);
   if (m.series) name.append(' ', el('span', { className: 'wb-series' }, `(${m.series})`));
+  name.title = name.textContent;
   card.append(name, table);
   return card;
 }
@@ -271,10 +280,7 @@ function renderWhiskybase() {
     // Below both columns' content, level with Details of parsed data.
     $('wb-foot').append(matchDetails(lk));
     // The bottle page (reviews, series, price, photo) is fetched now that the match is shown.
-    if (!lk.match.detailed) {
-      out.append(el('p', { className: 'muted' }, 'Loading details from Whiskybase…'));
-      chrome.runtime.sendMessage({ type: 'whisky:details', tabId: currentTabId });
-    }
+    if (!lk.match.detailed) chrome.runtime.sendMessage({ type: 'whisky:details', tabId: currentTabId });
   } else if (lk.state === 'nomatch') {
     out.append(el('p', { className: 'wb-bad' }, lk.total ? 'No confident match. Best candidates:' : 'No results.'));
     if (lk.candidates.length) out.append(candidateList(lk.candidates));
@@ -462,11 +468,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.
 
+// One note per flag, each shown while its flag is on.
+const debugNotes = [...document.querySelectorAll('.debug-note[data-flag]')];
+
 async function showDebug() {
-  $('debug-note').hidden = !(await chrome.storage.local.get('debugSimulateSearchFailure')).debugSimulateSearchFailure;
+  const flags = await chrome.storage.local.get(debugNotes.map((p) => p.dataset.flag));
+  for (const p of debugNotes) p.hidden = !flags[p.dataset.flag];
 }
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.debugSimulateSearchFailure) showDebug();
+  if (area === 'local' && debugNotes.some((p) => p.dataset.flag in changes)) showDebug();
 });
 
 $('rescan').addEventListener('click', () => scan(true));

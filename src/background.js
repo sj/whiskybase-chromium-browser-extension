@@ -12,7 +12,9 @@
  *
  * Debugging: `chrome.storage.local.set({ debugSimulateSearchFailure: true })` in this
  * worker's DevTools console makes every Whiskybase page request act as if
- * it failed (see DEVELOPMENT.md); `false` turns it off again.
+ * it failed (see DEVELOPMENT.md); `false` turns it off again. Likewise,
+ * `debugSimulateSlowDataLoads` holds back the bottle details (photo, price and
+ * so on) for 5 seconds, to show the popup while they load.
  */
 'use strict';
 
@@ -46,13 +48,15 @@ function setBadge(tabId, key, name) {
 // ---------------------------------------------------------------------------
 // Whiskybase search: cached, throttled, one request at a time
 
-async function simulatingBlocks() {
-  return !!(await chrome.storage.local.get('debugSimulateSearchFailure')).debugSimulateSearchFailure;
+const SLOW_LOAD_MS = 5000; // how long debugSimulateSlowDataLoads holds back the bottle details
+
+async function debugFlag(name) {
+  return !!(await chrome.storage.local.get(name))[name];
 }
 
 /** Fetches a Whiskybase page and runs `analyse` on its HTML; 'blocked' when it fails on a check. */
 async function fetchPage(url, analyse) {
-  if (await simulatingBlocks()) return { state: 'blocked', url, status: 403 };
+  if (await debugFlag('debugSimulateSearchFailure')) return { state: 'blocked', url, status: 403 };
   const wait = lastRequestAt + MIN_GAP_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastRequestAt = Date.now();
@@ -80,7 +84,7 @@ async function pausedAfterCheck() {
 async function cachedFetch(key, url, analyse) {
   const cached = (await chrome.storage.session.get(key))[key];
   // While simulating blocks, cached pages would hide them.
-  if (cached && Date.now() - cached.at < CACHE_MS && !(await simulatingBlocks())) return { ...cached.value, cached: true };
+  if (cached && Date.now() - cached.at < CACHE_MS && !(await debugFlag('debugSimulateSearchFailure'))) return { ...cached.value, cached: true };
 
   const run = queue.then(async () => {
     const direct = (await pausedAfterCheck()) ? { state: 'blocked', url, paused: true } : await fetchPage(url, analyse);
@@ -230,6 +234,7 @@ async function addDetails(tabId) {
   if (!lk || lk.state !== 'match' || lk.match.detailed || detailing.has(tabId)) return;
   detailing.add(tabId);
   try {
+    if (await debugFlag('debugSimulateSlowDataLoads')) await new Promise((r) => setTimeout(r, SLOW_LOAD_MS));
     const details = await bottleDetails(lk.match);
     const photo = await photoData([lk.match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
     const now = (await chrome.storage.session.get(key))[key];
