@@ -1,7 +1,7 @@
 /*
  * Page addresses of bottles matched before, as keys: the background stores the
- * match under the page's key, and looks up the links on a list of bottles by
- * theirs (see content.js). Nothing here talks to Whiskybase.
+ * match under the page's key (and its canonical address's), and looks up the
+ * links on a list of bottles by theirs (see content.js). Nothing here talks to Whiskybase.
  *
  * No dependencies and no DOM, so the same file runs in the background service
  * worker (importScripts) and Node tests.
@@ -33,7 +33,27 @@
     return `${host}${port}${path}${query}`;
   }
 
-  const api = { key };
+  // A match is also stored under the address the page gives as its canonical
+  // one, marked with this: a list may link there instead of to the page itself
+  // (an auction's list linking each photo to the bottle rather than the lot).
+  const CANONICAL = '#canonical';
+
+  /**
+   * The keys to try for a link on a list, best first: the page it links to;
+   * a page that named it as canonical; and, for a link with a query, a page
+   * that named the address without the query as canonical (the same bottle
+   * in another lot, say). Empty for anything but a web page.
+   */
+  function linkKeys(url) {
+    const k = key(url);
+    if (!k) return [];
+    const keys = [k, k + CANONICAL];
+    const q = k.indexOf('?');
+    if (q > 0) keys.push(k.slice(0, q) + CANONICAL);
+    return keys;
+  }
+
+  const api = { key, linkKeys, CANONICAL };
   root.KnownPages = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

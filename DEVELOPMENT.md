@@ -193,9 +193,20 @@ the like), and sorts the other parameters, so that a list's link to the page
 gets the same key as the page itself. A later lookup on the page without a
 match removes it.
 
+Lists don't always link to the page that was matched: Whisky Auctioneer's
+lists link each photo to the bottle (`/learn/explore-whisky/bottles/<name>?v=<lot>`)
+rather than to the lot page (`/whisky-lot/<lot>/<name>`). So the match is
+also stored under the address the page names as canonical (`<link
+rel="canonical">`, which `content.js` adds to its detection result), as
+`known:<key>#canonical`; not when that is a home page, which some sites give
+as every page's canonical address. A link on a list tries its own key first,
+then `<key>#canonical`, then, if it has a query, that key without the query
+(`KnownPages.linkKeys`): the lot page's canonical address is the bottle without
+`?v=`, so every lot of that bottle on the list gets the badge.
+
 On every page it runs on, `content.js` collects the links that show an image
 and asks the background (`whisky:known`) which of them point to such a page;
-the page's own address is left out. Each of those images gets a small badge on
+links to the page's own address or its canonical address are left out. Each of those images gets a small badge on
 its top left corner: the extension's icon and the rating, with a tooltip such
 as "WB233907: Inchgower Madeira Finish MM (78 ratings)". The badge is in a shadow root, so the page's styles don't
 reach it and the detector doesn't read it. It's tied to its image with CSS

@@ -218,7 +218,7 @@ async function lookup(tabId, pageUrl, whisky, searched) {
     candidates: ranked.slice(0, 5).map(brief),
   };
   await setLookup(tabId, result);
-  await rememberMatch(pageUrl, match);
+  await rememberMatch(tabId, pageUrl, match);
   if (match) setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
 }
 
@@ -228,26 +228,53 @@ async function lookup(tabId, pageUrl, whisky, searched) {
 // Only what is stored here is used for that: nothing is looked up. Kept in
 // local storage, unlike the lookups, so that it lasts beyond the session.
 
-async function rememberMatch(pageUrl, match) {
-  const key = KnownPages.key(pageUrl);
-  if (!key) return;
-  const bottle = match && { id: match.id, url: match.url, text: match.text, rating: match.rating || null, reviews: match.reviews != null ? match.reviews : null };
-  if (bottle) await chrome.storage.local.set({ [`known:${key}`]: bottle });
-  else await chrome.storage.local.remove(`known:${key}`);
+// The address the page in the tab gives as its own (rel=canonical), from content.js.
+async function pageCanonical(tabId, pageUrl) {
+  try {
+    const r = await chrome.tabs.sendMessage(tabId, { type: 'whisky:get' });
+    return r && r.url === pageUrl ? r.canonical || null : null;
+  } catch (e) {
+    return null; // no content script in the tab (any more)
+  }
 }
 
-/** The stored matches for the links in `hrefs` (except the page itself), by href. */
-async function knownBottles(hrefs, pageUrl) {
-  const own = KnownPages.key(pageUrl);
-  const keys = new Map();
+// Under the page's address, and its canonical address if that is another one;
+// not a home page, which some sites give as every page's canonical address.
+async function rememberMatch(tabId, pageUrl, match) {
+  const key = KnownPages.key(pageUrl);
+  if (!key) return;
+  const keys = [`known:${key}`];
+  const canonical = KnownPages.key(await pageCanonical(tabId, pageUrl));
+  const home = canonical && canonical.split('?')[0].endsWith('/');
+  if (canonical && canonical !== key && !home) keys.push(`known:${canonical}${KnownPages.CANONICAL}`);
+  await storeKnown(keys, match);
+}
+
+async function storeKnown(keys, match) {
+  const bottle = match && { id: match.id, url: match.url, text: match.text, rating: match.rating || null, reviews: match.reviews != null ? match.reviews : null };
+  if (bottle) await chrome.storage.local.set(Object.fromEntries(keys.map((k) => [k, bottle])));
+  else await chrome.storage.local.remove(keys);
+}
+
+/**
+ * The stored matches for the links in `hrefs`, by href, each with the key it
+ * was stored under (storedAs). Links to the page itself, or to its canonical
+ * address, are left out.
+ */
+async function knownBottles(hrefs, pageUrl, canonicalUrl) {
+  const own = new Set([KnownPages.key(pageUrl), KnownPages.key(canonicalUrl)].filter(Boolean));
+  const tries = new Map();
   for (const href of hrefs.slice(0, 2000)) {
-    const key = KnownPages.key(href);
-    if (key && key !== own) keys.set(href, `known:${key}`);
+    const keys = KnownPages.linkKeys(href);
+    if (keys.length && !own.has(keys[0])) tries.set(href, keys.map((k) => `known:${k}`));
   }
-  if (!keys.size) return {};
-  const stored = await chrome.storage.local.get([...new Set(keys.values())]);
+  if (!tries.size) return {};
+  const stored = await chrome.storage.local.get([...new Set([...tries.values()].flat())]);
   const known = {};
-  for (const [href, key] of keys) if (stored[key]) known[href] = stored[key];
+  for (const [href, keys] of tries) {
+    const key = keys.find((k) => stored[k]);
+    if (key) known[href] = { ...stored[key], storedAs: key };
+  }
   return known;
 }
 
@@ -299,7 +326,7 @@ async function addDetails(tabId) {
     if (!now || now.state !== 'match' || now.pageUrl !== lk.pageUrl || now.match.id !== lk.match.id) return;
     await setLookup(tabId, { ...now, match: { ...now.match, ...details } });
     // The bottle page has the latest rating, and the number of ratings.
-    if (details.rating || details.reviews != null) await rememberMatch(now.pageUrl, { ...now.match, ...details });
+    if (details.rating || details.reviews != null) await rememberMatch(tabId, now.pageUrl, { ...now.match, ...details });
   } finally {
     detailing.delete(key);
   }
@@ -311,10 +338,10 @@ async function addDetails(tabId) {
 // pick up. Its details are only fetched once the popup asks, as for a lookup.
 
 async function showKnown(tab, href) {
-  const bottle = (await knownBottles([href], tab.url))[href];
-  if (!bottle) return;
+  const { storedAs, ...bottle } = (await knownBottles([href], tab.url))[href] || {};
+  if (!storedAs) return;
   const match = { ...bottle, url: bottle.url || Whiskybase.WHISKY_URL + bottle.id };
-  await chrome.storage.session.set({ [`shown:${tab.id}`]: { href, at: Date.now(), match } });
+  await chrome.storage.session.set({ [`shown:${tab.id}`]: { href, storedAs, at: Date.now(), match } });
   // Not before Chrome 127; and it fails with a popup already open, say.
   if (chrome.action.openPopup) await chrome.action.openPopup({ windowId: tab.windowId }).catch(() => {});
 }
@@ -329,7 +356,7 @@ async function addShownDetails(tabId) {
     const now = (await chrome.storage.session.get(key))[key];
     if (!now || now.at !== shown.at) return;
     await chrome.storage.session.set({ [key]: { ...now, match: { ...now.match, ...details } } });
-    if (details.rating || details.reviews != null) await rememberMatch(now.href, { ...now.match, ...details });
+    if (details.rating || details.reviews != null) await storeKnown([now.storedAs], { ...now.match, ...details });
   } finally {
     detailing.delete(key);
   }
@@ -500,7 +527,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
   // A page's links to bottles matched before, from content.js.
   if (msg.type === 'whisky:known' && sender.tab && Array.isArray(msg.hrefs)) {
-    Promise.all([knownBottles(msg.hrefs, sender.url || sender.tab.url), badgeIcon()]).then(
+    Promise.all([knownBottles(msg.hrefs, sender.url || sender.tab.url, msg.canonical), badgeIcon()]).then(
       ([known, icon]) => sendResponse({ known, icon }),
       () => sendResponse(null)
     );

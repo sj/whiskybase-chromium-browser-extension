@@ -487,6 +487,13 @@ check('KnownPages.key: one key per page, whatever the link adds', () => {
   assert.notEqual(KP.key('https://shop.example/Whisky/A'), KP.key('https://shop.example/whisky/a'));
   assert.equal(KP.key('https://shop.example:8443/'), 'shop.example:8443/');
   for (const url of ['javascript:void(0)', 'mailto:a@b.example', 'not a url', '', undefined]) assert.equal(KP.key(url), null, String(url));
+  assert.deepEqual(KP.linkKeys('https://www.auction.example/bottles/caol-ila-1968?v=5330587&utm_source=x'), [
+    'auction.example/bottles/caol-ila-1968?v=5330587',
+    'auction.example/bottles/caol-ila-1968?v=5330587#canonical',
+    'auction.example/bottles/caol-ila-1968#canonical',
+  ]);
+  assert.deepEqual(KP.linkKeys('https://shop.example/a/'), ['shop.example/a', 'shop.example/a#canonical']);
+  assert.deepEqual(KP.linkKeys('mailto:a@b.example'), []);
 });
 
 const SEARCH_MM = 'whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-search-results.html';

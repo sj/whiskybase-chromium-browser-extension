@@ -34,8 +34,19 @@
   let windowStart = Date.now();
   let timer = null;
 
+  // The address the page gives as its own (rel=canonical): a match is also
+  // stored under it, as a list of bottles may link there instead.
+  function canonicalUrl() {
+    const link = document.querySelector('link[rel="canonical"][href]');
+    try {
+      return link ? new URL(link.getAttribute('href'), location.href).href : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   function scan() {
-    latest = globalThis.WhiskyDetector.detect(document, { url: location.href });
+    latest = { ...globalThis.WhiskyDetector.detect(document, { url: location.href }), canonical: canonicalUrl() };
     const key = JSON.stringify([latest.url, latest.status, latest.whisky.name]);
     if (key !== lastReported) {
       lastReported = key;
@@ -161,7 +172,7 @@
     lastAsked = asked;
     let reply;
     try {
-      reply = await chrome.runtime.sendMessage({ type: 'whisky:known', hrefs });
+      reply = await chrome.runtime.sendMessage({ type: 'whisky:known', hrefs, canonical: canonicalUrl() });
     } catch (e) {
       return void linkObserver.disconnect(); // extension reloaded or removed
     }
