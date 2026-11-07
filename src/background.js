@@ -490,6 +490,25 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 });
 
+// A tab whose search failed before there was a helper tab (one of several
+// bottles opened in background tabs, say) searches again when the user switches
+// to it, if there is a helper tab by then: through it, if the background's own
+// request fails again.
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  const key = `lookup:${tabId}`;
+  const lk = (await chrome.storage.session.get(key))[key];
+  if (!lk || lk.state !== 'blocked' || !(await helperTab())) return;
+  let result;
+  try {
+    result = await chrome.tabs.sendMessage(tabId, { type: 'whisky:get' });
+  } catch (e) {
+    return; // no content script (any more) to say what the bottle is
+  }
+  if (!result || result.url !== lk.pageUrl || result.status === 'none') return;
+  pageUrls.set(tabId, lk.pageUrl);
+  lookup(tabId, lk.pageUrl, result.whisky);
+});
+
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   pageUrls.delete(tabId);
   chrome.storage.session.remove(`lookup:${tabId}`);

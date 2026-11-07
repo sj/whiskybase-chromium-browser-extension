@@ -131,6 +131,11 @@ check that only a person in a browser tab can pass.
   it's closed or leaves Whiskybase, it stops being a helper tab. No other
   Whiskybase tab is ever used, and **Search on Whiskybase** always opens a new tab,
   which then becomes the helper tab.
+- **Failed tabs catch up:** a tab whose search failed before there was a helper
+  tab (one of several bottles opened in background tabs, say) searches again
+  when the user switches to it, if there is a helper tab by then. It asks the
+  tab's content script what the bottle is, and the search goes through the
+  helper tab if the background's own request fails again.
 
 #### Simulating search failures
 
