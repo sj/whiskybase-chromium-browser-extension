@@ -226,13 +226,13 @@ async function lookup(tabId, pageUrl, whisky, searched) {
 // Bottles matched before, by page address (known:<key>), so that a list of
 // bottles linking to those pages can show them with their rating (content.js).
 // Only what is stored here is used for that: nothing is looked up. Kept in
-// session storage, like the lookups, so it is gone when the browser closes.
+// local storage, unlike the lookups, so that it lasts beyond the session.
 
 async function rememberMatch(pageUrl, match) {
   const key = KnownPages.key(pageUrl);
   if (!key) return;
-  if (match) await chrome.storage.session.set({ [`known:${key}`]: { id: match.id, text: match.text, rating: match.rating || null } });
-  else await chrome.storage.session.remove(`known:${key}`);
+  if (match) await chrome.storage.local.set({ [`known:${key}`]: { id: match.id, text: match.text, rating: match.rating || null } });
+  else await chrome.storage.local.remove(`known:${key}`);
 }
 
 /** The stored matches for the links in `hrefs` (except the page itself), by href. */
@@ -244,7 +244,7 @@ async function knownBottles(hrefs, pageUrl) {
     if (key && key !== own) keys.set(href, `known:${key}`);
   }
   if (!keys.size) return {};
-  const stored = await chrome.storage.session.get([...new Set(keys.values())]);
+  const stored = await chrome.storage.local.get([...new Set(keys.values())]);
   const known = {};
   for (const [href, key] of keys) if (stored[key]) known[href] = stored[key];
   return known;

@@ -179,7 +179,7 @@ chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
 ## Bottles matched before, on lists of bottles
 
 When a lookup finds a match, the background also stores it under the page's
-address, as `known:<key>` in session storage with the Whiskybase ID, name and
+address, as `known:<key>` in local storage with the Whiskybase ID, name and
 rating (the rating is updated once the bottle page is in). The key, from
 [`src/known-pages.js`](src/known-pages.js), leaves out the scheme, `www.`, a
 trailing slash, the `#fragment` and tracking parameters (`utm_…`, `gclid` and
@@ -200,8 +200,9 @@ goes to Whiskybase.
 
 Since it runs in the content script, lists only get badges on pages the
 content script is on: every page with automatic checking on, otherwise the page
-whose toolbar icon was clicked. The stored matches are gone when the browser
-closes.
+whose toolbar icon was clicked. Unlike the lookups, the stored matches are kept
+in local storage, so they last after the browser closes; at about 100 bytes
+each, the 10 MB that local storage allows is plenty.
 
 ## Files
 
