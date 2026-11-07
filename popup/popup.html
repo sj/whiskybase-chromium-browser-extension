@@ -53,7 +53,11 @@
           <path d="M8 7.3v4.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
         </svg>
       </span>
-      <a class="about" href="https://github.com/sj/whiskybase-chromium-browser-extension" target="_blank" rel="noopener">About &amp; feedback</a>
+      <span class="footer-links">
+        <button type="button" id="clear-known" class="link"
+          title="Forget the bottles matched before, which show with their rating on lists of bottles">Clear stored bottle data</button>
+        <a class="about" href="https://github.com/sj/whiskybase-chromium-browser-extension" target="_blank" rel="noopener">About &amp; feedback</a>
+      </span>
     </footer>
     <p class="debug-note" data-flag="debugSimulateSearchFailure" hidden>Debug: act as if every background request to Whiskybase failed (in order to test fallback functionality).</p>
     <p class="debug-note" data-flag="debugSimulateSlowDataLoads" hidden>Debug: load the bottle details from Whiskybase 5 seconds late (in order to test the loading state).</p>

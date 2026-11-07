@@ -205,7 +205,8 @@ Since it runs in the content script, lists only get badges on pages the
 content script is on: every page with automatic checking on, otherwise the page
 whose toolbar icon was clicked. Unlike the lookups, the stored matches are kept
 in local storage, so they last after the browser closes; at about 100 bytes
-each, the 10 MB that local storage allows is plenty.
+each, the 10 MB that local storage allows is plenty. **Clear stored bottle
+data** at the bottom of the popup removes them all (and with them the badges).
 
 ## Files
 

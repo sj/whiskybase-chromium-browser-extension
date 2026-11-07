@@ -80,7 +80,8 @@ to anyone, except for the Whiskybase lookups described below.
   close the browser. Only the extension's settings, and the address of each page
   with a matched bottle (with the bottle's Whiskybase ID, name, rating and number of ratings, so that
   lists of bottles linking to it can show its rating) are stored permanently, in
-  your browser only. They are removed when you remove the extension.
+  your browser only. They are removed when you click **Clear stored bottle data**
+  at the bottom of the popup, or remove the extension.
 - **Links.** The About & feedback links and the right-click menu entries just
   open GitHub pages in a new tab when you click them.
 

@@ -479,6 +479,14 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && debugNotes.some((p) => p.dataset.flag in changes)) showDebug();
 });
 
+// The bottles matched before (known:<key>, see background.js), for the badges on lists of bottles.
+$('clear-known').addEventListener('click', async () => {
+  const keys = Object.keys(await chrome.storage.local.get(null)).filter((k) => k.startsWith('known:'));
+  await chrome.storage.local.remove(keys);
+  $('clear-known').textContent = 'Stored bottle data cleared';
+  $('clear-known').disabled = true;
+});
+
 $('rescan').addEventListener('click', () => scan(true));
 showAutoCheck();
 showDebug();
