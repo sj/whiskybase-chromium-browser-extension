@@ -107,11 +107,6 @@
     return `WB${bottle.id}: ${bottle.text}${ratings}`;
   }
 
-  // On the image's top left corner. Without anchor positioning it is measured
-  // rather than left to CSS, since the box it is placed in may be inline (a
-  // plain link round the image), where top/left don't line up with the image;
-  // measured again when the image loads or the window is resized, which misses
-  // other changes to the page's layout.
   const badgeImages = new WeakMap(); // badge → the image it is placed on
 
   // The bottle's photo: the largest image in the link, as a link round a card
@@ -128,6 +123,11 @@
     return best;
   }
 
+  // Centred at the bottom of the image, 6px up from its bottom edge. Without
+  // anchor positioning it is measured rather than left to CSS, since the box it
+  // is placed in may be inline (a plain link round the image), where top/left
+  // don't line up with the image; measured again when the image loads or the
+  // window is resized, which misses other changes to the page's layout.
   function placeBadge(host) {
     if (ANCHORS) return;
     const img = badgeImages.get(host);
@@ -135,8 +135,8 @@
     host.style.top = host.style.left = '0px';
     const at = host.getBoundingClientRect();
     const to = img.getBoundingClientRect();
-    host.style.top = `${Math.round(to.top - at.top) + 6}px`;
-    host.style.left = `${Math.round(to.left - at.left) + 6}px`;
+    host.style.top = `${Math.round(to.bottom - at.top - at.height) - 6}px`;
+    host.style.left = `${Math.round(to.left - at.left + (to.width - at.width) / 2)}px`;
   }
 
   // The badge is in a shadow root so that the page's styles leave it alone
@@ -155,8 +155,9 @@
         const name = `--bottle-lookup-${++anchorCount}`;
         img.style.setProperty('anchor-name', name);
         host.style.setProperty('position-anchor', name);
-        host.style.top = 'calc(anchor(top) + 6px)';
-        host.style.left = 'calc(anchor(left) + 6px)';
+        host.style.bottom = 'calc(anchor(bottom) + 6px)';
+        host.style.left = 'anchor(center)';
+        host.style.transform = 'translateX(-50%)';
       }
       host.attachShadow({ mode: 'open' }).innerHTML =
         '<style>span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px 2px 3px; ' +
@@ -173,11 +174,11 @@
         chrome.runtime.sendMessage({ type: 'whisky:show-known', href: a.href }).catch(() => {});
       });
     }
-    placeBadge(host);
     const root = host.shadowRoot;
     root.querySelector('img').src = icon;
     root.querySelector('b').textContent = badgeText(bottle);
     root.querySelector('span').title = badgeTitle(bottle);
+    placeBadge(host); // once it has its content, as its width counts
   }
 
   // `all` also updates the badges already there (a rating may have changed).
