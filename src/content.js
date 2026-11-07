@@ -133,11 +133,17 @@
       host.attachShadow({ mode: 'open' }).innerHTML =
         '<style>span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px 2px 3px; ' +
         'border-radius: 10px; background: rgba(31, 26, 22, 0.85); color: #fff; ' +
-        'font: 600 11px/14px system-ui, sans-serif; white-space: nowrap; } img { width: 14px; height: 14px; }</style>' +
+        'font: 600 11px/14px system-ui, sans-serif; white-space: nowrap; cursor: pointer; } img { width: 14px; height: 14px; }</style>' +
         '<span><img alt=""><b></b></span>';
       if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
       box.append(host);
       img.addEventListener('load', () => placeBadge(host));
+      // Clicked: the popup opens on this bottle, instead of the link being followed.
+      host.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chrome.runtime.sendMessage({ type: 'whisky:show-known', href: a.href }).catch(() => {});
+      });
     }
     placeBadge(host);
     const root = host.shadowRoot;

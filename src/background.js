@@ -231,7 +231,7 @@ async function lookup(tabId, pageUrl, whisky, searched) {
 async function rememberMatch(pageUrl, match) {
   const key = KnownPages.key(pageUrl);
   if (!key) return;
-  const bottle = match && { id: match.id, text: match.text, rating: match.rating || null, reviews: match.reviews != null ? match.reviews : null };
+  const bottle = match && { id: match.id, url: match.url, text: match.text, rating: match.rating || null, reviews: match.reviews != null ? match.reviews : null };
   if (bottle) await chrome.storage.local.set({ [`known:${key}`]: bottle });
   else await chrome.storage.local.remove(`known:${key}`);
 }
@@ -268,40 +268,70 @@ async function badgeIcon() {
  * shows the match rather than for every page with one, to keep the requests
  * to Whiskybase (and with them rate limiting and other checks) down.
  */
+// The match with what its bottle page adds: number of ratings, price, series and photo.
+async function detailedMatch(match) {
+  if (await debugFlag('debugSimulateSlowDataLoads')) await new Promise((r) => setTimeout(r, SLOW_LOAD_MS));
+  const details = await bottleDetails(match);
+  const photo = await photoData([match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
+  return {
+    detailed: true,
+    rating: details.rating || match.rating,
+    reviews: details.reviews != null ? details.reviews : null,
+    price: details.price || null,
+    shops: details.shops || null,
+    series: details.series || null,
+    detailsNote: details.note,
+    photo: photo.url || null,
+    photoData: photo.data || null,
+    photoNote: photo.note || null,
+  };
+}
+
 const detailing = new Set();
 async function addDetails(tabId) {
   const key = `lookup:${tabId}`;
   const lk = (await chrome.storage.session.get(key))[key];
-  if (!lk || lk.state !== 'match' || lk.match.detailed || detailing.has(tabId)) return;
-  detailing.add(tabId);
+  if (!lk || lk.state !== 'match' || lk.match.detailed || detailing.has(key)) return;
+  detailing.add(key);
   try {
-    if (await debugFlag('debugSimulateSlowDataLoads')) await new Promise((r) => setTimeout(r, SLOW_LOAD_MS));
-    const details = await bottleDetails(lk.match);
-    const photo = await photoData([lk.match.photo, details.photo].filter(Whiskybase.isBottlePhoto));
+    const details = await detailedMatch(lk.match);
     const now = (await chrome.storage.session.get(key))[key];
     if (!now || now.state !== 'match' || now.pageUrl !== lk.pageUrl || now.match.id !== lk.match.id) return;
-    await setLookup(tabId, {
-      ...now,
-      match: {
-        ...now.match,
-        detailed: true,
-        rating: details.rating || now.match.rating,
-        reviews: details.reviews != null ? details.reviews : null,
-        price: details.price || null,
-        shops: details.shops || null,
-        series: details.series || null,
-        detailsNote: details.note,
-        photo: photo.url || null,
-        photoData: photo.data || null,
-        photoNote: photo.note || null,
-      },
-    });
+    await setLookup(tabId, { ...now, match: { ...now.match, ...details } });
     // The bottle page has the latest rating, and the number of ratings.
-    if (details.rating || details.reviews != null) {
-      await rememberMatch(now.pageUrl, { ...now.match, rating: details.rating || now.match.rating, reviews: details.reviews });
-    }
+    if (details.rating || details.reviews != null) await rememberMatch(now.pageUrl, { ...now.match, ...details });
   } finally {
-    detailing.delete(tabId);
+    detailing.delete(key);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// A badge on a list of bottles clicked (content.js): the popup opens on that
+// bottle, kept as shown:<tabId> in chrome.storage.session for the popup to
+// pick up. Its details are only fetched once the popup asks, as for a lookup.
+
+async function showKnown(tab, href) {
+  const bottle = (await knownBottles([href], tab.url))[href];
+  if (!bottle) return;
+  const match = { ...bottle, url: bottle.url || Whiskybase.WHISKY_URL + bottle.id };
+  await chrome.storage.session.set({ [`shown:${tab.id}`]: { href, at: Date.now(), match } });
+  // Not before Chrome 127; and it fails with a popup already open, say.
+  if (chrome.action.openPopup) await chrome.action.openPopup({ windowId: tab.windowId }).catch(() => {});
+}
+
+async function addShownDetails(tabId) {
+  const key = `shown:${tabId}`;
+  const shown = (await chrome.storage.session.get(key))[key];
+  if (!shown || shown.match.detailed || detailing.has(key)) return;
+  detailing.add(key);
+  try {
+    const details = await detailedMatch(shown.match);
+    const now = (await chrome.storage.session.get(key))[key];
+    if (!now || now.at !== shown.at) return;
+    await chrome.storage.session.set({ [key]: { ...now, match: { ...now.match, ...details } } });
+    if (details.rating || details.reviews != null) await rememberMatch(now.href, { ...now.match, ...details });
+  } finally {
+    detailing.delete(key);
   }
 }
 
@@ -465,6 +495,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   if (msg.type === 'whisky:open-search' && fromPopup) return void openSearch(msg.tabId, msg.url, msg.whisky);
   if (msg.type === 'whisky:details' && fromPopup) return void addDetails(msg.tabId);
+  if (msg.type === 'whisky:shown-details' && fromPopup) return void addShownDetails(msg.tabId);
+  if (msg.type === 'whisky:show-known' && sender.tab && typeof msg.href === 'string') return void showKnown(sender.tab, msg.href);
 
   // A page's links to bottles matched before, from content.js.
   if (msg.type === 'whisky:known' && sender.tab && Array.isArray(msg.hrefs)) {
@@ -486,7 +518,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (status === 'whisky' && confidence >= AUTO_MIN_CONFIDENCE) {
     lookup(tabId, url, whisky);
   } else if (previousUrl !== url) {
-    chrome.storage.session.remove(`lookup:${tabId}`);
+    chrome.storage.session.remove([`lookup:${tabId}`, `shown:${tabId}`]);
   }
 });
 

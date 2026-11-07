@@ -381,8 +381,14 @@ $('wb-run').addEventListener('click', () => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'session') return;
+  if (currentShown) {
+    const shown = changes[`shown:${currentTabId}`];
+    if (shown && shown.newValue && shown.newValue.at === currentShown.at) renderShown(shown.newValue);
+    return;
+  }
   const key = `lookup:${currentTabId}`;
-  if (area === 'session' && changes[key]) {
+  if (changes[key]) {
     currentLookup = changes[key].newValue || null;
     renderWhiskybase();
   }
@@ -402,9 +408,41 @@ async function detection(tabId, rescan) {
   return ask();
 }
 
+// --- A bottle from a list --------------------------------------------------
+// Clicking a badge on a list of bottles opens the popup on that bottle: the
+// background keeps it as shown:<tabId>, for the popup opened just then.
+
+const SHOWN_MS = 10 * 1000;
+let currentShown = null;
+
+function renderShown(shown) {
+  currentShown = shown;
+  $('parsed-title').textContent = 'Bottle on this list';
+  $('status').hidden = false;
+  $('status').className = 'status';
+  $('status').replaceChildren(
+    'You clicked the badge of a bottle on this list, matched before on ',
+    link(shown.href, 'its own page'),
+    '. Re-scan to look at this page instead.'
+  );
+  $('fields').hidden = true;
+  $('why').hidden = true;
+  $('wb').hidden = false;
+  document.body.classList.add('wide');
+  $('wb-title').textContent = 'Whiskybase match';
+  $('wb-run').hidden = true;
+  $('wb-result').replaceChildren(matchCard(shown.match));
+  $('wb-foot').replaceChildren();
+  if (!shown.match.detailed) chrome.runtime.sendMessage({ type: 'whisky:shown-details', tabId: currentTabId });
+}
+
 async function scan(rescan) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
+  currentShown = null;
+  const shownKey = `shown:${tab.id}`;
+  const shown = !rescan && (await chrome.storage.session.get(shownKey))[shownKey];
+  if (shown && Date.now() - shown.at < SHOWN_MS) return renderShown(shown);
   const key = `lookup:${tab.id}`;
   currentLookup = (await chrome.storage.session.get(key))[key] || null;
   // Whiskybase itself: nothing to scan, and nothing to look up.

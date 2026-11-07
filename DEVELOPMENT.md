@@ -184,8 +184,8 @@ chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
 ## Bottles matched before, on lists of bottles
 
 When a lookup finds a match, the background also stores it under the page's
-address, as `known:<key>` in local storage with the Whiskybase ID, name and
-rating, and the number of ratings once the bottle page is in (which also
+address, as `known:<key>` in local storage with the Whiskybase ID, address,
+name and rating, and the number of ratings once the bottle page is in (which also
 updates the rating). The key, from
 [`src/known-pages.js`](src/known-pages.js), leaves out the scheme, `www.`, a
 trailing slash, the `#fragment` and tracking parameters (`utm_…`, `gclid` and
@@ -208,6 +208,13 @@ say), every page with the content script updates its badges straight away,
 through `chrome.storage.onChanged`.
 **Nothing is looked up for this**: it only uses what is stored, so no request
 goes to Whiskybase.
+
+Clicking a badge opens the popup on that bottle instead of following the link:
+the background stores it as `shown:<tabId>` in session storage and calls
+`chrome.action.openPopup()` (Chrome 127 and later). A popup opened within ten
+seconds of that shows the bottle's card rather than the page's own data, and
+asks for its details (photo, price) as it does for a lookup, which is the only
+time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
 
 Since it runs in the content script, lists only get badges on pages the
 content script is on: every page with automatic checking on, otherwise the page
