@@ -155,6 +155,25 @@ chrome.storage.local.set({ debugSimulateSearchFailure: false })
 
 There is no setting for it in the popup, so users never see it.
 
+#### Simulating slow data loads
+
+To see the popup while the bottle details (photo, price, review count, series)
+are still loading, run this in the same console:
+
+```js
+chrome.storage.local.set({ debugSimulateSlowDataLoads: true })
+```
+
+The background then waits 5 seconds before fetching the bottle page, so the
+spinners stay up long enough to look at. The details are kept with the match
+once loaded, so to see it again, open a page with another bottle (or the same
+page in a new tab). The popup shows its own orange debug line while the flag is
+on. Turn it off with:
+
+```js
+chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
+```
+
 
 
 ## Files

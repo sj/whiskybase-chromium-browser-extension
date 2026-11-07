@@ -55,7 +55,8 @@
       </span>
       <a class="about" href="https://github.com/sj/whiskybase-chromium-browser-extension" target="_blank" rel="noopener">About &amp; feedback</a>
     </footer>
-    <p id="debug-note" class="debug-note" hidden>Debug: act as if every background request to Whiskybase failed (in order to test fallback functionality).</p>
+    <p class="debug-note" data-flag="debugSimulateSearchFailure" hidden>Debug: act as if every background request to Whiskybase failed (in order to test fallback functionality).</p>
+    <p class="debug-note" data-flag="debugSimulateSlowDataLoads" hidden>Debug: load the bottle details from Whiskybase 5 seconds late (in order to test the loading state).</p>
 
     <!-- Shown in the photo's place when Whiskybase has no photo of the bottle. -->
     <template id="no-photo">

@@ -468,11 +468,15 @@ chrome.storage.onChanged.addListener((changes, area) => {
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.
 
+// One note per flag, each shown while its flag is on.
+const debugNotes = [...document.querySelectorAll('.debug-note[data-flag]')];
+
 async function showDebug() {
-  $('debug-note').hidden = !(await chrome.storage.local.get('debugSimulateSearchFailure')).debugSimulateSearchFailure;
+  const flags = await chrome.storage.local.get(debugNotes.map((p) => p.dataset.flag));
+  for (const p of debugNotes) p.hidden = !flags[p.dataset.flag];
 }
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.debugSimulateSearchFailure) showDebug();
+  if (area === 'local' && debugNotes.some((p) => p.dataset.flag in changes)) showDebug();
 });
 
 $('rescan').addEventListener('click', () => scan(true));
