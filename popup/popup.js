@@ -111,6 +111,45 @@ function link(href, text) {
   return el('a', { href, target: '_blank', rel: 'noopener' }, text);
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+// A 14px outline icon from SVG path data, in the text colour.
+function icon(...paths) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 16 16', width: 14, height: 14, 'aria-hidden': 'true' })) svg.setAttribute(k, v);
+  for (const d of paths) {
+    const path = document.createElementNS(SVG_NS, 'path');
+    for (const [k, v] of Object.entries({ d, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.3, 'stroke-linejoin': 'round' })) path.setAttribute(k, v);
+    svg.append(path);
+  }
+  return svg;
+}
+
+const COPY_ICON = ['M5.5 5.5h7v8h-7z', 'M3.5 10.5v-8h7'];
+const COPIED_ICON = ['M3.5 8.5l3 3 6-7'];
+
+// A small icon button that copies `text`, showing a tick for a moment after.
+function copyButton(text) {
+  const label = `Copy ${text}`;
+  const button = el('button', { type: 'button', className: 'copy', title: label, ariaLabel: label }, icon(...COPY_ICON));
+  let timer;
+  button.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      return;
+    }
+    button.replaceChildren(icon(...COPIED_ICON));
+    button.title = button.ariaLabel = 'Copied';
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      button.replaceChildren(icon(...COPY_ICON));
+      button.title = button.ariaLabel = label;
+    }, 1500);
+  });
+  return button;
+}
+
 function candidateList(candidates) {
   const list = el('ol', { className: 'wb-list' });
   for (const r of candidates) {
@@ -177,13 +216,13 @@ function matchCard(m) {
     card.append(a);
   }
   const rows = [
-    ['Whiskybase ID', link(m.url, Whiskybase.displayId(m.id)), 'wb-id'],
+    ['Whiskybase ID', [link(m.url, Whiskybase.displayId(m.id)), copyButton(Whiskybase.displayId(m.id))], 'wb-id'],
     ['Rating', ratingText(m), 'wb-rating'],
   ];
   // Only for bottles that shops currently list.
   if (m.price && m.shops) rows.push(['Price estimate', priceText(m), 'wb-price']);
   const table = el('table', { className: 'wb-fields' });
-  for (const [label, value, className] of rows) table.append(el('tr', { className }, el('th', {}, label), el('td', {}, value)));
+  for (const [label, value, className] of rows) table.append(el('tr', { className }, el('th', {}, label), el('td', {}, ...[value].flat())));
   // The name in bold, then the bottling series (when Whiskybase has one) in brackets.
   const name = el('p', { className: 'wb-name' }, m.text);
   if (m.series) name.append(' ', el('span', { className: 'wb-series' }, `(${m.series})`));
