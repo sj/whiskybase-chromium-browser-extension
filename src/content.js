@@ -112,10 +112,26 @@
   // plain link round the image), where top/left don't line up with the image;
   // measured again when the image loads or the window is resized, which misses
   // other changes to the page's layout.
+  const badgeImages = new WeakMap(); // badge → the image it is placed on
+
+  // The bottle's photo: the largest image in the link, as a link round a card
+  // may have small ones too (a "Free delivery" label's icon, say). By the size
+  // on the page, or else the size the page gives it, for one not laid out yet.
+  function photo(a) {
+    let best = null;
+    let bestArea = -1;
+    for (const img of a.querySelectorAll('img')) {
+      const r = img.getBoundingClientRect();
+      const area = r.width * r.height || (+img.getAttribute('width') || 0) * (+img.getAttribute('height') || 0);
+      if (area > bestArea) [best, bestArea] = [img, area];
+    }
+    return best;
+  }
+
   function placeBadge(host) {
     if (ANCHORS) return;
-    const img = host.parentElement && host.parentElement.querySelector('img');
-    if (!img) return;
+    const img = badgeImages.get(host);
+    if (!img || !img.isConnected) return;
     host.style.top = host.style.left = '0px';
     const at = host.getBoundingClientRect();
     const to = img.getBoundingClientRect();
@@ -129,10 +145,11 @@
     let host = a.querySelector(`[${BADGE_ATTR}]`);
     if (!bottle) return void (host && host.remove());
     if (!host) {
-      const img = a.querySelector('img');
+      const img = photo(a);
       const box = img.parentElement.tagName === 'PICTURE' ? img.parentElement.parentElement : img.parentElement;
       host = document.createElement('span');
       host.setAttribute(BADGE_ATTR, '');
+      badgeImages.set(host, img);
       host.style.cssText = 'all: initial; position: absolute; z-index: 2147483647;';
       if (ANCHORS) {
         const name = `--bottle-lookup-${++anchorCount}`;
