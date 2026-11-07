@@ -20,7 +20,9 @@ page's DevTools console as `[Bottle lookup for Whiskybase]`.
   other bottles ("You may also like", related or recently viewed products) are
   left out, so their ABVs, ages and cask numbers aren't mistaken for this bottle's.
 - **Penalties**: listing/category pages, other drinks (gin, rum, cognac, ...),
-  non-bottle products (lotion, glasses, books, ...).
+  non-bottle products (lotion, glasses, books, ...). A listing is recognised by
+  its structured data (several products, an item list) or, on a page without
+  product data, by a grid of at least 12 linked photos in alike cards.
 
 **Brand** is only shown when it adds something: a name a distillery sells under
 (Port Charlotte and Octomore at Bruichladdich, Longrow at Springbank, Ledaig at Tobermory,

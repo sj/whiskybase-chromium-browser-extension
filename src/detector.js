@@ -735,6 +735,33 @@
     return clean((good[0] || h1s[0] || {}).textContent || '').slice(0, 300);
   }
 
+  // A list of bottles without structured data says so by its layout: a grid of
+  // cards, each a link round a photo. The largest set of distinct image links
+  // whose cards (or a box up to six levels round them) are alike siblings.
+  // Product pages have grids too (related bottles, a gallery), but smaller ones.
+  const GRID_LISTING = 12;
+  function productGrid(doc) {
+    const groups = new Map(); // parent → card signature → hrefs
+    let largest = 0;
+    for (const img of doc.querySelectorAll('a[href] img')) {
+      const a = img.closest('a');
+      if (a.closest('header, nav, footer')) continue;
+      const href = a.getAttribute('href').split(/[?#]/)[0];
+      let card = a;
+      for (let level = 0; level < 6 && card.parentElement && card.parentElement !== doc.body; level++) {
+        const parent = card.parentElement;
+        const sig = `${card.tagName} ${typeof card.className === 'string' ? card.className : ''}`;
+        if (!groups.has(parent)) groups.set(parent, new Map());
+        const bySig = groups.get(parent);
+        if (!bySig.has(sig)) bySig.set(sig, new Set());
+        const hrefs = bySig.get(sig).add(href);
+        if (hrefs.size > largest && !inOtherProducts(parent)) largest = hrefs.size;
+        card = parent;
+      }
+    }
+    return largest;
+  }
+
   function domBreadcrumb(doc) {
     const el = doc.querySelector(
       '[aria-label*="breadcrumb" i], [class*="breadcrumb" i], [id*="breadcrumb" i], [itemtype*="BreadcrumbList" i]'
@@ -877,17 +904,22 @@
     const md = readMicrodata(doc);
     const siteName = meta(doc, 'og:site_name');
     const inline = inlinePairs(doc);
+    const products = [...ld.products, ...md.products];
+    const ogType = meta(doc, 'og:type').toLowerCase();
+    // Only without the page's own product data, which settles what it shows.
+    const grid = products.length || /product/.test(ogType) ? 0 : productGrid(doc);
     return {
       url: opts.url || (doc.location && doc.location.href) || '',
       title: clean(doc.title),
       siteName,
-      ogType: meta(doc, 'og:type').toLowerCase(),
+      ogType,
       ogTitle: meta(doc, 'og:title'),
       description: meta(doc, 'description') || meta(doc, 'og:description'),
       h1: mainHeading(doc),
       breadcrumb: ld.breadcrumb || domBreadcrumb(doc),
-      products: [...ld.products, ...md.products],
-      listing: ld.listing || md.listing,
+      products,
+      listing: ld.listing || md.listing || grid >= GRID_LISTING,
+      grid,
       cartButtons: countCartButtons(doc),
       // Inline pairs also count as spec text, for the ABV and size they hold.
       specText: [specText(doc), ...inline.map(([k, v]) => `${k}: ${v}`)].join('\n'),
@@ -999,7 +1031,10 @@
 
     // Penalties
     let penalty = 0;
-    if (s.listing) penalty += add(-4, 'Looks like a listing/category page (several products)');
+    if (s.listing) {
+      const what = s.grid >= GRID_LISTING ? `a grid of ${s.grid} bottles` : 'several products';
+      penalty += add(-4, `Looks like a listing/category page (${what})`);
+    }
     else if (s.cartButtons > 6) penalty += add(-2, `Many add-to-cart buttons (${s.cartButtons})`);
     const otherSpirit = nameText.replace(CASK_DRINK_RE, ' ').match(OTHER_SPIRIT_RE);
     if (otherSpirit && !nameHasWhisky && !distillery) {
