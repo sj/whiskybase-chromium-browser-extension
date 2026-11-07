@@ -194,8 +194,10 @@ the page's own address is left out. Each of those images gets a small badge on
 its top left corner: the extension's icon and the rating, with a tooltip such
 as "WB233907: Inchgower Madeira Finish MM (78 ratings)". The badge is in a shadow root, so the page's styles don't
 reach it and the detector doesn't read it. Links added later (more results,
-infinite scrolling) are picked up after a second; coming back to the tab
-updates all badges, since a bottle may have been looked up in another tab.
+infinite scrolling) are picked up after a second. When a match is stored or
+updated in another tab (a bottle opened from the list in a background tab,
+say), every page with the content script updates its badges straight away,
+through `chrome.storage.onChanged`.
 **Nothing is looked up for this**: it only uses what is stored, so no request
 goes to Whiskybase.
 

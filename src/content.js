@@ -132,7 +132,7 @@
     root.querySelector('span').title = badgeTitle(bottle);
   }
 
-  // `all` also updates the badges already there (a rating may have changed, in another tab).
+  // `all` also updates the badges already there (a rating may have changed).
   async function markKnown(all) {
     const links = imageLinks(all);
     const hrefs = [...links.keys()];
@@ -161,9 +161,12 @@
     clearTimeout(placeTimer);
     placeTimer = setTimeout(() => document.querySelectorAll(`[${BADGE_ATTR}]`).forEach(placeBadge), 200);
   });
-  // Back from another tab, where a bottle may have been looked up meanwhile.
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') markKnown(true);
+  // A bottle matched or updated in another tab (one opened from this list in
+  // the background, say): its badge appears or changes here straight away.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !Object.keys(changes).some((k) => k.startsWith('known:'))) return;
+    clearTimeout(markTimer);
+    markTimer = setTimeout(() => markKnown(true), 200);
   });
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
