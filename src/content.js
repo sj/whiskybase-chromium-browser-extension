@@ -84,9 +84,12 @@
     return bottle.rating ? bottle.rating.toFixed(2) : '–';
   }
 
+  // "WB233907: Inchgower Madeira Finish MM (78 ratings)"; the number of ratings
+  // is only known once the popup has shown the bottle's details.
   function badgeTitle(bottle) {
-    const rating = bottle.rating ? `${bottle.rating.toFixed(2)} / 100` : 'not rated yet';
-    return `Whiskybase WB${bottle.id}, ${bottle.text}: ${rating} (as looked up earlier by Bottle lookup for Whiskybase)`;
+    const n = bottle.reviews;
+    const ratings = n != null ? ` (${n} ${n === 1 ? 'rating' : 'ratings'})` : !bottle.rating ? ' (no ratings yet)' : '';
+    return `WB${bottle.id}: ${bottle.text}${ratings}`;
   }
 
   // On the image's top left corner. Measured rather than left to CSS, since the

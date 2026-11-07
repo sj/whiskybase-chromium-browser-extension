@@ -78,7 +78,7 @@ to anyone, except for the Whiskybase lookups described below.
 - **Storage.** Results are kept in the browser's session storage while you
   browse, so the same bottle isn't looked up twice. They are cleared when you
   close the browser. Only the extension's settings, and the address of each page
-  with a matched bottle (with the bottle's Whiskybase ID, name and rating, so that
+  with a matched bottle (with the bottle's Whiskybase ID, name, rating and number of ratings, so that
   lists of bottles linking to it can show its rating) are stored permanently, in
   your browser only. They are removed when you remove the extension.
 - **Links.** The About & feedback links and the right-click menu entries just

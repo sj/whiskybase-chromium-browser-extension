@@ -180,7 +180,8 @@ chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
 
 When a lookup finds a match, the background also stores it under the page's
 address, as `known:<key>` in local storage with the Whiskybase ID, name and
-rating (the rating is updated once the bottle page is in). The key, from
+rating, and the number of ratings once the bottle page is in (which also
+updates the rating). The key, from
 [`src/known-pages.js`](src/known-pages.js), leaves out the scheme, `www.`, a
 trailing slash, the `#fragment` and tracking parameters (`utm_…`, `gclid` and
 the like), and sorts the other parameters, so that a list's link to the page
@@ -190,8 +191,8 @@ match removes it.
 On every page it runs on, `content.js` collects the links that show an image
 and asks the background (`whisky:known`) which of them point to such a page;
 the page's own address is left out. Each of those images gets a small badge on
-its top left corner: the extension's icon and the rating, with the bottle's ID
-and name as tooltip. The badge is in a shadow root, so the page's styles don't
+its top left corner: the extension's icon and the rating, with a tooltip such
+as "WB233907: Inchgower Madeira Finish MM (78 ratings)". The badge is in a shadow root, so the page's styles don't
 reach it and the detector doesn't read it. Links added later (more results,
 infinite scrolling) are picked up after a second; coming back to the tab
 updates all badges, since a bottle may have been looked up in another tab.

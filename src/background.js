@@ -231,7 +231,8 @@ async function lookup(tabId, pageUrl, whisky, searched) {
 async function rememberMatch(pageUrl, match) {
   const key = KnownPages.key(pageUrl);
   if (!key) return;
-  if (match) await chrome.storage.local.set({ [`known:${key}`]: { id: match.id, text: match.text, rating: match.rating || null } });
+  const bottle = match && { id: match.id, text: match.text, rating: match.rating || null, reviews: match.reviews != null ? match.reviews : null };
+  if (bottle) await chrome.storage.local.set({ [`known:${key}`]: bottle });
   else await chrome.storage.local.remove(`known:${key}`);
 }
 
@@ -295,8 +296,10 @@ async function addDetails(tabId) {
         photoNote: photo.note || null,
       },
     });
-    // The bottle page has the latest rating.
-    if (details.rating) await rememberMatch(now.pageUrl, { ...now.match, rating: details.rating });
+    // The bottle page has the latest rating, and the number of ratings.
+    if (details.rating || details.reviews != null) {
+      await rememberMatch(now.pageUrl, { ...now.match, rating: details.rating || now.match.rating, reviews: details.reviews });
+    }
   } finally {
     detailing.delete(tabId);
   }
