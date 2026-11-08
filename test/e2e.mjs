@@ -24,8 +24,9 @@ const out = join(here, '.out', 'e2e');
 const fixture = (f) => readFileSync(join(here, 'fixtures', f));
 const PORT = 9399;
 
-// As opened from the list, which links to it with its sku.
-const PRODUCT = 'https://www.masterofmalt.com/whiskies/inchgower/inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid-whisky/?sku=127692';
+// Opened at its own address; the list links to it with a parameter that its
+// canonical address leaves out (?sku=127692).
+const PRODUCT = 'https://www.masterofmalt.com/whiskies/inchgower/inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid-whisky/';
 const PAGES = {
   [PRODUCT]: fixture('masterofmalt.com-inchgower-murray-mcdavid-product-page.html'),
   'https://www.masterofmalt.com/distilleries/inchgower-whisky-distillery/': fixture('masterofmalt.com-bottle-list.html'),
@@ -167,9 +168,11 @@ await check('product page: detected and matched to Whiskybase', async () => {
   expect(lookup && lookup.state, 'match', 'lookup');
   expect(lookup.match.id, '233907', 'match');
 });
-await check('product page: match stored under the page address', async () => {
-  const stored = await evaluate(`chrome.storage.local.get('known:' + KnownPages.key(${JSON.stringify(PRODUCT)})).then((r) => Object.values(r)[0])`, worker);
-  expect(stored && stored.id, '233907', 'stored match');
+await check('product page: match stored under the page address and as its canonical one', async () => {
+  const key = await evaluate(`KnownPages.key(${JSON.stringify(PRODUCT)})`, worker);
+  const stored = await evaluate(`chrome.storage.local.get(${JSON.stringify([`known:${key}`, `known:${key}#canonical`])})`, worker);
+  expect(stored[`known:${key}`] && stored[`known:${key}`].id, '233907', 'stored match');
+  expect(stored[`known:${key}#canonical`] && stored[`known:${key}#canonical`].id, '233907', 'stored as canonical');
 });
 await check('product page: faint icon after the title, with the matched tooltip', async () => {
   const tip = await waitFor(`(() => { const h = document.querySelector('[data-bottle-lookup-title]'); const t = h && h.shadowRoot.querySelector('title').textContent; return t && t.includes('matched') && t; })()`, product.session);

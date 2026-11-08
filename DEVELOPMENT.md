@@ -212,11 +212,16 @@ lists link each photo to the bottle (`/learn/explore-whisky/bottles/<name>?v=<lo
 rather than to the lot page (`/whisky-lot/<lot>/<name>`). So the match is
 also stored under the address the page names as canonical (`<link
 rel="canonical">`, which `content.js` adds to its detection result), as
-`known:<key>#canonical`; not when that is a home page, which some sites give
-as every page's canonical address. A link on a list tries its own key first,
-then `<key>#canonical`, then, if it has a query, that key without the query
-(`KnownPages.linkKeys`): the lot page's canonical address is the bottle without
-`?v=`, so every lot of that bottle on the list gets the badge.
+`known:<key>#canonical`, also when it is the page's own address; not when
+that is a home page, which some sites give as every page's canonical address.
+A link on a list tries its own key first, then `<key>#canonical`, then, if it
+has a query, that key without the query (`KnownPages.linkKeys`): the lot
+page's canonical address is the bottle without `?v=`, so every lot of that
+bottle on the list gets the badge. Likewise, Master of Malt's lists link to
+`<product>/?sku=<n>`, and the product page names `<product>/` as canonical
+however it was opened. Which parameters can be left out is the site's say
+(its canonical address), never the extension's: where a parameter picks the
+bottle (`product.php?id=123`), the canonical address keeps it.
 
 On every page it runs on, `content.js` collects the links that show an image
 and asks the background (`whisky:known`) which of them point to such a page;
@@ -422,7 +427,8 @@ The browser tests ([`test/e2e.mjs`](test/e2e.mjs)) load the extension itself
 into headless Chromium, in a fresh profile, and check it on fixture pages:
 the Master of Malt product page is looked up and matched (Whiskybase answers
 from its fixtures) and gets the title icon, the Master of Malt list then
-badges that bottle, and the SMWS page gets its distillery name. Pages are
+badges that bottle (its link has a `?sku=` the product page's address
+doesn't), and the SMWS page gets its distillery name. Pages are
 served at their real addresses and every other request is blocked, so nothing
 goes out. Google Chrome 137 and later ignore `--load-extension`: use Chromium
 or Chrome for Testing (`CHROME_BIN`). They don't run in CI.
