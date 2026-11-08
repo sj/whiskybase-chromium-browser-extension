@@ -26,14 +26,23 @@ const PORT = 9399;
 
 // Opened at its own address; the list links to it with a parameter that its
 // canonical address leaves out (?sku=127692).
+const LOT = 'https://www.whiskyauction.com/item/4838071';
 const PRODUCT = 'https://www.masterofmalt.com/whiskies/inchgower/inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid-whisky/';
 const PAGES = {
   [PRODUCT]: fixture('masterofmalt.com-inchgower-murray-mcdavid-product-page.html'),
   'https://www.masterofmalt.com/distilleries/inchgower-whisky-distillery/': fixture('masterofmalt.com-bottle-list.html'),
   'https://smws.com/tempest-in-the-tropics-3-369/': fixture('smws-3-369.html'),
+  [LOT]: fixture('whiskyauction.com-4838071-product-page-WB36642.html'),
+  'https://www.whiskyauction.com/wac/auctionBrowser': fixture('whiskyauction.com-auction-browser.html'),
 };
-const WB_SEARCH = fixture('whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-search-results.html');
+// Whiskybase's search results, by the start of the query.
+const WB_SEARCHES = {
+  'Inchgower ': fixture('whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-search-results.html'),
+  'Port Ellen ': fixture('whiskybase/whiskyauction.com-4838071-whiskybase-search-results.html'),
+};
 const WB_BOTTLE = fixture('whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-bottle-page.html');
+// Photos (the lot's are laid out only with a size): any image will do.
+const PHOTO = readFileSync(join(root, 'icons', 'icon128.png'));
 
 function findBrowser() {
   for (const bin of [process.env.CHROME_BIN, 'chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable'].filter(Boolean)) {
@@ -111,11 +120,16 @@ async function waitFor(expr, session, ms = 10000) {
 events.push(async (d) => {
   if (d.method !== 'Fetch.requestPaused') return;
   const { url } = d.params.request;
-  const isWhiskybase = url.startsWith('https://www.whiskybase.com/');
-  const body = PAGES[url] && d.params.resourceType === 'Document' ? PAGES[url] : isWhiskybase ? (/\/search\?/.test(url) ? WB_SEARCH : WB_BOTTLE) : null;
+  const query = url.startsWith('https://www.whiskybase.com/search?') && new URL(url).searchParams.get('q');
+  const search = query && Object.entries(WB_SEARCHES).find(([start]) => query.startsWith(start));
+  const isPhoto = d.params.resourceType === 'Image' && url.startsWith('https://cdn.whiskyauction.com/');
+  const body = PAGES[url] && d.params.resourceType === 'Document' ? PAGES[url]
+    : query ? search && search[1]
+    : url.startsWith('https://www.whiskybase.com/whiskies/') ? WB_BOTTLE
+    : isPhoto ? PHOTO : null;
   if (!body) return send('Fetch.failRequest', { requestId: d.params.requestId, errorReason: 'BlockedByClient' }, d.sessionId);
   await send('Fetch.fulfillRequest', { requestId: d.params.requestId, responseCode: 200,
-    responseHeaders: [{ name: 'content-type', value: 'text/html; charset=utf-8' }], body: body.toString('base64') }, d.sessionId);
+    responseHeaders: [{ name: 'content-type', value: isPhoto ? 'image/png' : 'text/html; charset=utf-8' }], body: body.toString('base64') }, d.sessionId);
 });
 const ALL = [{ urlPattern: '*' }];
 await send('Fetch.enable', { patterns: ALL }); // browser-wide: the extension's search and helper tabs too
@@ -202,6 +216,28 @@ await check('smws.com: the note is not part of the page text the detector reads'
   const d = await detection(smws.tabId);
   expect(d.status, 'whisky', 'detection');
   if (/Bowmore/.test(d.whisky.name)) throw new Error(`name: ${d.whisky.name}`);
+});
+
+const lot = await openPage(LOT);
+await check('whiskyauction.com lot: matched, and its photo gets the badge', async () => {
+  const lookup = await waitFor(`chrome.storage.session.get('lookup:${lot.tabId}').then((r) => { const l = r['lookup:${lot.tabId}']; return l && l.state !== 'searching' && l; })`, worker, 20000);
+  expect(lookup && lookup.state, 'match', 'lookup');
+  expect(lookup.match.id, '36642', 'match');
+  const badge = await waitFor(`(() => { const h = document.querySelector('[data-bottle-lookup-page]'); return h && h.parentElement.querySelector('img').className + ' ' + h.shadowRoot.querySelector('b').textContent; })()`, lot.session);
+  expect(badge, 'detailpage-image 93.75', 'photo badge');
+});
+
+// Its list loads the cards by script; one card as the site renders it.
+const CARD = '<div class="cardcontent"><a class="card-link" href="/item/4838071" target="_BLANK"><div class="cardcontent-top">' +
+  '<div class="cardcontent-title cardcontent-title-auction"> #4838071 </div><div class="cardcontent-image">' +
+  '<img src="https://cdn.whiskyauction.com/auction/i/im2611card/483807101.jpg" class="rounded" loading="lazy"></div>' +
+  '<div class="cardcontent-description-text">Gordon &amp; MacPhail<br>62.4% Vol, 750 ml</div></div></a></div>';
+const auction = await openPage('https://www.whiskyauction.com/wac/auctionBrowser');
+await check('whiskyauction.com list: the card of the lot matched before gets its badge', async () => {
+  await waitFor(`document.readyState === 'complete'`, auction.session);
+  await evaluate(`document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(CARD)}), 1`, auction.session);
+  const badges = await waitFor(`(() => { const b = [...document.querySelectorAll('[data-bottle-lookup]')].map((h) => h.closest('a').getAttribute('href') + ' ' + h.shadowRoot.querySelector('b').textContent); return b.length && b; })()`, auction.session);
+  expect(JSON.stringify(badges), JSON.stringify(['/item/4838071 93.75']), 'badges');
 });
 
 console.log(failures ? `\n${failures} failed` : '\nAll browser tests passed');

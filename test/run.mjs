@@ -386,6 +386,8 @@ const fixtureCases = [
   { file: 'masterofmalt.com-bottle-list.html', status: 'none' },
   { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none' },
   { file: 'smws-list-of-bottles.html', status: 'none' },
+  // Whisky Auction's list: its cards come by script, so the saved page has none.
+  { file: 'whiskyauction.com-auction-browser.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },
   { file: 'news-article.html', status: 'none' },
@@ -461,6 +463,12 @@ const matchCases = [
     page: 'masterofmalt.com-inchgower-murray-mcdavid-product-page.html',
     search: 'whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-search-results.html',
     id: '233907',
+  },
+  {
+    // Whiskybase names it "Port Ellen 1970 GM"; its search data has the rest.
+    page: 'whiskyauction.com-4838071-product-page-WB36642.html',
+    search: 'whiskybase/whiskyauction.com-4838071-whiskybase-search-results.html',
+    id: '36642',
   },
 ];
 
