@@ -6,7 +6,7 @@
 
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import assert from 'node:assert/strict';
@@ -642,6 +642,31 @@ for (const c of matchCases) {
     }
   }
 }
+
+// ---------------------------------------------------------------------------
+console.log('\nFixture hygiene');
+
+// API keys and tokens in a saved page, by their format; test/scrub-fixture.py
+// replaces these (and keys it recognises by their name).
+const KEY_FORMATS = {
+  'Google API key': /AIza[0-9A-Za-z_-]{35}/,
+  'Google client secret': /GOCSPX-[0-9A-Za-z_-]{20,}/,
+  'Stripe key': /\b(?:sk|rk|pk)_(?:live|test)_[0-9A-Za-z]{10,}/,
+  'AWS key ID': /\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/,
+  'GitHub token': /\b(?:gh[pousr]_[0-9A-Za-z]{30,}|github_pat_[0-9A-Za-z_]{20,})/,
+  'Slack token': /\bxox[abposr]-[0-9A-Za-z-]{10,}/,
+  'private key': /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  JWT: /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/,
+  'Sentry key': /https?:\/\/[0-9a-f]{32}@[a-z0-9.-]*\bsentry\.io/,
+};
+check('fixtures hold no API keys or tokens (scrub them with test/scrub-fixture.py)', () => {
+  const found = [];
+  for (const file of readdirSync(join(here, 'fixtures'), { recursive: true }).filter((f) => f.endsWith('.html'))) {
+    const html = readFileSync(join(here, 'fixtures', file), 'utf8');
+    for (const [what, re] of Object.entries(KEY_FORMATS)) if (re.test(html)) found.push(`${file}: ${what}`);
+  }
+  assert.deepEqual(found, []);
+});
 
 console.log(failures ? `\n${failures} failing` : '\nAll tests passed');
 process.exit(failures ? 1 : 0);

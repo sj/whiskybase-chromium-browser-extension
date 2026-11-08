@@ -447,6 +447,14 @@ sellers' names, contact details, birth dates and bank details. The script
 replaces those fields wherever they appear in that data, so run it on every
 new fixture, signed in or not, and then search the page for email addresses.
 
+Pages also embed API keys and tokens: mostly the site's own keys for the
+browser (Google Maps, Shopify's storefront token, Stripe's publishable key),
+sometimes a visitor's token. The script replaces them by their format (Google,
+Stripe, AWS, GitHub, Slack, JWTs, Sentry, private keys) or by the name they
+are given (`apiKey`, `access-token`, `client_secret`, ...). It keeps a page's
+line endings, and only counts what it changed, so a second run reports nothing.
+`npm test` fails if a fixture still holds a key in one of those formats.
+
 ### Fixing reported pages automatically
 
 The workflow [`.github/workflows/detector-issue.yml`](.github/workflows/detector-issue.yml)
