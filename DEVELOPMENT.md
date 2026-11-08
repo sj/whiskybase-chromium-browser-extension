@@ -1,6 +1,8 @@
 # Development documentation
 
-This file describes how the extension works, and how the code is structured. 
+This file describes how the extension works, and how the code is structured.
+Coding agents (and anyone new to the code) also have [`AGENTS.md`](AGENTS.md):
+the project's rules, how to check a change, and the usual pitfalls.
 
 ## A few notes when you're changing the code
 
@@ -285,7 +287,7 @@ data** at the bottom of the popup removes them all (and with them the badges).
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
-| `test/` | Parser unit tests and fixture pages |
+| `test/` | Parser unit tests, browser tests (`e2e.mjs`) and fixture pages |
 
 ## Packaging
 
@@ -411,6 +413,19 @@ has the matching checklist: fixture, expectation, scrubbing, `npm test`.
 
 The GitHub Actions workflow [`.github/workflows/test.yml`](.github/workflows/test.yml)
 runs the tests on every push to any branch and on every pull request.
+
+```bash
+npm run e2e
+```
+
+The browser tests ([`test/e2e.mjs`](test/e2e.mjs)) load the extension itself
+into headless Chromium, in a fresh profile, and check it on fixture pages:
+the Master of Malt product page is looked up and matched (Whiskybase answers
+from its fixtures) and gets the title icon, the Master of Malt list then
+badges that bottle, and the SMWS page gets its distillery name. Pages are
+served at their real addresses and every other request is blocked, so nothing
+goes out. Google Chrome 137 and later ignore `--load-extension`: use Chromium
+or Chrome for Testing (`CHROME_BIN`). They don't run in CI.
 
 Pages saved while signed in contain your name, email, username, account IDs and
 session tokens. Scrub them before sharing the project; your own details are
