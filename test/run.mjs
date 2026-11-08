@@ -382,6 +382,10 @@ const fixtureCases = [
     whisky: { name: 'Macallan 1968 Fine & Rare 33 Year Old Bottled 2002 - Cask No.5913', distillery: 'Macallan', bottling: 'distillery', age: 33, vintage: 1968, bottled: 2002, abv: 46.6, volumeMl: 700, caskNumber: '5913' },
   },
   { file: 'category-listing.html', status: 'none' },
+  // Lists of bottles without structured data for them: told apart by their grid of photos.
+  { file: 'masterofmalt.com-bottle-list.html', status: 'none' },
+  { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none' },
+  { file: 'smws-list-of-bottles.html', status: 'none' },
   { file: 'gin-product.html', status: 'none' },
   { file: 'sherry-product.html', status: 'none' },
   { file: 'news-article.html', status: 'none' },
