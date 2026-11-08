@@ -82,16 +82,9 @@ On smws.com (and only there, against false positives), `content.js` also adds
 the distillery's name after each of the Society's bottle codes: "3.369" becomes
 "3.369 (Bowmore)". The codes and distilleries are in `src/smws.js`, which only
 has codes that published lists agree on; a newer code is left as it is. The
-name sits in a shadow root, so the detector doesn't read it as the page's text,
-with a faint grey copy of the extension's icon after it (from the background
-as a data: URL, `whisky:icon`, so it needn't be a web-accessible resource).
-Clicking the icon opens the popup (`whisky:open-popup`, `chrome.action.openPopup`,
-Chrome 127 and later) rather than following a link round the code. The icon
-only shows while the page's detection is whisky or possible (a bottle's page),
-not on a list of bottles where the popup would have nothing to show; each scan
-updates it. Content
-added later (the Society's lists of bottles load after the page) is annotated
-as well. Like everything else, this only happens where the content
+name sits in a shadow root, so the detector doesn't read it as the page's text.
+Content added later (the Society's lists of bottles load after the page) is
+annotated as well. Like everything else, this only happens where the content
 script runs: after a click on the icon, or on every page with automatic
 checking on.
 
@@ -245,6 +238,33 @@ the background stores it as `shown:<tabId>` in session storage and calls
 seconds of that shows the bottle's card rather than the page's own data, and
 asks for its details (photo, price) as it does for a lookup, which is the only
 time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
+
+A bottle's own page gets the same badge once its bottle is matched
+(`whisky:own-known`, the match stored under the page's address): on the
+bottle's photo, taken to be the largest image on the page that is shown, at
+least 120px each way and not a wide banner, outside the header, menus and
+footer. Images are compared by their size in the layout, so a transform
+doesn't count, and the badge stays on its photo unless another is larger: a
+zoom on hover (Master of Malt) adds an enlarged copy of the photo, which stays
+on the page, made invisible, after the pointer leaves.
+It appears as soon as a lookup stores the match, comes back straight away on
+a later visit, and goes when a lookup no longer finds one. As a photo may only
+get its size once it loads (a lazy one), every image that loads counts until
+there is a badge. Clicking it opens the popup (`whisky:open-popup`,
+`chrome.action.openPopup`, Chrome 127 and later), as the toolbar icon would.
+
+All badges are faint and grey (a frosted white pill, the icon in grey), so as
+not to get in the way of the photo, and take the icon's colours when the
+pointer is on them.
+
+While a bottle is detected (whisky or possible), the page's title (the first
+proper h1, `WhiskyDetector.mainHeadingElement`, which the detector also reads)
+ends in a very faint grey Glencairn glass, the icon's without its square
+background: an inline SVG with a dark line inside a light halo, so that it
+shows on light and dark backdrops alike, in colour on hover. It is in a shadow
+root so the detector doesn't read it. Its tooltip says whether the bottle is matched
+to Whiskybase (a match stored for the page); clicking it opens the popup.
+Each scan, and each change to the stored match, updates it.
 
 Since it runs in the content script, lists only get badges on pages the
 content script is on: every page with automatic checking on, otherwise the page

@@ -729,10 +729,15 @@
     return { products, listing: roots.length >= 3 };
   }
 
-  function mainHeading(doc) {
+  // The page's title (its first proper h1), or null.
+  function mainHeadingElement(doc) {
     const h1s = [...doc.querySelectorAll('h1')];
     const good = h1s.filter((h) => !h.closest('header, nav, footer') && clean(h.textContent).length >= 3);
-    return clean((good[0] || h1s[0] || {}).textContent || '').slice(0, 300);
+    return good[0] || h1s[0] || null;
+  }
+
+  function mainHeading(doc) {
+    return clean((mainHeadingElement(doc) || {}).textContent || '').slice(0, 300);
   }
 
   // A list of bottles without structured data says so by its layout: a grid of
@@ -1119,6 +1124,7 @@
     detect,
     collectSignals,
     evaluate,
+    mainHeadingElement,
     parseAbv,
     parseFallbackAbv,
     parseVolume,
