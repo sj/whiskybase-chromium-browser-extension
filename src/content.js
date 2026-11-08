@@ -65,18 +65,36 @@
   const SMWS_DELAY_MS = 500;
   const SKIP_TEXT = `script, style, noscript, textarea, select, [contenteditable], [${SMWS_ATTR}]`;
   let smwsTimer = null;
+  let smwsIcon = null;
 
   // The name is in a shadow root, so that the detector (which reads the page's
   // own text) doesn't see it; it takes the font and colour of the text round it.
+  // After it, a faint grey copy of the extension's icon, which opens the popup.
   function smwsNote(code, distillery) {
     const host = document.createElement('span');
     host.setAttribute(SMWS_ATTR, code);
     host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
-    const note = document.createElement('span');
-    note.style.opacity = '0.75';
+    const root = host.attachShadow({ mode: 'open' });
+    root.innerHTML =
+      '<style>span { opacity: 0.75; } img { width: 1em; height: 1em; margin-left: 0.25em; vertical-align: -0.125em; ' +
+      'opacity: 0.3; filter: grayscale(1); cursor: pointer; transition: opacity 0.15s, filter 0.15s; } ' +
+      'img:hover { opacity: 0.9; filter: none; }</style><span></span>';
+    const note = root.querySelector('span');
     note.textContent = ` (${distillery})`;
     note.title = `SMWS distillery ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
-    host.attachShadow({ mode: 'open' }).append(note);
+    if (smwsIcon) {
+      const icon = document.createElement('img');
+      icon.src = smwsIcon;
+      icon.alt = '';
+      icon.title = 'Bottle lookup for Whiskybase';
+      // The code may be inside a link (a bottle in a list): the popup opens instead.
+      icon.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {});
+      });
+      root.append(icon);
+    }
     return host;
   }
 
@@ -113,7 +131,13 @@
   scan();
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   if (globalThis.SmwsCodes && globalThis.SmwsCodes.isSmwsSite(location.hostname)) {
-    annotateSmws();
-    smwsObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+    chrome.runtime
+      .sendMessage({ type: 'whisky:icon' })
+      .catch(() => null)
+      .then((icon) => {
+        smwsIcon = icon;
+        annotateSmws();
+        smwsObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+      });
   }
 })();

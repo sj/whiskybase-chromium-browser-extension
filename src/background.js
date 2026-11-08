@@ -396,11 +396,33 @@ async function fetchInHelperTab(url, analyse) {
   return { state: 'ok', url, status: result.status, page };
 }
 
+// The extension's icon for the page (next to SMWS distillery names), as data:
+// so that the icon doesn't have to be a web-accessible resource.
+let iconData = null;
+async function pageIcon() {
+  if (!iconData) {
+    const bytes = new Uint8Array(await (await fetch(chrome.runtime.getURL('icons/icon32.png'))).arrayBuffer());
+    iconData = `data:image/png;base64,${btoa(String.fromCharCode(...bytes))}`;
+  }
+  return iconData;
+}
+
 // ---------------------------------------------------------------------------
 // Messages
 
-chrome.runtime.onMessage.addListener((msg, sender) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
+
+  if (msg.type === 'whisky:icon' && sender.tab) {
+    pageIcon().then(sendResponse, () => sendResponse(null));
+    return true;
+  }
+  // The icon on the page was clicked: the popup opens as if the toolbar icon
+  // had been (chrome.action.openPopup: Chrome 127 and later).
+  if (msg.type === 'whisky:open-popup' && sender.tab) {
+    if (chrome.action.openPopup) chrome.action.openPopup({ windowId: sender.tab.windowId }).catch(() => {});
+    return;
+  }
 
   // "Try again" in the popup: the user asks to search once more, so the pause
   // after rate limiting or another check no longer applies.

@@ -6,8 +6,8 @@
  * each code on the page.
  *
  * Only codes that published lists agree on are included (Whiskipedia, Whisky
- * Saga, Whisky Boys, scotchmaltwhisky.co.uk, checked November 2026); a newer
- * code is left as it is. Whisky only: the Society's rum, armagnac, cognac and
+ * Saga, Whisky Boys, scotchmaltwhisky.co.uk, checked November 2026), and 164;
+ * a newer code is left as it is. Whisky only: the Society's rum, armagnac, cognac and
  * gin codes are left out.
  */
 (function (root) {
@@ -46,7 +46,7 @@
     'Cotswolds', 'Archie Rose', 'Starward', 'Ardnamurchan', 'West Cork', // 146
     'Mackmyra', 'Shelter Point', 'Thy', 'Mosgaard', 'Milk & Honey', // 151
     'Glasgow', 'Armorik', 'Yuza', 'Mars Shinshu', 'Tsunuki', // 156
-    "Nc'nean", 'Isle of Raasay', 'Isle of Harris', // 161
+    "Nc'nean", 'Isle of Raasay', 'Isle of Harris', 'Penderyn', // 161 (164: double-distilled Penderyn)
   ];
   const OTHER = {
     G: [

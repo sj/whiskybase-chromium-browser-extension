@@ -130,6 +130,7 @@ const smwsCases = [
   ['1.5 l, 0.7 litre, 70.5cl', []],
   ['aged 12.5 years', []],
   ['version 1.95.88534, 10.2.3', []],
+  ['164.3', ['164.3 Penderyn']],
   ['170.2, G99.1', []],
 ];
 for (const [text, want] of smwsCases) {
