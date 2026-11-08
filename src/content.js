@@ -346,7 +346,7 @@
       host.setAttribute(TITLE_ATTR, '');
       host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
       host.attachShadow({ mode: 'open' }).innerHTML =
-        '<style>svg { width: max(12px, 0.55em); height: max(12px, 0.55em); margin-left: 0.35em; ' +
+        '<style>svg { width: max(14px, 0.66em); height: max(14px, 0.66em); margin-left: 0.35em; ' +
         'vertical-align: middle; opacity: 0.35; filter: grayscale(1); cursor: pointer; ' +
         'transition: opacity 0.15s, filter 0.15s; } svg:hover { opacity: 0.9; filter: none; }</style>' +
         GLASS_SVG;
