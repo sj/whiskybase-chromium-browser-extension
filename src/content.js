@@ -253,16 +253,28 @@
 
   let pageBottle = null; // { bottle, icon } stored for this page's address
 
-  // The bottle's photo: the largest image on the page, at least 120px each way
-  // and not a wide banner, outside the header, menus and footer.
+  // An image's area if it can be the bottle's photo: shown, at least 120px each
+  // way and not a wide banner, outside the header, menus and footer. By its size
+  // in the layout, so that a transform doesn't count: a zoom on hover (Master of
+  // Malt) adds a copy of the photo, enlarged, which stays when made invisible.
+  function photoArea(img) {
+    if (!img.isConnected || img.closest('header, nav, footer')) return 0;
+    if (img.checkVisibility && !img.checkVisibility({ opacityProperty: true, visibilityProperty: true })) return 0;
+    const w = img.offsetWidth;
+    const h = img.offsetHeight;
+    return w >= 120 && h >= 120 && w <= 2 * h ? w * h : 0;
+  }
+
+  // The bottle's photo: the largest image on the page. The badge stays on the
+  // one it is on unless another is larger, and the first of the same size wins.
   function mainPhoto() {
-    let best = null;
-    let bestArea = 0;
+    const host = document.querySelector(`[${PAGE_BADGE_ATTR}]`);
+    let best = host && badgeImages.get(host);
+    let bestArea = best ? photoArea(best) : 0;
+    if (!bestArea) best = null;
     for (const img of document.images) {
-      if (img.closest('header, nav, footer')) continue;
-      const r = img.getBoundingClientRect();
-      if (r.width < 120 || r.height < 120 || r.width > 2 * r.height) continue;
-      if (r.width * r.height > bestArea) [best, bestArea] = [img, r.width * r.height];
+      const area = photoArea(img);
+      if (area > bestArea) [best, bestArea] = [img, area];
     }
     return best;
   }

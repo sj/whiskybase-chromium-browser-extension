@@ -248,8 +248,12 @@ time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
 
 A bottle's own page gets the same badge once its bottle is matched
 (`whisky:own-known`, the match stored under the page's address): on the
-bottle's photo, taken to be the largest image on the page that is at least
-120px each way and not a wide banner, outside the header, menus and footer.
+bottle's photo, taken to be the largest image on the page that is shown, at
+least 120px each way and not a wide banner, outside the header, menus and
+footer. Images are compared by their size in the layout, so a transform
+doesn't count, and the badge stays on its photo unless another is larger: a
+zoom on hover (Master of Malt) adds an enlarged copy of the photo, which stays
+on the page, made invisible, after the pointer leaves.
 It appears as soon as a lookup stores the match, comes back straight away on
 a later visit, and goes when a lookup no longer finds one. As a photo may only
 get its size once it loads (a lazy one), every image that loads counts until
