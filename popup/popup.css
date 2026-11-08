@@ -360,8 +360,23 @@ body.wide #wb {
 .info:focus-visible {
   opacity: 1;
 }
-.about {
+.footer-links {
+  display: flex;
+  gap: 10px;
   margin-left: auto;
+}
+.about,
+.link {
   white-space: nowrap;
   color: var(--muted);
+}
+/* A button that looks like the links next to it. */
+.link {
+  padding: 0;
+  border: none;
+  text-decoration: underline;
+}
+.link:disabled {
+  text-decoration: none;
+  cursor: default;
 }

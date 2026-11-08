@@ -133,6 +133,11 @@ check that only a person in a browser tab can pass.
   it's closed or leaves Whiskybase, it stops being a helper tab. No other
   Whiskybase tab is ever used, and **Search on Whiskybase** always opens a new tab,
   which then becomes the helper tab.
+- **Failed tabs catch up:** a tab whose search failed before there was a helper
+  tab (one of several bottles opened in background tabs, say) searches again
+  when the user switches to it, if there is a helper tab by then. It asks the
+  tab's content script what the bottle is, and the search goes through the
+  helper tab if the background's own request fails again.
 
 #### Simulating search failures
 
@@ -178,15 +183,69 @@ chrome.storage.local.set({ debugSimulateSlowDataLoads: false })
 
 
 
+## Bottles matched before, on lists of bottles
+
+When a lookup finds a match, the background also stores it under the page's
+address, as `known:<key>` in local storage with the Whiskybase ID, address,
+name and rating, and the number of ratings once the bottle page is in (which also
+updates the rating). The key, from
+[`src/known-pages.js`](src/known-pages.js), leaves out the scheme, `www.`, a
+trailing slash, the `#fragment` and tracking parameters (`utm_…`, `gclid` and
+the like), and sorts the other parameters, so that a list's link to the page
+gets the same key as the page itself. A later lookup on the page without a
+match removes it.
+
+Lists don't always link to the page that was matched: Whisky Auctioneer's
+lists link each photo to the bottle (`/learn/explore-whisky/bottles/<name>?v=<lot>`)
+rather than to the lot page (`/whisky-lot/<lot>/<name>`). So the match is
+also stored under the address the page names as canonical (`<link
+rel="canonical">`, which `content.js` adds to its detection result), as
+`known:<key>#canonical`; not when that is a home page, which some sites give
+as every page's canonical address. A link on a list tries its own key first,
+then `<key>#canonical`, then, if it has a query, that key without the query
+(`KnownPages.linkKeys`): the lot page's canonical address is the bottle without
+`?v=`, so every lot of that bottle on the list gets the badge.
+
+On every page it runs on, `content.js` collects the links that show an image
+and asks the background (`whisky:known`) which of them point to such a page;
+links to the page's own address or its canonical address are left out. Each of those images gets a small badge on
+the bottom of the photo, centred: the extension's icon and the rating, with a tooltip such
+as "WB233907: Inchgower Madeira Finish MM (78 ratings)". The badge is in a shadow root, so the page's styles don't
+reach it and the detector doesn't read it. It's tied to its image with CSS
+anchor positioning, so it stays on the image when the page's layout shifts
+afterwards (older browsers measure the image instead, on load and on resize).
+Links added later (more results,
+infinite scrolling) are picked up after a second. When a match is stored or
+updated in another tab (a bottle opened from the list in a background tab,
+say), every page with the content script updates its badges straight away,
+through `chrome.storage.onChanged`.
+**Nothing is looked up for this**: it only uses what is stored, so no request
+goes to Whiskybase.
+
+Clicking a badge opens the popup on that bottle instead of following the link:
+the background stores it as `shown:<tabId>` in session storage and calls
+`chrome.action.openPopup()` (Chrome 127 and later). A popup opened within ten
+seconds of that shows the bottle's card rather than the page's own data, and
+asks for its details (photo, price) as it does for a lookup, which is the only
+time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
+
+Since it runs in the content script, lists only get badges on pages the
+content script is on: every page with automatic checking on, otherwise the page
+whose toolbar icon was clicked. Unlike the lookups, the stored matches are kept
+in local storage, so they last after the browser closes; at about 100 bytes
+each, the 10 MB that local storage allows is plenty. **Clear stored bottle
+data** at the bottom of the popup removes them all (and with them the badges).
+
 ## Files
 
 | Path | Role |
 | ---- | ---- |
 | `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
-| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content |
+| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content; marks images that link to bottles matched before |
 | `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's right-click menu entries |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
+| `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
 | `test/` | Parser unit tests and fixture pages |
 

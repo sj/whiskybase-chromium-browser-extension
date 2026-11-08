@@ -16,6 +16,7 @@ const verbose = process.argv.includes('-v');
 const require = createRequire(import.meta.url);
 const D = require('../src/detector.js');
 const WB = require('../src/whiskybase.js');
+const KP = require('../src/known-pages.js');
 const { changelogSection, releaseNotes, CHANGELOG_URL } = await import('../scripts/release-notes.mjs');
 
 let failures = 0;
@@ -472,6 +473,31 @@ check('isWhiskybasePage: Whiskybase and its subdomains only', () => {
     assert.equal(WB.isWhiskybasePage(url), true, url);
   for (const url of ['https://www.masterofmalt.com/?ref=whiskybase.com', 'https://notwhiskybase.com/', 'https://whiskybase.com.example.org/', '', undefined])
     assert.equal(WB.isWhiskybasePage(url), false, String(url));
+});
+
+check('KnownPages.key: one key per page, whatever the link adds', () => {
+  const k = 'shop.example/whisky/inchgower-2016';
+  for (const url of [
+    'https://shop.example/whisky/inchgower-2016',
+    'http://www.shop.example/whisky/inchgower-2016/',
+    'https://SHOP.example/whisky/inchgower-2016#reviews',
+    'https://shop.example/whisky/inchgower-2016?utm_source=list&gclid=x&srsltid=y',
+  ])
+    assert.equal(KP.key(url), k, url);
+  // Parameters that pick the page stay, in any order; the path keeps its case.
+  assert.equal(KP.key('https://shop.example/product.php?b=2&id=7'), 'shop.example/product.php?b=2&id=7');
+  assert.equal(KP.key('https://shop.example/product.php?id=7&b=2&utm_medium=x'), 'shop.example/product.php?b=2&id=7');
+  assert.notEqual(KP.key('https://shop.example/product?id=7'), KP.key('https://shop.example/product?id=8'));
+  assert.notEqual(KP.key('https://shop.example/Whisky/A'), KP.key('https://shop.example/whisky/a'));
+  assert.equal(KP.key('https://shop.example:8443/'), 'shop.example:8443/');
+  for (const url of ['javascript:void(0)', 'mailto:a@b.example', 'not a url', '', undefined]) assert.equal(KP.key(url), null, String(url));
+  assert.deepEqual(KP.linkKeys('https://www.auction.example/bottles/caol-ila-1968?v=5330587&utm_source=x'), [
+    'auction.example/bottles/caol-ila-1968?v=5330587',
+    'auction.example/bottles/caol-ila-1968?v=5330587#canonical',
+    'auction.example/bottles/caol-ila-1968#canonical',
+  ]);
+  assert.deepEqual(KP.linkKeys('https://shop.example/a/'), ['shop.example/a', 'shop.example/a#canonical']);
+  assert.deepEqual(KP.linkKeys('mailto:a@b.example'), []);
 });
 
 const SEARCH_MM = 'whiskybase/masterofmalt.com-inchgower-murray-mcdavid-whiskybase-search-results.html';
