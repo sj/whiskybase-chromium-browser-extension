@@ -75,7 +75,7 @@
     const note = document.createElement('span');
     note.style.opacity = '0.75';
     note.textContent = ` (${distillery})`;
-    note.title = `SMWS code ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
+    note.title = `SMWS distillery ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
     host.attachShadow({ mode: 'open' }).append(note);
     return host;
   }
