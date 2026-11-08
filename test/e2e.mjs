@@ -227,7 +227,8 @@ await check('whiskyauction.com lot: matched, and its photo gets the badge', asyn
   expect(badge, 'detailpage-image 93.75', 'photo badge');
 });
 
-// Its list loads the cards by script; one card as the site renders it.
+// Its list loads the cards by script (one card as the site renders it), while
+// a clock on the page rewrites its text every 200ms.
 const CARD = '<div class="cardcontent"><a class="card-link" href="/item/4838071" target="_BLANK"><div class="cardcontent-top">' +
   '<div class="cardcontent-title cardcontent-title-auction"> #4838071 </div><div class="cardcontent-image">' +
   '<img src="https://cdn.whiskyauction.com/auction/i/im2611card/483807101.jpg" class="rounded" loading="lazy"></div>' +
@@ -235,6 +236,8 @@ const CARD = '<div class="cardcontent"><a class="card-link" href="/item/4838071"
 const auction = await openPage('https://www.whiskyauction.com/wac/auctionBrowser');
 await check('whiskyauction.com list: the card of the lot matched before gets its badge', async () => {
   await waitFor(`document.readyState === 'complete'`, auction.session);
+  await evaluate(`(() => { const c = document.createElement('span'); document.body.append(c); setInterval(() => (c.textContent = new Date().toISOString()), 200); return 1; })()`, auction.session);
+  await sleep(1500);
   await evaluate(`document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(CARD)}), 1`, auction.session);
   const badges = await waitFor(`(() => { const b = [...document.querySelectorAll('[data-bottle-lookup]')].map((h) => h.closest('a').getAttribute('href') + ' ' + h.shadowRoot.querySelector('b').textContent); return b.length && b; })()`, auction.session);
   expect(JSON.stringify(badges), JSON.stringify(['/item/4838071 93.75']), 'badges');

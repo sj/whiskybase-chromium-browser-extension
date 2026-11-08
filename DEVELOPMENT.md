@@ -232,7 +232,10 @@ reach it and the detector doesn't read it. It's tied to its image with CSS
 anchor positioning, so it stays on the image when the page's layout shifts
 afterwards (older browsers measure the image instead, on load and on resize).
 Links added later (more results,
-infinite scrolling) are picked up after a second. When a match is stored or
+infinite scrolling) are picked up after a second, counted from the first
+change: a page that keeps changing (Whisky Auction's clock rewrites its text
+every 200ms) would otherwise never be checked again. Changes to text alone
+don't count for this, as new links come as elements. When a match is stored or
 updated in another tab (a bottle opened from the list in a background tab,
 say), every page with the content script updates its badges straight away,
 through `chrome.storage.onChanged`.
