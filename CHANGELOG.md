@@ -7,6 +7,8 @@ For each release, changes are listed below. When a release is published, the cha
 - A small copy icon next to the Whiskybase ID copies it (e.g. WB233907) to the clipboard.
 - The popup no longer jumps around while the Whiskybase details load: the space for the photo and the price estimate is kept free from the start, with a spinner until they arrive. Without a photo, a generic bottle picture is shown; without a price, N/A. A long name and bottling series stay on one line, with the full text as a tooltip.
 - On smws.com, the Scotch Malt Whisky Society's bottle codes get the distillery's name after them: "3.369 (Bowmore)", with a faint icon that opens the extension's popup.
+- On lists of bottles (a shop's whisky section, say), the extension checks whether it has any information readily cached about any of the bottles. If one of the bottles in the list was previously matched to Whiskybase, the extension adds a subtle small badge with the Whiskybase rating. It only uses what the extension already looked up: nothing is looked up for it (this is to avoid triggering a large number of searches and matches for every shop bottle list). Clicking a badge opens the extension on that bottle. There's a new button 'Clear stored bottle data' at the bottom of the popup that clears the cache of information. Information is only ever stored locally, never transmitted.
+- When several bottles were opened in background tabs and their searches failed, switching to one of those tabs now searches again straight away if a Whiskybase helper tab has been opened since, instead of asking you to search manually.
 
 ## 0.3.3
 

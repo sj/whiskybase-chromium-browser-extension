@@ -14,6 +14,7 @@ Once you've installed the extension: navigate to a page describing a bottle of w
 By default, the extension only analyses the current web page when you click its icon, but you can easily tell it to do so automatically for every page that loads. When the extension is triggered, the icon in the toolbar shows whether it was able to recognise any information, and whether it was able to link it to a bottle on Whiskybase.com. Click the extension icon to see the extracted details: distillery, bottle name, bottler, age, ABV, volume, vintage/bottled year, cask number, etc. 
 
 On the Scotch Malt Whisky Society's own site (smws.com), the extension also adds the distillery's name after each bottle code on the page: "3.369" shows as "3.369 (Bowmore)". Click the faint icon next to it to open the extension.
+Browsing a long list of bottles, such as a shop's whisky section? With automatic checking on, the photos of bottles that the extension has matched to Whiskybase before get a small badge with the extension's icon and the bottle's Whiskybase rating. This only uses what the extension already knows: nothing is looked up on Whiskybase for it. Click a badge to open the extension on that bottle, with its photo, rating and price estimate.
 
 **Please note**: This is an independent project; it is not affiliated with nor endorsed by Whiskybase. 
 
@@ -77,7 +78,12 @@ to anyone, except for the Whiskybase lookups described below.
   that these searches came from your account.
 - **Storage.** Results are kept in the browser's session storage while you
   browse, so the same bottle isn't looked up twice. They are cleared when you
-  close the browser. Only the extension's settings are stored permanently.
+  close the browser. Only the extension's settings, and the address of each page
+  with a matched bottle and the address that page names as its canonical one
+  (with the bottle's Whiskybase ID, address, name, rating and number of ratings, so that
+  lists of bottles linking to it can show its rating) are stored permanently, in
+  your browser only. They are removed when you click **Clear stored bottle data**
+  at the bottom of the popup, or remove the extension.
 - **Links.** The About & feedback links and the right-click menu entries just
   open GitHub pages in a new tab when you click them.
 
