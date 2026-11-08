@@ -284,8 +284,8 @@ async function ownBottle(pageUrl) {
   return (key && (await chrome.storage.local.get(`known:${key}`))[`known:${key}`]) || null;
 }
 
-// The extension's icon for the page (the badges on photos, next to SMWS
-// distillery names), as data: so that it doesn't have to be a web-accessible resource.
+// The extension's icon for the page (the badges on photos, after the bottle's
+// title), as data: so that it doesn't have to be a web-accessible resource.
 let iconData = null;
 async function badgeIcon() {
   if (!iconData) {
@@ -510,10 +510,6 @@ async function fetchInHelperTab(url, analyse) {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
 
-  if (msg.type === 'whisky:icon' && sender.tab) {
-    badgeIcon().then(sendResponse, () => sendResponse(null));
-    return true;
-  }
   // The icon on the page was clicked: the popup opens as if the toolbar icon
   // had been (chrome.action.openPopup: Chrome 127 and later).
   if (msg.type === 'whisky:open-popup' && sender.tab) {

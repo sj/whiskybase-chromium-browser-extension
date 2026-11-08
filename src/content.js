@@ -62,7 +62,6 @@
         observer.disconnect();
       }
     }
-    showSmwsIcons();
     showTitleIcon();
     return latest;
   }
@@ -321,6 +320,10 @@
   const TITLE_ATTR = 'data-bottle-lookup-title';
   let pageIcon = null; // the extension's icon, as data:
 
+  function bottleShown() {
+    return !!latest && latest.status !== 'none';
+  }
+
   // While a bottle is detected, the page's title ends in a very faint grey copy
   // of the extension's icon, which opens the popup. It is in a shadow root, so
   // that the detector (which reads the title) doesn't see it.
@@ -358,51 +361,19 @@
   const SMWS_DELAY_MS = 500;
   const SKIP_TEXT = `script, style, noscript, textarea, select, [contenteditable], [${SMWS_ATTR}]`;
   let smwsTimer = null;
-  let smwsIcon = null;
 
   // The name is in a shadow root, so that the detector (which reads the page's
   // own text) doesn't see it; it takes the font and colour of the text round it.
-  // After it, a faint grey copy of the extension's icon, which opens the popup;
-  // only while the page shows a bottle, as on a list the popup has nothing to show.
   function smwsNote(code, distillery) {
     const host = document.createElement('span');
     host.setAttribute(SMWS_ATTR, code);
     host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
-    const root = host.attachShadow({ mode: 'open' });
-    root.innerHTML =
-      '<style>span { opacity: 0.75; } img { width: 1em; height: 1em; margin-left: 0.25em; vertical-align: -0.125em; ' +
-      'opacity: 0.3; filter: grayscale(1); cursor: pointer; transition: opacity 0.15s, filter 0.15s; } ' +
-      'img:hover { opacity: 0.9; filter: none; }</style><span></span>';
-    const note = root.querySelector('span');
+    const note = document.createElement('span');
+    note.style.opacity = '0.75';
     note.textContent = ` (${distillery})`;
     note.title = `SMWS distillery ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
-    if (smwsIcon) {
-      const icon = document.createElement('img');
-      icon.src = smwsIcon;
-      icon.alt = '';
-      icon.title = 'Bottle lookup for Whiskybase';
-      icon.hidden = !bottleShown();
-      // The code may be inside a link (a related bottle, say): the popup opens instead.
-      icon.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {});
-      });
-      root.append(icon);
-    }
+    host.attachShadow({ mode: 'open' }).append(note);
     return host;
-  }
-
-  function bottleShown() {
-    return !!latest && latest.status !== 'none';
-  }
-
-  // The detection changes as the page loads or navigates (a single-page app).
-  function showSmwsIcons() {
-    for (const host of document.querySelectorAll(`[${SMWS_ATTR}]`)) {
-      const icon = host.shadowRoot && host.shadowRoot.querySelector('img');
-      if (icon) icon.hidden = !bottleShown();
-    }
   }
 
   // Each code is followed by its note; a code that has one already is left alone.
@@ -441,13 +412,7 @@
   refreshPageBottle();
   linkObserver.observe(document.documentElement, { childList: true, subtree: true });
   if (globalThis.SmwsCodes && globalThis.SmwsCodes.isSmwsSite(location.hostname)) {
-    chrome.runtime
-      .sendMessage({ type: 'whisky:icon' })
-      .catch(() => null)
-      .then((icon) => {
-        smwsIcon = icon;
-        annotateSmws();
-        smwsObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
-      });
+    annotateSmws();
+    smwsObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
   }
 })();

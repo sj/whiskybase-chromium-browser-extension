@@ -82,16 +82,9 @@ On smws.com (and only there, against false positives), `content.js` also adds
 the distillery's name after each of the Society's bottle codes: "3.369" becomes
 "3.369 (Bowmore)". The codes and distilleries are in `src/smws.js`, which only
 has codes that published lists agree on; a newer code is left as it is. The
-name sits in a shadow root, so the detector doesn't read it as the page's text,
-with a faint grey copy of the extension's icon after it (from the background
-as a data: URL, `whisky:icon`, so it needn't be a web-accessible resource).
-Clicking the icon opens the popup (`whisky:open-popup`, `chrome.action.openPopup`,
-Chrome 127 and later) rather than following a link round the code. The icon
-only shows while the page's detection is whisky or possible (a bottle's page),
-not on a list of bottles where the popup would have nothing to show; each scan
-updates it. Content
-added later (the Society's lists of bottles load after the page) is annotated
-as well. Like everything else, this only happens where the content
+name sits in a shadow root, so the detector doesn't read it as the page's text.
+Content added later (the Society's lists of bottles load after the page) is
+annotated as well. Like everything else, this only happens where the content
 script runs: after a click on the icon, or on every page with automatic
 checking on.
 
@@ -257,8 +250,8 @@ on the page, made invisible, after the pointer leaves.
 It appears as soon as a lookup stores the match, comes back straight away on
 a later visit, and goes when a lookup no longer finds one. As a photo may only
 get its size once it loads (a lazy one), every image that loads counts until
-there is a badge. Clicking it opens the popup (`whisky:open-popup`), as the
-toolbar icon would.
+there is a badge. Clicking it opens the popup (`whisky:open-popup`,
+`chrome.action.openPopup`, Chrome 127 and later), as the toolbar icon would.
 
 All badges are faint and grey (a frosted white pill, the icon in grey), so as
 not to get in the way of the photo, and take the icon's colours when the
