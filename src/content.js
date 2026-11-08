@@ -63,6 +63,7 @@
       }
     }
     showSmwsIcons();
+    showTitleIcon();
     return latest;
   }
 
@@ -310,7 +311,45 @@
       // extension reloaded or removed
     }
     pageBottle = reply && reply.bottle ? reply : null;
+    if (reply && reply.icon) pageIcon = reply.icon;
     placePageBadge();
+    showTitleIcon(); // its tooltip says whether there is a match
+  }
+
+  // --- An icon after the bottle's title ----------------------------------------
+
+  const TITLE_ATTR = 'data-bottle-lookup-title';
+  let pageIcon = null; // the extension's icon, as data:
+
+  // While a bottle is detected, the page's title ends in a very faint grey copy
+  // of the extension's icon, which opens the popup. It is in a shadow root, so
+  // that the detector (which reads the title) doesn't see it.
+  function showTitleIcon() {
+    let host = document.querySelector(`[${TITLE_ATTR}]`);
+    const title = pageIcon && bottleShown() && globalThis.WhiskyDetector.mainHeadingElement(document);
+    if (host && host.parentElement !== title) host = void host.remove();
+    if (!title) return;
+    if (!host) {
+      host = document.createElement('span');
+      host.setAttribute(TITLE_ATTR, '');
+      host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
+      host.attachShadow({ mode: 'open' }).innerHTML =
+        '<style>img { width: max(12px, 0.55em); height: max(12px, 0.55em); margin-left: 0.35em; ' +
+        'vertical-align: middle; opacity: 0.18; filter: grayscale(1); cursor: pointer; ' +
+        'transition: opacity 0.15s, filter 0.15s; } img:hover { opacity: 0.9; filter: none; }</style><img alt="">';
+      // The title may be inside a link: the popup opens instead.
+      host.shadowRoot.querySelector('img').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {});
+      });
+      title.append(host);
+    }
+    const icon = host.shadowRoot.querySelector('img');
+    icon.src = pageIcon;
+    icon.title = pageBottle
+      ? 'Bottle information detected and matched to Whiskybase. Click to see more in browser extension.'
+      : 'Bottle information detected. Click to see more in browser extension.';
   }
 
   // --- SMWS codes, on smws.com -----------------------------------------------

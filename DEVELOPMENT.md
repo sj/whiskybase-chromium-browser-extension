@@ -264,6 +264,13 @@ All badges are faint and grey (a frosted white pill, the icon in grey), so as
 not to get in the way of the photo, and take the icon's colours when the
 pointer is on them.
 
+While a bottle is detected (whisky or possible), the page's title (the first
+proper h1, `WhiskyDetector.mainHeadingElement`, which the detector also reads)
+ends in a very faint grey copy of the extension's icon, in a shadow root so
+the detector doesn't read it. Its tooltip says whether the bottle is matched
+to Whiskybase (a match stored for the page); clicking it opens the popup.
+Each scan, and each change to the stored match, updates it.
+
 Since it runs in the content script, lists only get badges on pages the
 content script is on: every page with automatic checking on, otherwise the page
 whose toolbar icon was clicked. Unlike the lookups, the stored matches are kept
