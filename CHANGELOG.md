@@ -9,8 +9,7 @@ For each release, changes are listed below. When a release is published, the cha
 - Lists of bottles without structured data are no longer taken for a single bottle.
 - On smws.com, the Scotch Malt Whisky Society's bottle codes get the distillery's name after them: "3.369 (Bowmore)".
 - On lists of bottles (a shop's whisky section, say), the extension checks whether it has any information readily cached about any of the bottles. If one of the bottles in the list was previously matched to Whiskybase, the extension adds a subtle small badge with the Whiskybase rating. It only uses what the extension already looked up: nothing is looked up for it (this is to avoid triggering a large number of searches and matches for every shop bottle list). Clicking a badge opens the extension on that bottle. There's a new button 'Clear stored bottle data' at the bottom of the popup that clears the cache of information. Information is only ever stored locally, never transmitted.
-- A bottle's own page now gets the same small badge with the Whiskybase rating, on the bottle's photo, once it has been matched. Click it to open the extension. All badges are now faint and grey, and take the extension's colours when you point at them.
-- When a bottle is recognised, a very faint icon after its title opens the extension; its tooltip says whether it was matched to Whiskybase.
+- On a bottle page, when a bottle is recognised, two badges are added: one very faint/transparent one next to the bottle name (just an icon), and one on the main image of the bottle (showing the Whiskybase score, if/when available). Clicking them opens the extension.
 - When several bottles were opened in background tabs and their searches failed, switching to one of those tabs now searches again straight away if a Whiskybase helper tab has been opened since, instead of asking you to search manually.
 
 ## 0.3.3
