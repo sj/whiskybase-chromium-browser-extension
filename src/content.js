@@ -310,7 +310,6 @@
       // extension reloaded or removed
     }
     pageBottle = reply && reply.bottle ? reply : null;
-    if (reply && reply.icon) pageIcon = reply.icon;
     placePageBadge();
     showTitleIcon(); // its tooltip says whether there is a match
   }
@@ -318,7 +317,17 @@
   // --- An icon after the bottle's title ----------------------------------------
 
   const TITLE_ATTR = 'data-bottle-lookup-title';
-  let pageIcon = null; // the extension's icon, as data:
+  // The icon's Glencairn glass without its square, for any backdrop: a dark
+  // line inside a light halo, so that it shows on light and dark ones alike.
+  const GLASS =
+    'M8.6 2.6H15.4C15.3 4.6 14.6 6.2 14.8 7.9C15.1 10 17.7 11.1 17.7 13.9C17.7 16.3 15.6 17.5 13.1 17.7V19.4' +
+    'C15.1 19.6 16.5 20 16.5 20.6C16.5 21.3 7.5 21.3 7.5 20.6C7.5 20 8.9 19.6 10.9 19.4V17.7' +
+    'C8.4 17.5 6.3 16.3 6.3 13.9C6.3 11.1 8.9 10 9.2 7.9C9.4 6.2 8.7 4.6 8.6 2.6Z';
+  const GLASS_SVG =
+    '<svg viewBox="0 0 24 24" role="img"><title></title>' +
+    `<path d="${GLASS}" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>` +
+    `<path d="${GLASS}" fill="rgba(255, 255, 255, 0.18)" stroke="#2b2118" stroke-width="1.2" stroke-linejoin="round"/>` +
+    '<path d="M7.25 13.1H16.75C16.8 15.6 14.9 16.75 12 16.75C9.1 16.75 7.2 15.6 7.25 13.1Z" fill="#e39b2d"/></svg>';
 
   function bottleShown() {
     return !!latest && latest.status !== 'none';
@@ -329,7 +338,7 @@
   // that the detector (which reads the title) doesn't see it.
   function showTitleIcon() {
     let host = document.querySelector(`[${TITLE_ATTR}]`);
-    const title = pageIcon && bottleShown() && globalThis.WhiskyDetector.mainHeadingElement(document);
+    const title = bottleShown() && globalThis.WhiskyDetector.mainHeadingElement(document);
     if (host && host.parentElement !== title) host = void host.remove();
     if (!title) return;
     if (!host) {
@@ -337,23 +346,23 @@
       host.setAttribute(TITLE_ATTR, '');
       host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
       host.attachShadow({ mode: 'open' }).innerHTML =
-        '<style>img { width: max(12px, 0.55em); height: max(12px, 0.55em); margin-left: 0.35em; ' +
-        'vertical-align: middle; opacity: 0.18; filter: grayscale(1); cursor: pointer; ' +
-        'transition: opacity 0.15s, filter 0.15s; } img:hover { opacity: 0.9; filter: none; }</style><img alt="">';
+        '<style>svg { width: max(12px, 0.55em); height: max(12px, 0.55em); margin-left: 0.35em; ' +
+        'vertical-align: middle; opacity: 0.35; filter: grayscale(1); cursor: pointer; ' +
+        'transition: opacity 0.15s, filter 0.15s; } svg:hover { opacity: 0.9; filter: none; }</style>' +
+        GLASS_SVG;
       // The title may be inside a link: the popup opens instead.
-      host.shadowRoot.querySelector('img').addEventListener('click', (e) => {
+      host.shadowRoot.querySelector('svg').addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {});
       });
       title.append(host);
     }
-    const icon = host.shadowRoot.querySelector('img');
-    icon.src = pageIcon;
-    icon.title = pageBottle
+    host.shadowRoot.querySelector('title').textContent = pageBottle
       ? 'Bottle information detected and matched to Whiskybase. Click to see more in browser extension.'
       : 'Bottle information detected. Click to see more in browser extension.';
   }
+
 
   // --- SMWS codes, on smws.com -----------------------------------------------
 

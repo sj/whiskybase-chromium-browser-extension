@@ -259,8 +259,10 @@ pointer is on them.
 
 While a bottle is detected (whisky or possible), the page's title (the first
 proper h1, `WhiskyDetector.mainHeadingElement`, which the detector also reads)
-ends in a very faint grey copy of the extension's icon, in a shadow root so
-the detector doesn't read it. Its tooltip says whether the bottle is matched
+ends in a very faint grey Glencairn glass, the icon's without its square
+background: an inline SVG with a dark line inside a light halo, so that it
+shows on light and dark backdrops alike, in colour on hover. It is in a shadow
+root so the detector doesn't read it. Its tooltip says whether the bottle is matched
 to Whiskybase (a match stored for the page); clicking it opens the popup.
 Each scan, and each change to the stored match, updates it.
 
