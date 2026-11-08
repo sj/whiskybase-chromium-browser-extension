@@ -52,7 +52,7 @@ The manifest has no content scripts, so the extension can't read pages unless as
 
 - **On click (default):** clicking the toolbar icon gives the extension access to
   that tab (`activeTab`). If the page doesn't have the detector yet, the popup
-  loads `src/detector.js` and `src/content.js` into it with `chrome.scripting`.
+  loads `src/detector.js`, `src/smws.js` and `src/content.js` into it with `chrome.scripting`.
   From there it works as before: the content script reports to the background,
   which sets the badge and starts the Whiskybase lookup.
   The lookup starts by itself only for a detection with at least 90% confidence
@@ -61,7 +61,7 @@ The manifest has no content scripts, so the extension can't read pages unless as
 - **Automatic checking (opt-in):** the popup's **Check every page automatically**
   requests the optional access to all `http`/`https` sites and sets `autoCheck`
   in `chrome.storage.local`. While both hold, the background registers the same
-  two files as a content script on every page (`syncAutoCheck`). Pages already
+  files as a content script on every page (`syncAutoCheck`). Pages already
   open are checked on the next load or click.
 - **Whiskybase itself** is never scanned: the automatic content script excludes
   `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
@@ -77,6 +77,23 @@ The manifest has no content scripts, so the extension can't read pages unless as
   doesn't search (`noaccess`) and the popup offers **Allow access to Whiskybase**.
 
 A page can get the content script both ways; `content.js` then keeps one copy.
+
+On smws.com (and only there, against false positives), `content.js` also adds
+the distillery's name after each of the Society's bottle codes: "3.369" becomes
+"3.369 (Bowmore)". The codes and distilleries are in `src/smws.js`, which only
+has codes that published lists agree on; a newer code is left as it is. The
+name sits in a shadow root, so the detector doesn't read it as the page's text,
+with a faint grey copy of the extension's icon after it (from the background
+as a data: URL, `whisky:icon`, so it needn't be a web-accessible resource).
+Clicking the icon opens the popup (`whisky:open-popup`, `chrome.action.openPopup`,
+Chrome 127 and later) rather than following a link round the code. The icon
+only shows while the page's detection is whisky or possible (a bottle's page),
+not on a list of bottles where the popup would have nothing to show; each scan
+updates it. Content
+added later (the Society's lists of bottles load after the page) is annotated
+as well. Like everything else, this only happens where the content
+script runs: after a click on the icon, or on every page with automatic
+checking on.
 
 ## How Whiskybase lookup works
 
@@ -242,7 +259,8 @@ data** at the bottom of the popup removes them all (and with them the badges).
 | ---- | ---- |
 | `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
-| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content; marks images that link to bottles matched before |
+| `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content; marks images that link to bottles matched before; adds distillery names to SMWS codes on smws.com |
+| `src/smws.js` | The Scotch Malt Whisky Society's codes and their distilleries, and finding them in text (no DOM; also used by the tests) |
 | `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's right-click menu entries |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |

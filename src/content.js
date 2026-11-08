@@ -13,6 +13,9 @@
  * bottles in a shop, say) with a small badge: the extension's icon and the
  * bottle's Whiskybase rating. The background answers from what it stored for
  * those pages earlier; nothing is looked up for this.
+ *
+ * On smws.com, it also adds the distillery's name after each of the Society's
+ * bottle codes ("3.369 (Bowmore)").
  */
 (() => {
   'use strict';
@@ -58,6 +61,7 @@
         observer.disconnect();
       }
     }
+    showSmwsIcons();
     return latest;
   }
 
@@ -218,6 +222,83 @@
     markTimer = setTimeout(() => markKnown(true), 200);
   });
 
+  // --- SMWS codes, on smws.com -----------------------------------------------
+
+  const SMWS_ATTR = 'data-bottle-lookup-smws';
+  const SMWS_DELAY_MS = 500;
+  const SKIP_TEXT = `script, style, noscript, textarea, select, [contenteditable], [${SMWS_ATTR}]`;
+  let smwsTimer = null;
+  let smwsIcon = null;
+
+  // The name is in a shadow root, so that the detector (which reads the page's
+  // own text) doesn't see it; it takes the font and colour of the text round it.
+  // After it, a faint grey copy of the extension's icon, which opens the popup;
+  // only while the page shows a bottle, as on a list the popup has nothing to show.
+  function smwsNote(code, distillery) {
+    const host = document.createElement('span');
+    host.setAttribute(SMWS_ATTR, code);
+    host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
+    const root = host.attachShadow({ mode: 'open' });
+    root.innerHTML =
+      '<style>span { opacity: 0.75; } img { width: 1em; height: 1em; margin-left: 0.25em; vertical-align: -0.125em; ' +
+      'opacity: 0.3; filter: grayscale(1); cursor: pointer; transition: opacity 0.15s, filter 0.15s; } ' +
+      'img:hover { opacity: 0.9; filter: none; }</style><span></span>';
+    const note = root.querySelector('span');
+    note.textContent = ` (${distillery})`;
+    note.title = `SMWS distillery ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
+    if (smwsIcon) {
+      const icon = document.createElement('img');
+      icon.src = smwsIcon;
+      icon.alt = '';
+      icon.title = 'Bottle lookup for Whiskybase';
+      icon.hidden = !bottleShown();
+      // The code may be inside a link (a related bottle, say): the popup opens instead.
+      icon.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {});
+      });
+      root.append(icon);
+    }
+    return host;
+  }
+
+  function bottleShown() {
+    return !!latest && latest.status !== 'none';
+  }
+
+  // The detection changes as the page loads or navigates (a single-page app).
+  function showSmwsIcons() {
+    for (const host of document.querySelectorAll(`[${SMWS_ATTR}]`)) {
+      const icon = host.shadowRoot && host.shadowRoot.querySelector('img');
+      if (icon) icon.hidden = !bottleShown();
+    }
+  }
+
+  // Each code is followed by its note; a code that has one already is left alone.
+  function annotateSmws() {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (/\d\.\d/.test(n.data) && !n.parentElement.closest(SKIP_TEXT)) nodes.push(n);
+    }
+    for (const node of nodes) {
+      // Last first, so that splitting the text leaves the earlier positions as they are.
+      for (const c of globalThis.SmwsCodes.findCodes(node.data).reverse()) {
+        const next = c.end === node.data.length ? node.nextSibling : null;
+        if (next && next.nodeType === 1 && next.getAttribute(SMWS_ATTR) === c.code) continue;
+        node.splitText(c.end).before(smwsNote(c.code, c.distillery));
+      }
+    }
+  }
+
+  // Pages fill in later (the Society's lists of bottles load after the page),
+  // so this one keeps watching.
+  const smwsObserver = new MutationObserver(() => {
+    clearTimeout(smwsTimer);
+    smwsTimer = setTimeout(annotateSmws, SMWS_DELAY_MS);
+  });
+
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.type === 'whisky:get') {
       sendResponse(msg.rescan || !latest ? scan() : latest);
@@ -228,4 +309,14 @@
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   markKnown(false);
   linkObserver.observe(document.documentElement, { childList: true, subtree: true });
+  if (globalThis.SmwsCodes && globalThis.SmwsCodes.isSmwsSite(location.hostname)) {
+    chrome.runtime
+      .sendMessage({ type: 'whisky:icon' })
+      .catch(() => null)
+      .then((icon) => {
+        smwsIcon = icon;
+        annotateSmws();
+        smwsObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+      });
+  }
 })();

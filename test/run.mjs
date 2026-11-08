@@ -16,6 +16,7 @@ const verbose = process.argv.includes('-v');
 const require = createRequire(import.meta.url);
 const D = require('../src/detector.js');
 const WB = require('../src/whiskybase.js');
+const SMWS = require('../src/smws.js');
 const KP = require('../src/known-pages.js');
 const { changelogSection, releaseNotes, CHANGELOG_URL } = await import('../scripts/release-notes.mjs');
 
@@ -115,6 +116,38 @@ for (const [fn, args, expected, pick = (r) => r] of parserCases) {
     assert.deepEqual(pick(D[fn](...args)), expected)
   );
 }
+
+// ---------------------------------------------------------------------------
+console.log('\nSMWS codes');
+
+const smwsCases = [
+  ['CASK NO. 3.369', ['3.369 Bowmore']],
+  ['Tempest in the tropics (3.369)', ['3.369 Bowmore']],
+  ['29.300, 127.12 and G4.21.', ['29.300 Laphroaig', '127.12 Bruichladdich (Port Charlotte)', 'G4.21 Cameronbridge']],
+  ['RW1.5 and CW2.1', ['RW1.5 FEW Spirits', 'CW2.1 Balcones']],
+  // Prices, strengths, sizes, ages, versions and codes newer than the table.
+  ['£3.50, €12.40, 75.00, 3.05', []],
+  ['58.6% ABV, 61.2 %', []],
+  ['1.5 l, 0.7 litre, 70.5cl', []],
+  ['aged 12.5 years', []],
+  ['version 1.95.88534, 10.2.3', []],
+  ['164.3', ['164.3 Penderyn']],
+  ['170.2, G99.1', []],
+];
+for (const [text, want] of smwsCases) {
+  check(`SmwsCodes.findCodes(${JSON.stringify(text)}) → ${JSON.stringify(want)}`, () =>
+    assert.deepEqual(SMWS.findCodes(text).map((c) => `${c.code} ${c.distillery}`), want)
+  );
+}
+check('SmwsCodes.isSmwsSite: smws.com and its subdomains only', () => {
+  assert.ok(SMWS.isSmwsSite('smws.com') && SMWS.isSmwsSite('www.smws.com'));
+  assert.ok(!SMWS.isSmwsSite('smws.com.example.org') && !SMWS.isSmwsSite('notsmws.com') && !SMWS.isSmwsSite('www.masterofmalt.com'));
+});
+check('the popup and automatic checking load the same content scripts', () => {
+  const files = (f) => readFileSync(join(here, '..', f), 'utf8').match(/\[('src\/detector\.js'[^\]]*)\]/)[1];
+  assert.equal(files('popup/popup.js'), files('src/background.js'));
+  assert.match(files('src/background.js'), /'src\/smws\.js', 'src\/content\.js'/);
+});
 
 // ---------------------------------------------------------------------------
 console.log('\nFixture pages');

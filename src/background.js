@@ -278,8 +278,8 @@ async function knownBottles(hrefs, pageUrl, canonicalUrl) {
   return known;
 }
 
-// The extension's icon for the badges on the page, as data: so that the icon
-// doesn't have to be a web-accessible resource.
+// The extension's icon for the page (the badges on lists, next to SMWS
+// distillery names), as data: so that it doesn't have to be a web-accessible resource.
 let iconData = null;
 async function badgeIcon() {
   if (!iconData) {
@@ -504,6 +504,17 @@ async function fetchInHelperTab(url, analyse) {
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
 
+  if (msg.type === 'whisky:icon' && sender.tab) {
+    badgeIcon().then(sendResponse, () => sendResponse(null));
+    return true;
+  }
+  // The icon on the page was clicked: the popup opens as if the toolbar icon
+  // had been (chrome.action.openPopup: Chrome 127 and later).
+  if (msg.type === 'whisky:open-popup' && sender.tab) {
+    if (chrome.action.openPopup) chrome.action.openPopup({ windowId: sender.tab.windowId }).catch(() => {});
+    return;
+  }
+
   // "Try again" in the popup: the user asks to search once more, so the pause
   // after rate limiting or another check no longer applies.
   if (msg.type === 'whisky:retry' && (sender.url || '').startsWith(chrome.runtime.getURL('popup/'))) {
@@ -592,7 +603,7 @@ const AUTO_SCRIPT = {
   id: 'detector',
   matches: ALL_SITES,
   excludeMatches: Whiskybase.OWN_PAGES,
-  js: ['src/detector.js', 'src/content.js'],
+  js: ['src/detector.js', 'src/smws.js', 'src/content.js'],
   runAt: 'document_idle',
 };
 
