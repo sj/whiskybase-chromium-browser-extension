@@ -238,15 +238,17 @@ async function pageCanonical(tabId, pageUrl) {
   }
 }
 
-// Under the page's address, and its canonical address if that is another one;
-// not a home page, which some sites give as every page's canonical address.
+// Under the page's address, and its canonical address, even when that is the
+// same one: a list's link with a query is also tried without it as a canonical
+// address, so a parameter the page's canonical address leaves out doesn't count.
+// Not a home page, which some sites give as every page's canonical address.
 async function rememberMatch(tabId, pageUrl, match) {
   const key = KnownPages.key(pageUrl);
   if (!key) return;
   const keys = [`known:${key}`];
   const canonical = KnownPages.key(await pageCanonical(tabId, pageUrl));
   const home = canonical && canonical.split('?')[0].endsWith('/');
-  if (canonical && canonical !== key && !home) keys.push(`known:${canonical}${KnownPages.CANONICAL}`);
+  if (canonical && !home) keys.push(`known:${canonical}${KnownPages.CANONICAL}`);
   await storeKnown(keys, match);
 }
 
