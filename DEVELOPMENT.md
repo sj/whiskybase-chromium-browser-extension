@@ -86,7 +86,10 @@ name sits in a shadow root, so the detector doesn't read it as the page's text,
 with a faint grey copy of the extension's icon after it (from the background
 as a data: URL, `whisky:icon`, so it needn't be a web-accessible resource).
 Clicking the icon opens the popup (`whisky:open-popup`, `chrome.action.openPopup`,
-Chrome 127 and later) rather than following a link round the code. Content
+Chrome 127 and later) rather than following a link round the code. The icon
+only shows while the page's detection is whisky or possible (a bottle's page),
+not on a list of bottles where the popup would have nothing to show; each scan
+updates it. Content
 added later (the Society's lists of bottles load after the page) is annotated
 as well. Like everything else, this only happens where the content
 script runs: after a click on the icon, or on every page with automatic

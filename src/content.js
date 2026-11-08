@@ -61,6 +61,7 @@
         observer.disconnect();
       }
     }
+    showSmwsIcons();
     return latest;
   }
 
@@ -231,7 +232,8 @@
 
   // The name is in a shadow root, so that the detector (which reads the page's
   // own text) doesn't see it; it takes the font and colour of the text round it.
-  // After it, a faint grey copy of the extension's icon, which opens the popup.
+  // After it, a faint grey copy of the extension's icon, which opens the popup;
+  // only while the page shows a bottle, as on a list the popup has nothing to show.
   function smwsNote(code, distillery) {
     const host = document.createElement('span');
     host.setAttribute(SMWS_ATTR, code);
@@ -249,7 +251,8 @@
       icon.src = smwsIcon;
       icon.alt = '';
       icon.title = 'Bottle lookup for Whiskybase';
-      // The code may be inside a link (a bottle in a list): the popup opens instead.
+      icon.hidden = !bottleShown();
+      // The code may be inside a link (a related bottle, say): the popup opens instead.
       icon.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -258,6 +261,18 @@
       root.append(icon);
     }
     return host;
+  }
+
+  function bottleShown() {
+    return !!latest && latest.status !== 'none';
+  }
+
+  // The detection changes as the page loads or navigates (a single-page app).
+  function showSmwsIcons() {
+    for (const host of document.querySelectorAll(`[${SMWS_ATTR}]`)) {
+      const icon = host.shadowRoot && host.shadowRoot.querySelector('img');
+      if (icon) icon.hidden = !bottleShown();
+    }
   }
 
   // Each code is followed by its note; a code that has one already is left alone.
