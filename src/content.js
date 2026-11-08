@@ -12,7 +12,8 @@
  * It also marks the images that link to bottles matched before (a list of
  * bottles in a shop, say) with a small badge: the extension's icon and the
  * bottle's Whiskybase rating. The background answers from what it stored for
- * those pages earlier; nothing is looked up for this.
+ * those pages earlier; nothing is looked up for this. A page whose own bottle
+ * was matched gets the same badge on its photo.
  *
  * On smws.com, it also adds the distillery's name after each of the Society's
  * bottle codes ("3.369 (Bowmore)").
@@ -69,6 +70,7 @@
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       windowStart = Date.now();
+      refreshPageBottle();
     } else if (Date.now() - windowStart > SETTLE_WINDOW_MS) {
       return;
     }
@@ -80,6 +82,8 @@
 
   const MARK_DELAY_MS = 1000;
   const BADGE_ATTR = 'data-bottle-lookup';
+  const PAGE_BADGE_ATTR = 'data-bottle-lookup-page';
+  const ALL_BADGES = `[${BADGE_ATTR}], [${PAGE_BADGE_ATTR}]`;
   // CSS anchor positioning (Chrome 125 and later) keeps a badge on its image
   // however the page moves the image about afterwards.
   const ANCHORS = CSS.supports('anchor-name', '--a');
@@ -143,46 +147,63 @@
     host.style.left = `${Math.round(to.left - at.left + (to.width - at.width) / 2)}px`;
   }
 
+  // Faint and grey on the photo, in the icon's colours when the pointer is on it.
+  const BADGE_HTML =
+    '<style>span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px 2px 3px; ' +
+    'border-radius: 10px; background: rgba(255, 255, 255, 0.55); color: rgba(43, 33, 24, 0.7); ' +
+    'box-shadow: 0 0 0 1px rgba(43, 33, 24, 0.12); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); ' +
+    'font: 600 11px/14px system-ui, sans-serif; white-space: nowrap; cursor: pointer; ' +
+    'transition: background 0.15s, color 0.15s, box-shadow 0.15s; } ' +
+    'img { width: 14px; height: 14px; filter: grayscale(1); opacity: 0.45; transition: filter 0.15s, opacity 0.15s; } ' +
+    'span:hover { background: #7a3e12; color: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3); } ' +
+    'span:hover img { filter: none; opacity: 1; }</style>' +
+    '<span><img alt=""><b></b></span>';
+
   // The badge is in a shadow root so that the page's styles leave it alone
   // (and the detector, which reads the page's own text, doesn't see it).
-  function setImageBadge(a, bottle, icon) {
-    let host = a.querySelector(`[${BADGE_ATTR}]`);
-    if (!bottle) return void (host && host.remove());
-    if (!host) {
-      const img = photo(a);
-      const box = img.parentElement.tagName === 'PICTURE' ? img.parentElement.parentElement : img.parentElement;
-      host = document.createElement('span');
-      host.setAttribute(BADGE_ATTR, '');
-      badgeImages.set(host, img);
-      host.style.cssText = 'all: initial; position: absolute; z-index: 2147483647;';
-      if (ANCHORS) {
-        const name = `--bottle-lookup-${++anchorCount}`;
-        img.style.setProperty('anchor-name', name);
-        host.style.setProperty('position-anchor', name);
-        host.style.bottom = 'calc(anchor(bottom) + 6px)';
-        host.style.left = 'anchor(center)';
-        host.style.transform = 'translateX(-50%)';
-      }
-      host.attachShadow({ mode: 'open' }).innerHTML =
-        '<style>span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px 2px 3px; ' +
-        'border-radius: 10px; background: rgba(31, 26, 22, 0.85); color: #fff; ' +
-        'font: 600 11px/14px system-ui, sans-serif; white-space: nowrap; cursor: pointer; } img { width: 14px; height: 14px; }</style>' +
-        '<span><img alt=""><b></b></span>';
-      if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
-      box.append(host);
-      img.addEventListener('load', () => placeBadge(host));
-      // Clicked: the popup opens on this bottle, instead of the link being followed.
-      host.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        chrome.runtime.sendMessage({ type: 'whisky:show-known', href: a.href }).catch(() => {});
-      });
+  // Clicked: `onClick`, instead of a link round the image being followed.
+  function addBadge(img, attr, onClick) {
+    const box = img.parentElement.tagName === 'PICTURE' ? img.parentElement.parentElement : img.parentElement;
+    const host = document.createElement('span');
+    host.setAttribute(attr, '');
+    badgeImages.set(host, img);
+    host.style.cssText = 'all: initial; position: absolute; z-index: 2147483647;';
+    if (ANCHORS) {
+      const name = `--bottle-lookup-${++anchorCount}`;
+      img.style.setProperty('anchor-name', name);
+      host.style.setProperty('position-anchor', name);
+      host.style.bottom = 'calc(anchor(bottom) + 6px)';
+      host.style.left = 'anchor(center)';
+      host.style.transform = 'translateX(-50%)';
     }
+    host.attachShadow({ mode: 'open' }).innerHTML = BADGE_HTML;
+    if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+    box.append(host);
+    img.addEventListener('load', () => placeBadge(host));
+    host.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onClick();
+    });
+    return host;
+  }
+
+  function fillBadge(host, bottle, icon) {
     const root = host.shadowRoot;
     root.querySelector('img').src = icon;
     root.querySelector('b').textContent = badgeText(bottle);
     root.querySelector('span').title = badgeTitle(bottle);
     placeBadge(host); // once it has its content, as its width counts
+  }
+
+  // Clicked: the popup opens on this bottle.
+  function setImageBadge(a, bottle, icon) {
+    let host = a.querySelector(`[${BADGE_ATTR}]`);
+    if (!bottle) return void (host && host.remove());
+    host ||= addBadge(photo(a), BADGE_ATTR, () =>
+      chrome.runtime.sendMessage({ type: 'whisky:show-known', href: a.href }).catch(() => {})
+    );
+    fillBadge(host, bottle, icon);
   }
 
   // `all` also updates the badges already there (a rating may have changed).
@@ -207,20 +228,78 @@
   // Lists grow (more results, infinite scrolling), so this one keeps watching.
   const linkObserver = new MutationObserver(() => {
     clearTimeout(markTimer);
-    markTimer = setTimeout(() => markKnown(false), MARK_DELAY_MS);
+    markTimer = setTimeout(() => {
+      markKnown(false);
+      placePageBadge(); // the photo may have been added or replaced
+    }, MARK_DELAY_MS);
   });
   let placeTimer = null;
   addEventListener('resize', () => {
     clearTimeout(placeTimer);
-    placeTimer = setTimeout(() => document.querySelectorAll(`[${BADGE_ATTR}]`).forEach(placeBadge), 200);
+    placeTimer = setTimeout(() => document.querySelectorAll(ALL_BADGES).forEach(placeBadge), 200);
   });
   // A bottle matched or updated in another tab (one opened from this list in
   // the background, say): its badge appears or changes here straight away.
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !Object.keys(changes).some((k) => k.startsWith('known:'))) return;
     clearTimeout(markTimer);
-    markTimer = setTimeout(() => markKnown(true), 200);
+    markTimer = setTimeout(() => {
+      markKnown(true);
+      refreshPageBottle();
+    }, 200);
   });
+
+  // --- The page's own bottle, matched before -----------------------------------
+
+  let pageBottle = null; // { bottle, icon } stored for this page's address
+
+  // The bottle's photo: the largest image on the page, at least 120px each way
+  // and not a wide banner, outside the header, menus and footer.
+  function mainPhoto() {
+    let best = null;
+    let bestArea = 0;
+    for (const img of document.images) {
+      if (img.closest('header, nav, footer')) continue;
+      const r = img.getBoundingClientRect();
+      if (r.width < 120 || r.height < 120 || r.width > 2 * r.height) continue;
+      if (r.width * r.height > bestArea) [best, bestArea] = [img, r.width * r.height];
+    }
+    return best;
+  }
+
+  // Clicked: the popup opens, as for a click on the toolbar icon.
+  function placePageBadge() {
+    let host = document.querySelector(`[${PAGE_BADGE_ATTR}]`);
+    const img = pageBottle && mainPhoto();
+    if (host && badgeImages.get(host) !== img) host = void host.remove();
+    if (!img) return;
+    host ||= addBadge(img, PAGE_BADGE_ATTR, () => chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {}));
+    fillBadge(host, pageBottle.bottle, pageBottle.icon);
+  }
+
+  // A photo has no size until it loads (a lazy one, say), and that changes
+  // nothing the observers see: until there is a badge, each loaded image counts.
+  let photoTimer = null;
+  document.addEventListener(
+    'load',
+    (e) => {
+      if (!pageBottle || e.target.tagName !== 'IMG' || document.querySelector(`[${PAGE_BADGE_ATTR}]`)) return;
+      clearTimeout(photoTimer);
+      photoTimer = setTimeout(placePageBadge, 200);
+    },
+    true
+  );
+
+  async function refreshPageBottle() {
+    let reply = null;
+    try {
+      reply = await chrome.runtime.sendMessage({ type: 'whisky:own-known' });
+    } catch (e) {
+      // extension reloaded or removed
+    }
+    pageBottle = reply && reply.bottle ? reply : null;
+    placePageBadge();
+  }
 
   // --- SMWS codes, on smws.com -----------------------------------------------
 
@@ -308,6 +387,7 @@
   scan();
   observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true });
   markKnown(false);
+  refreshPageBottle();
   linkObserver.observe(document.documentElement, { childList: true, subtree: true });
   if (globalThis.SmwsCodes && globalThis.SmwsCodes.isSmwsSite(location.hostname)) {
     chrome.runtime

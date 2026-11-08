@@ -278,7 +278,13 @@ async function knownBottles(hrefs, pageUrl, canonicalUrl) {
   return known;
 }
 
-// The extension's icon for the page (the badges on lists, next to SMWS
+// The stored match for a page itself, for the badge on its photo.
+async function ownBottle(pageUrl) {
+  const key = KnownPages.key(pageUrl);
+  return (key && (await chrome.storage.local.get(`known:${key}`))[`known:${key}`]) || null;
+}
+
+// The extension's icon for the page (the badges on photos, next to SMWS
 // distillery names), as data: so that it doesn't have to be a web-accessible resource.
 let iconData = null;
 async function badgeIcon() {
@@ -540,6 +546,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'whisky:known' && sender.tab && Array.isArray(msg.hrefs)) {
     Promise.all([knownBottles(msg.hrefs, sender.url || sender.tab.url, msg.canonical), badgeIcon()]).then(
       ([known, icon]) => sendResponse({ known, icon }),
+      () => sendResponse(null)
+    );
+    return true;
+  }
+
+  if (msg.type === 'whisky:own-known' && sender.tab && sender.frameId === 0) {
+    Promise.all([ownBottle(sender.url || sender.tab.url), badgeIcon()]).then(
+      ([bottle, icon]) => sendResponse({ bottle, icon }),
       () => sendResponse(null)
     );
     return true;

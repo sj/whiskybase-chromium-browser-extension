@@ -246,6 +246,20 @@ seconds of that shows the bottle's card rather than the page's own data, and
 asks for its details (photo, price) as it does for a lookup, which is the only
 time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
 
+A bottle's own page gets the same badge once its bottle is matched
+(`whisky:own-known`, the match stored under the page's address): on the
+bottle's photo, taken to be the largest image on the page that is at least
+120px each way and not a wide banner, outside the header, menus and footer.
+It appears as soon as a lookup stores the match, comes back straight away on
+a later visit, and goes when a lookup no longer finds one. As a photo may only
+get its size once it loads (a lazy one), every image that loads counts until
+there is a badge. Clicking it opens the popup (`whisky:open-popup`), as the
+toolbar icon would.
+
+All badges are faint and grey (a frosted white pill, the icon in grey), so as
+not to get in the way of the photo, and take the icon's colours when the
+pointer is on them.
+
 Since it runs in the content script, lists only get badges on pages the
 content script is on: every page with automatic checking on, otherwise the page
 whose toolbar icon was clicked. Unlike the lookups, the stored matches are kept
