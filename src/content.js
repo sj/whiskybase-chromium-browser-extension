@@ -7,7 +7,9 @@
  *
  * Pages that render late or navigate client-side (SPAs) are re-scanned after
  * DOM changes: always when the URL changed, otherwise only during the first
- * few seconds after load.
+ * few seconds after load. Each such wait runs from the first change, not the
+ * last: on a page that changes all the time (a clock ticking every 200ms) a
+ * wait restarted by every change would never end.
  *
  * It also marks the images that link to bottles matched before (a list of
  * bottles in a shop, say) with a small badge: the extension's icon and the
@@ -74,8 +76,10 @@
     } else if (Date.now() - windowStart > SETTLE_WINDOW_MS) {
       return;
     }
-    clearTimeout(timer);
-    timer = setTimeout(scan, RESCAN_DELAY_MS);
+    timer ||= setTimeout(() => {
+      timer = null;
+      scan();
+    }, RESCAN_DELAY_MS);
   });
 
   // --- Bottles matched before, on lists of bottles ----------------------------
@@ -89,6 +93,7 @@
   const ANCHORS = CSS.supports('anchor-name', '--a');
   let lastAsked = null;
   let markTimer = null;
+  let knownTimer = null;
   let anchorCount = 0;
 
   // Links that show an image, by href. Without `all`, only those without a badge yet.
@@ -226,9 +231,12 @@
   }
 
   // Lists grow (more results, infinite scrolling), so this one keeps watching.
-  const linkObserver = new MutationObserver(() => {
-    clearTimeout(markTimer);
-    markTimer = setTimeout(() => {
+  // New links and photos come as elements; changes to text alone (a clock on
+  // the page) are left out.
+  const linkObserver = new MutationObserver((records) => {
+    if (!records.some((r) => [...r.addedNodes].some((n) => n.nodeType === Node.ELEMENT_NODE))) return;
+    markTimer ||= setTimeout(() => {
+      markTimer = null;
       markKnown(false);
       placePageBadge(); // the photo may have been added or replaced
     }, MARK_DELAY_MS);
@@ -242,8 +250,8 @@
   // the background, say): its badge appears or changes here straight away.
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'local' || !Object.keys(changes).some((k) => k.startsWith('known:'))) return;
-    clearTimeout(markTimer);
-    markTimer = setTimeout(() => {
+    clearTimeout(knownTimer);
+    knownTimer = setTimeout(() => {
       markKnown(true);
       refreshPageBottle();
     }, 200);
@@ -405,8 +413,10 @@
   // Pages fill in later (the Society's lists of bottles load after the page),
   // so this one keeps watching.
   const smwsObserver = new MutationObserver(() => {
-    clearTimeout(smwsTimer);
-    smwsTimer = setTimeout(annotateSmws, SMWS_DELAY_MS);
+    smwsTimer ||= setTimeout(() => {
+      smwsTimer = null;
+      annotateSmws();
+    }, SMWS_DELAY_MS);
   });
 
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

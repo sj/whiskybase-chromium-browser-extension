@@ -232,7 +232,10 @@ reach it and the detector doesn't read it. It's tied to its image with CSS
 anchor positioning, so it stays on the image when the page's layout shifts
 afterwards (older browsers measure the image instead, on load and on resize).
 Links added later (more results,
-infinite scrolling) are picked up after a second. When a match is stored or
+infinite scrolling) are picked up after a second, counted from the first
+change: a page that keeps changing (Whisky Auction's clock rewrites its text
+every 200ms) would otherwise never be checked again. Changes to text alone
+don't count for this, as new links come as elements. When a match is stored or
 updated in another tab (a bottle opened from the list in a background tab,
 say), every page with the content script updates its badges straight away,
 through `chrome.storage.onChanged`.
@@ -428,7 +431,9 @@ into headless Chromium, in a fresh profile, and check it on fixture pages:
 the Master of Malt product page is looked up and matched (Whiskybase answers
 from its fixtures) and gets the title icon, the Master of Malt list then
 badges that bottle (its link has a `?sku=` the product page's address
-doesn't), and the SMWS page gets its distillery name. Pages are
+doesn't), the SMWS page gets its distillery name, and a Whisky Auction lot is
+matched and badged on its photo and on a card of its list (added by the test,
+as the list loads its cards by script). Pages are
 served at their real addresses and every other request is blocked, so nothing
 goes out. Google Chrome 137 and later ignore `--load-extension`: use Chromium
 or Chrome for Testing (`CHROME_BIN`). They don't run in CI.
