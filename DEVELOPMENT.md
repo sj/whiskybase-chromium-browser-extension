@@ -85,6 +85,10 @@ the distillery's name after each of the Society's bottle codes: "3.369" becomes
 "3.369 (Bowmore)". The codes and distilleries are in `src/smws.js`, which only
 has codes that published lists agree on; a newer code is left as it is. The
 name sits in a shadow root, so the detector doesn't read it as the page's text.
+It is lighter (faded, so it also reads on a dark background) and a little
+smaller than the text round it, and a long name is cut short
+with an ellipsis ("(Highland P…)", the full name in its tooltip), so that it
+fits SMWS's narrow table cells.
 Content added later (the Society's lists of bottles load after the page) is
 annotated as well. Like everything else, this only happens where the content
 script runs: after a click on the icon, or on every page with automatic
