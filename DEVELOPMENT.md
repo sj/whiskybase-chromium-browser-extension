@@ -113,9 +113,9 @@ checking on.
 - **Match details:** the popup shows the parsed data on the left and Whiskybase
   on the right: the bottle photo and name (followed by its bottling series in
   brackets, when Whiskybase has one), then rows for the ID (as Whiskybase
-  writes it, e.g. **WB233907**), the rating with the number of reviews it is
+  writes it, e.g. **WB233907**), the rating with the number of ratings it is
   based on, and, when shops list the bottle, the price estimate (Whiskybase's
-  Average Shop Price) with the number of shops. The review count, series and price are
+  Average Shop Price) with the number of shops. The number of ratings, series and price are
   only on the bottle's own page, which is fetched only when the popup shows the
   match (not for every page with one, to keep requests down); the photo host applies rate limiting and other checks too, so the
   background fetches the photo (trying its other sizes if one fails) and hands
@@ -234,7 +234,7 @@ On every page it runs on, `content.js` collects the links that show an image
 and asks the background (`whisky:known`) which of them point to such a page;
 links to the page's own address or its canonical address are left out. Each of those images gets a small badge on
 the bottom of the photo, centred: the extension's icon and the rating, with a tooltip such
-as "WB233907: Inchgower Madeira Finish MM (78 ratings)". The badge is in a shadow root, so the page's styles don't
+as "WB233907: Inchgower Madeira Finish MM. Rating: 87.50 (based on 78 ratings)". The badge is in a shadow root, so the page's styles don't
 reach it and the detector doesn't read it. It's tied to its image with CSS
 anchor positioning, so it stays on the image when the page's layout shifts
 afterwards (older browsers measure the image instead, on load and on resize).

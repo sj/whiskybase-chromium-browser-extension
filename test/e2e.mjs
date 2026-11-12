@@ -238,6 +238,9 @@ await check('whiskyauction.com lot: matched, and its photo gets the badge', asyn
   expect(lookup.match.id, '36642', 'match');
   const badge = await waitFor(`(() => { const h = document.querySelector('[data-bottle-lookup-page]'); return h && h.parentElement.querySelector('img').className + ' ' + h.shadowRoot.querySelector('b').textContent; })()`, lot.session);
   expect(badge, 'detailpage-image 93.75', 'photo badge');
+  const title = await evaluate(`document.querySelector('[data-bottle-lookup-page]').shadowRoot.querySelector('span').title`, lot.session);
+  // The number of ratings is only known once the popup has shown the bottle.
+  expect(title, 'WB36642: Port Ellen 1970 GM. Rating: 93.75', 'tooltip');
 });
 
 // Its list loads the cards by script (one card as the site renders it), while
@@ -254,6 +257,15 @@ await check('whiskyauction.com list: the card of the lot matched before gets its
   await evaluate(`document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(CARD)}), 1`, auction.session);
   const badges = await waitFor(`(() => { const b = [...document.querySelectorAll('[data-bottle-lookup]')].map((h) => h.closest('a').getAttribute('href') + ' ' + h.shadowRoot.querySelector('b').textContent); return b.length && b; })()`, auction.session);
   expect(JSON.stringify(badges), JSON.stringify(['/item/4838071 93.75']), 'badges');
+});
+await check('whiskyauction.com list: the tooltip has the number of ratings once known', async () => {
+  // As stored after the popup showed the bottle's details.
+  await evaluate(`chrome.storage.local.get(null).then((all) => chrome.storage.local.set(Object.fromEntries(Object.entries(all).filter(([k, v]) => k.startsWith('known:') && v.id === '36642').map(([k, v]) => [k, { ...v, reviews: 12 }])))).then(() => 1)`, worker);
+  await evaluate(`location.reload(), 1`, auction.session);
+  await waitFor(`document.readyState === 'complete'`, auction.session);
+  await evaluate(`document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(CARD)}), 1`, auction.session);
+  const title = await waitFor(`(() => { const h = document.querySelector('[data-bottle-lookup]'); return h && h.shadowRoot.querySelector('span').title; })()`, auction.session);
+  expect(title, 'WB36642: Port Ellen 1970 GM. Rating: 93.75 (based on 12 ratings)', 'tooltip');
 });
 
 console.log(failures ? `\n${failures} failed` : '\nAll browser tests passed');
