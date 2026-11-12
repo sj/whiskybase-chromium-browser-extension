@@ -234,7 +234,7 @@ On every page it runs on, `content.js` collects the links that show an image
 and asks the background (`whisky:known`) which of them point to such a page;
 links to the page's own address or its canonical address are left out. Each of those images gets a small badge on
 the bottom of the photo, centred: the extension's icon and the rating, with a tooltip such
-as "WB233907: Inchgower Madeira Finish MM (78 ratings)". The badge is in a shadow root, so the page's styles don't
+as "WB233907: Inchgower Madeira Finish MM. Rating: 87.50 (based on 78 ratings)". The badge is in a shadow root, so the page's styles don't
 reach it and the detector doesn't read it. It's tied to its image with CSS
 anchor positioning, so it stays on the image when the page's layout shifts
 afterwards (older browsers measure the image instead, on load and on resize).

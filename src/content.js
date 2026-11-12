@@ -112,12 +112,13 @@
     return bottle.rating ? bottle.rating.toFixed(2) : '–';
   }
 
-  // "WB233907: Inchgower Madeira Finish MM (78 ratings)"; the number of ratings
-  // is only known once the popup has shown the bottle's details.
+  // "WB233907: Inchgower Madeira Finish MM. Rating: 87.50 (based on 78 ratings)";
+  // the number of ratings is only known once the popup has shown the bottle's details.
   function badgeTitle(bottle) {
     const n = bottle.reviews;
-    const ratings = n != null ? ` (${n} ${n === 1 ? 'rating' : 'ratings'})` : !bottle.rating ? ' (no ratings yet)' : '';
-    return `WB${bottle.id}: ${bottle.text}${ratings}`;
+    const based = n != null ? ` (based on ${n} ${n === 1 ? 'rating' : 'ratings'})` : '';
+    const rating = bottle.rating ? `Rating: ${bottle.rating.toFixed(2)}${based}` : 'No ratings yet';
+    return `WB${bottle.id}: ${bottle.text}. ${rating}`;
   }
 
   const badgeImages = new WeakMap(); // badge → the image it is placed on
