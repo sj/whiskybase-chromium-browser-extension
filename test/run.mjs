@@ -152,7 +152,8 @@ check('the popup and automatic checking load the same content scripts', () => {
 // ---------------------------------------------------------------------------
 console.log('\nFixture pages');
 
-// status: expected detection; whisky: fields that must match (RegExp or exact value)
+// status: expected detection; whisky: fields that must match (RegExp or exact value);
+// minConfidence: the least confidence (an automatic lookup needs 0.9)
 const fixtureCases = [
   {
     file: 'shop-jsonld-ardbeg.html',
@@ -210,6 +211,7 @@ const fixtureCases = [
     status: 'whisky',
     whisky: {
       name: 'Tempest in the tropics',
+      distillery: 'Bowmore', // from its code
       bottler: 'Scotch Malt Whisky Society',
       bottling: 'independent',
       bottlerSource: 'site',
@@ -218,6 +220,14 @@ const fixtureCases = [
       abv: 54,
       vintage: 2004,
     },
+  },
+  {
+    // "Wine" in the name: no other drink, as the code gives the distillery (12: BenRiach).
+    file: 'smws-12-82-benriach-sponge-cake-on-the-wine-lake.html',
+    query: 'SMWS 12.82 1991 54.8%',
+    status: 'whisky',
+    minConfidence: 0.9,
+    whisky: { name: 'Sponge cake on the wine lake', distillery: 'BenRiach', bottler: 'Scotch Malt Whisky Society', caskNumber: '12.82', age: 32, abv: 54.8, vintage: 1991 },
   },
   {
     file: 'sub-brand-port-charlotte.html',
@@ -422,6 +432,7 @@ function runFixtures(files) {
     `<script>${readFileSync(join(here, '..', 'src', name), 'utf8').replace(/<\/script/gi, '<\\/script')}</script>`;
   const harness = `<!doctype html><meta charset="utf-8"><body><pre id="out"></pre>
 ${script('detector.js')}
+${script('smws.js')}
 <script>
   const fixtures = ${JSON.stringify(fixtures).replace(/</g, '\\u003c')};
   const results = {};
@@ -488,6 +499,7 @@ for (const c of fixtureCases) {
     if (r.error) throw new Error(r.error);
     const detail = `got ${r.status} (score ${r.score})\n` + r.reasons.map((x) => `${x.points > 0 ? '+' : ''}${x.points}  ${x.text}`).join('\n');
     assert.ok([].concat(c.status).includes(r.status), detail);
+    if (c.minConfidence !== undefined) assert.ok(r.confidence >= c.minConfidence, `confidence ${r.confidence}\n${detail}`);
     for (const [k, want] of Object.entries(c.whisky || {})) {
       const got = r.whisky[k];
       if (want instanceof RegExp) assert.match(String(got), want, `whisky.${k}`);

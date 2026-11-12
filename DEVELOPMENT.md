@@ -14,7 +14,10 @@ page's DevTools console as `[Bottle lookup for Whiskybase]`.
 [`src/detector.js`](src/detector.js) gives points for signals and records each one:
 
 - **Whisky context**: whisky words or one of ~185 known distilleries/brands/bottlers
-  in the product name; whisky in breadcrumbs, title or description.
+  in the product name; whisky in breadcrumbs, title or description. The SMWS's
+  bottles give only a code: on their pages, the distillery comes from the code
+  (`src/smws.js`, which the detector uses when it is loaded with it), so a name
+  like "Sponge cake on the wine lake" isn't taken for another drink.
 - **Bottle evidence**: schema.org `Product` data (JSON-LD or microdata),
   `og:type=product`, an add-to-cart button, and bottle attributes parsed from
   the name, structured data and spec tables: ABV (incl. US proof), volume (ml/cl/l),

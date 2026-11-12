@@ -513,6 +513,15 @@
     return null;
   }
 
+  const SMWS_RE = /scotch\s+malt\s+whisky\s+society|\bsmws\b/i;
+
+  // The first SMWS code in a text with its distillery, from smws.js when it is
+  // loaded too (as in the extension and the tests); this file needs nothing else.
+  function smwsCodeIn(text) {
+    const codes = root.SmwsCodes;
+    return (codes && codes.findCodes(text)[0]) || null;
+  }
+
   function matchBottler(text) {
     const n = norm(text);
     if (!n) return null;
@@ -975,7 +984,15 @@
     // Auction sites often have a generic heading ("Submit your bid for item #…")
     // and give the distillery only in a labelled "Distillery:" field.
     const specDistillery = nameDistillery ? null : pairField(s.specPairs, DISTILLERY_KEY_RE, matchDistillery);
-    const distillery = nameDistillery || specDistillery;
+    const bottlerInName = matchBottler(nameText);
+    const siteBottler = matchBottler(s.siteName);
+    // The Society's bottles give no distillery, only their code ("12.82" is
+    // BenRiach's); their names say nothing ("Sponge cake on the wine lake").
+    const smwsCode =
+      nameDistillery || specDistillery || !SMWS_RE.test(`${bottlerInName} ${siteBottler}`)
+        ? null
+        : smwsCodeIn(`${nameText}\n${s.title}\n${s.ogTitle}\n${s.specText}`);
+    const distillery = nameDistillery || specDistillery || (smwsCode && smwsCode.distillery);
     if (STRONG_WHISKY_RE.test(nameText)) context += add(3, 'Product name mentions whisky');
     else if (nameHasWhisky) context += add(2, 'Product name mentions bourbon/scotch');
     if (nameDistillery) {
@@ -983,10 +1000,10 @@
       context += add(3, `Known distillery/brand in name: ${distillery}${via}`);
     } else if (specDistillery) {
       context += add(3, `Known distillery in product details: ${distillery}`);
+    } else if (smwsCode) {
+      context += add(3, `Distillery from the SMWS code ${smwsCode.code}: ${distillery}`);
     }
-    const bottlerInName = matchBottler(nameText);
     if (bottlerInName && !distillery) context += add(3, `Known independent bottler in name: ${bottlerInName}`);
-    const siteBottler = matchBottler(s.siteName);
     if (siteBottler && !bottlerInName && !distillery) context += add(2, `Site of independent bottler: ${s.siteName}`);
     if (WHISKY_RE.test(category)) context += add(2, 'Breadcrumbs/category mention whisky');
     if (!nameHasWhisky && WHISKY_RE.test(`${s.title} ${s.ogTitle}`)) context += add(1, 'Page title mentions whisky');
