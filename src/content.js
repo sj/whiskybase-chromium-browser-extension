@@ -65,6 +65,7 @@
       }
     }
     showTitleIcon();
+    placePageBadge(); // only while a bottle is shown
     return latest;
   }
 
@@ -121,6 +122,14 @@
   }
 
   const badgeImages = new WeakMap(); // badge → the image it is placed on
+  const imageBadges = new WeakMap(); // image → the badge on it
+
+  // An image with a badge gets no other: the second would take the first's
+  // anchor (the photo of a bottle on a list, which a page badge also chose).
+  function badged(img, except) {
+    const other = imageBadges.get(img);
+    return !!other && other !== except && other.isConnected;
+  }
 
   // The bottle's photo: the largest image in the link, as a link round a card
   // may have small ones too (a "Free delivery" label's icon, say). By the size
@@ -172,6 +181,7 @@
     const host = document.createElement('span');
     host.setAttribute(attr, '');
     badgeImages.set(host, img);
+    imageBadges.set(img, host);
     host.style.cssText = 'all: initial; position: absolute; z-index: 2147483647;';
     if (ANCHORS) {
       const name = `--bottle-lookup-${++anchorCount}`;
@@ -205,6 +215,7 @@
   function setImageBadge(a, bottle, icon) {
     let host = a.querySelector(`[${BADGE_ATTR}]`);
     if (!bottle) return void (host && host.remove());
+    if (!host && badged(photo(a))) return;
     host ||= addBadge(photo(a), BADGE_ATTR, () =>
       chrome.runtime.sendMessage({ type: 'whisky:show-known', href: a.href }).catch(() => {})
     );
@@ -290,10 +301,13 @@
     return best;
   }
 
-  // Clicked: the popup opens, as for a click on the toolbar icon.
+  // Only while the page shows a bottle: a list's address may have a match
+  // stored from before lists were recognised. Clicked: the popup opens, as for
+  // a click on the toolbar icon.
   function placePageBadge() {
     let host = document.querySelector(`[${PAGE_BADGE_ATTR}]`);
-    const img = pageBottle && mainPhoto();
+    let img = pageBottle && bottleShown() && mainPhoto();
+    if (img && badged(img, host)) img = null;
     if (host && badgeImages.get(host) !== img) host = void host.remove();
     if (!img) return;
     host ||= addBadge(img, PAGE_BADGE_ATTR, () => chrome.runtime.sendMessage({ type: 'whisky:open-popup' }).catch(() => {}));

@@ -250,7 +250,11 @@ asks for its details (photo, price) as it does for a lookup, which is the only
 time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
 
 A bottle's own page gets the same badge once its bottle is matched
-(`whisky:own-known`, the match stored under the page's address): on the
+(`whisky:own-known`, the match stored under the page's address), while the
+page is detected as showing a bottle: a list's address may still have a match
+stored from before lists were recognised. An image gets one badge at most,
+as a second would take the first's anchor (on SMWS's list, the page badge
+and the list badge both chose the same bottle's photo). The page badge goes on the
 bottle's photo, taken to be the largest image on the page that is shown, at
 least 120px each way and not a wide banner, outside the header, menus and
 footer. Images are compared by their size in the layout, so a transform

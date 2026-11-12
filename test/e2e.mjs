@@ -27,6 +27,7 @@ const PORT = 9399;
 // Opened at its own address; the list links to it with a parameter that its
 // canonical address leaves out (?sku=127692).
 const LOT = 'https://www.whiskyauction.com/item/4838071';
+const SMWS_LIST = 'https://smws.com/all-whisky/';
 const MAJESTIC = 'https://www.majestic.co.uk/spirits/laphroaig-14yo-w-dafoe-ltd-ed-49711';
 const PRODUCT = 'https://www.masterofmalt.com/whiskies/inchgower/inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid-whisky/';
 const PAGES = {
@@ -36,6 +37,7 @@ const PAGES = {
   [LOT]: fixture('whiskyauction.com-4838071-product-page-WB36642.html'),
   'https://www.whiskyauction.com/wac/auctionBrowser': fixture('whiskyauction.com-auction-browser.html'),
   // Its title twice, one for phones and one for larger screens, as the site's stylesheet shows them.
+  [SMWS_LIST]: fixture('smws-bottle-list-with-spurious-badge.html'),
   [MAJESTIC]: Buffer.from(fixture('majestic.co.uk-laphroaig-14yo-willem-dafoe.html').toString().replace('</head>',
     '<style>.d-block-mobile { display: none } @media (max-width: 767px) { .d-block-mobile { display: block } .d-none-mobile { display: none } }</style></head>')),
 };
@@ -126,7 +128,7 @@ events.push(async (d) => {
   const { url } = d.params.request;
   const query = url.startsWith('https://www.whiskybase.com/search?') && new URL(url).searchParams.get('q');
   const search = query && Object.entries(WB_SEARCHES).find(([start]) => query.startsWith(start));
-  const isPhoto = d.params.resourceType === 'Image' && url.startsWith('https://cdn.whiskyauction.com/');
+  const isPhoto = d.params.resourceType === 'Image' && /^https:\/\/(cdn\.whiskyauction\.com|cdn11\.bigcommerce\.com)\//.test(url);
   const body = PAGES[url] && d.params.resourceType === 'Document' ? PAGES[url]
     : query ? search && search[1]
     : url.startsWith('https://www.whiskybase.com/whiskies/') ? WB_BOTTLE
@@ -254,6 +256,27 @@ await check('whiskyauction.com list: the card of the lot matched before gets its
   await evaluate(`document.querySelector('main').insertAdjacentHTML('beforeend', ${JSON.stringify(CARD)}), 1`, auction.session);
   const badges = await waitFor(`(() => { const b = [...document.querySelectorAll('[data-bottle-lookup]')].map((h) => h.closest('a').getAttribute('href') + ' ' + h.shadowRoot.querySelector('b').textContent); return b.length && b; })()`, auction.session);
   expect(JSON.stringify(badges), JSON.stringify(['/item/4838071 93.75']), 'badges');
+});
+
+// SMWS's list, whose address once had a match stored (taken for a bottle before
+// lists were recognised); its cards come by script, one as the site renders it.
+const SMWS_CARD = '<li class="product"><article class="itemSmall card"><figure class="card-figure"><a href="https://smws.com/barrelbutt/">' +
+  '<div class="card-img-container"><img class="card-image" src="https://cdn11.bigcommerce.com/s-vagfena5nz/images/1.309.png" alt="Barrelbutt"></div></a></figure>' +
+  '<div class="card-body"><p class="caskNo">Cask No. 1.309</p><h3 class="card-title"><a href="https://smws.com/barrelbutt/">Barrelbutt</a></h3></div></article></li>';
+const bottle1309 = { id: '999001', url: 'https://www.whiskybase.com/whiskies/whisky/999001', text: 'SMWS 1.309 Barrelbutt', rating: null, reviews: null };
+await evaluate(`chrome.storage.local.set({ ['known:' + KnownPages.key(${JSON.stringify(SMWS_LIST)})]: ${JSON.stringify(bottle1309)}, ['known:' + KnownPages.key('https://smws.com/barrelbutt/')]: ${JSON.stringify(bottle1309)} })`, worker);
+const smwsList = await openPage(SMWS_LIST);
+await check('a list with a match stored for its own address: one badge per photo, on the photo', async () => {
+  await waitFor(`document.readyState === 'complete'`, smwsList.session);
+  // The saved page keeps its body hidden until the site's script shows it.
+  await evaluate(`document.body.removeAttribute('style'), document.body.insertAdjacentHTML('beforeend', ${JSON.stringify(SMWS_CARD)}), 1`, smwsList.session);
+  await waitFor(`document.querySelector('[data-bottle-lookup]')`, smwsList.session);
+  await sleep(1500);
+  const found = await evaluate(`JSON.stringify([...document.querySelectorAll('[data-bottle-lookup], [data-bottle-lookup-page]')].map((h) => {
+    const p = h.parentElement.querySelector('img').getBoundingClientRect(), b = h.getBoundingClientRect();
+    return (h.hasAttribute('data-bottle-lookup-page') ? 'page' : 'list') + ' badge: centre ' + Math.round(b.left + b.width / 2 - (p.left + p.width / 2)) + ', gap ' + Math.round(p.bottom - b.bottom);
+  }))`, smwsList.session);
+  expect(found, JSON.stringify(['list badge: centre 0, gap 6']), 'badges');
 });
 
 console.log(failures ? `\n${failures} failed` : '\nAll browser tests passed');
