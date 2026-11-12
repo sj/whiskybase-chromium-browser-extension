@@ -113,9 +113,9 @@ checking on.
 - **Match details:** the popup shows the parsed data on the left and Whiskybase
   on the right: the bottle photo and name (followed by its bottling series in
   brackets, when Whiskybase has one), then rows for the ID (as Whiskybase
-  writes it, e.g. **WB233907**), the rating with the number of reviews it is
+  writes it, e.g. **WB233907**), the rating with the number of ratings it is
   based on, and, when shops list the bottle, the price estimate (Whiskybase's
-  Average Shop Price) with the number of shops. The review count, series and price are
+  Average Shop Price) with the number of shops. The number of ratings, series and price are
   only on the bottle's own page, which is fetched only when the popup shows the
   match (not for every page with one, to keep requests down); the photo host applies rate limiting and other checks too, so the
   background fetches the photo (trying its other sizes if one fails) and hands

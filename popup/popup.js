@@ -199,8 +199,8 @@ function matchDetails(lk) {
 
 function ratingText(m) {
   if (!m.rating) return 'Not rated yet';
-  const n = m.reviews != null ? ` (${m.reviews} ${m.reviews === 1 ? 'review' : 'reviews'})` : '';
-  return `${m.rating.toFixed(2)} / 100${n}`;
+  const n = m.reviews != null ? ` (${m.reviews} ${m.reviews === 1 ? 'rating' : 'ratings'})` : '';
+  return `${m.rating.toFixed(2)}${n}`;
 }
 
 // Only bottles that shops currently list have a price.
