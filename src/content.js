@@ -390,9 +390,15 @@
     const host = document.createElement('span');
     host.setAttribute(SMWS_ATTR, code);
     host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
+    // A little smaller than the text round it, and a long name cut short with
+    // an ellipsis ("(Highland P…)"), so that it fits a narrow table cell.
     const note = document.createElement('span');
-    note.style.opacity = '0.75';
-    note.textContent = ` (${distillery})`;
+    note.style.cssText = 'opacity: 0.75; font-size: 0.85em; white-space: nowrap;';
+    const name = document.createElement('span');
+    name.style.cssText =
+      'display: inline-block; max-width: 6em; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom;';
+    name.textContent = distillery;
+    note.append(' (', name, ')');
     note.title = `SMWS distillery ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
     host.attachShadow({ mode: 'open' }).append(note);
     return host;
