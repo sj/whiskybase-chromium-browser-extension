@@ -20,7 +20,7 @@ page's DevTools console as `[Bottle lookup for Whiskybase]`.
   like "Sponge cake on the wine lake" isn't taken for another drink.
 - **Bottle evidence**: schema.org `Product` data (JSON-LD or microdata),
   `og:type=product`, an add-to-cart button, and bottle attributes parsed from
-  the name, structured data and spec tables: ABV (incl. US proof), volume (ml/cl/l),
+  the name, structured data and spec tables: ABV (incl. US proof; only 40–65% is taken), volume (ml/cl/l),
   age statement (EN/NL/DE/FR/ES/IT), vintage and bottling year. Sections showing
   other bottles ("You may also like", related or recently viewed products) are
   left out, so their ABVs, ages and cask numbers aren't mistaken for this bottle's.

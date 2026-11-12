@@ -4,7 +4,7 @@ For each release, changes are listed below. When a release is published, the cha
 
 ## Under development (not released yet)
 
-- The ABV is found when a shop gives it without the percent sign ("ABV: 59.7").
+- The ABV is found when a shop gives it without the percent sign ("ABV: 59.7"). Only figures between 40% and 65% are taken as the ABV, which avoids picking up unrelated percentages.
 - A small copy icon next to the Whiskybase ID copies it (e.g. WB233907) to the clipboard.
 - The popup no longer jumps around while the Whiskybase details load: the space for the photo and the price estimate is kept free from the start, with a spinner until they arrive. Without a photo, a generic bottle picture is shown; without a price, N/A. A long name and bottling series stay on one line, with the full text as a tooltip.
 - Lists of bottles without structured data are no longer taken for a single bottle.

@@ -305,6 +305,13 @@
   // ---------------------------------------------------------------------------
   // Attribute parsers (exported for testing)
 
+  // Whisky is bottled at 40% or more, and hardly ever above 65%: a figure outside
+  // that range is not taken as the ABV, wherever it is found (a rare bottle
+  // stronger than that is still recognised by its other details).
+  const ABV_MIN = 40;
+  const ABV_MAX = 65;
+  const abvInRange = (v) => v >= ABV_MIN && v <= ABV_MAX;
+
   const N = '(\\d{2}(?:[.,]\\d{1,2})?)';
   const ABV_STRICT_RES = [
     new RegExp(N + '\\s*%\\s*(?:vol\\b|abv\\b|alc\\b|alcohol)', 'i'),
@@ -316,13 +323,14 @@
   ];
   // A labelled figure without the percent sign ("ABV: 59.7", "Alcohol: 46"): the
   // label and the colon are needed, nothing may follow that makes it another
-  // measure ("Alcohol: 70cl"), and only 40–65 is taken (see parseAbv).
-  const ABV_BARE_RE = new RegExp(
-    '(?:\\babv|\\balc(?:ohol)?\\.?|alcoholpercentage|alcoholgehalte|alkoholgehalt|\\balcool)' +
-      '\\s*(?:content|percentage|gehalte|by\\s+vol(?:ume)?\\.?)?\\s*:\\s*' + N + '(?![\\d.,%]|\\s*(?:°|proof\\b|(?:ml|cl|ltr|liter|litre|lt|l)(?![a-z])))',
-    'i'
+  // measure ("Alcohol: 70cl").
+  ABV_STRICT_RES.push(
+    new RegExp(
+      '(?:\\babv|\\balc(?:ohol)?\\.?|alcoholpercentage|alcoholgehalte|alkoholgehalt|\\balcool)' +
+        '\\s*(?:content|percentage|gehalte|by\\s+vol(?:ume)?\\.?)?\\s*:\\s*' + N + '(?![\\d.,%]|\\s*(?:°|proof\\b|(?:ml|cl|ltr|liter|litre|lt|l)(?![a-z])))',
+      'i'
+    )
   );
-  ABV_STRICT_RES.push(ABV_BARE_RE);
   // A bare percentage right next to a bottle size ("70cl | 45.8%", "45.8% 70cl") is the ABV.
   const VOL_TOKEN = '\\d+(?:[.,]\\d+)?\\s*(?:ml|cl|ltr|liter|litre|lt|l)(?![a-z])';
   const NEAR = '[\\s|/·•,–-]{1,6}';
@@ -331,9 +339,8 @@
     new RegExp('(?:^|[^\\d.,])' + N + '\\s*%' + NEAR + VOL_TOKEN, 'i')
   );
   const ABV_LOOSE_RE = new RegExp('(?:^|[\\s(,/-])' + N + '\\s*%', 'i');
-  // Fallback: almost every whisky is bottled between 42% and 62%, so a bare
-  // percentage in that range is taken as the ABV, unless it reads like a discount
-  // or a share ("48% of reviewers").
+  // Fallback: a bare percentage in the ABV range is taken as the ABV, unless it
+  // reads like a discount or a share ("48% of reviewers").
   const BARE_PERCENT_RE = /(?:^|[^\d.,])(\d{2}(?:[.,]\d{1,2})?)\s*%/g;
   const DISCOUNT_RE =
     /\b(?:off|korting|rabatt|discount|save|sale|uitverkoop|remise|descuento|sconto|up\s+to|tot|bis\s+zu|extra|cashback)\b|[-–]\s*$/i;
@@ -342,7 +349,7 @@
     if (!text) return null;
     for (const m of text.matchAll(BARE_PERCENT_RE)) {
       const v = num(m[1]);
-      if (v < 42 || v > 62) continue;
+      if (!abvInRange(v)) continue;
       const start = m.index + m[0].indexOf(m[1]);
       const before = text.slice(Math.max(0, start - 10), start);
       const after = text.slice(m.index + m[0].length, m.index + m[0].length + 15);
@@ -371,14 +378,14 @@
       const m = text.match(re);
       if (m) {
         const v = num(m[1]);
-        // Without the percent sign, only what whisky is almost always bottled at.
-        if (re === ABV_BARE_RE ? v >= 40 && v <= 65 : v >= 20 && v <= 80) return v;
+        if (abvInRange(v)) return v;
       }
     }
     const p = text.match(PROOF_RE);
     if (p) {
       const v = num(p[1]);
-      if (v >= 60 && v <= 160) return proofAbv(v, !!p[2] || UK_PROOF_HINT_RE.test(text));
+      const abv = proofAbv(v, !!p[2] || UK_PROOF_HINT_RE.test(text));
+      if (abvInRange(abv)) return abv;
     }
     return null;
   }
