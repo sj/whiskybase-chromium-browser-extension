@@ -27,6 +27,7 @@ const PORT = 9399;
 // Opened at its own address; the list links to it with a parameter that its
 // canonical address leaves out (?sku=127692).
 const LOT = 'https://www.whiskyauction.com/item/4838071';
+const MAJESTIC = 'https://www.majestic.co.uk/spirits/laphroaig-14yo-w-dafoe-ltd-ed-49711';
 const PRODUCT = 'https://www.masterofmalt.com/whiskies/inchgower/inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid-whisky/';
 const PAGES = {
   [PRODUCT]: fixture('masterofmalt.com-inchgower-murray-mcdavid-product-page.html'),
@@ -34,6 +35,9 @@ const PAGES = {
   'https://smws.com/tempest-in-the-tropics-3-369/': fixture('smws-3-369.html'),
   [LOT]: fixture('whiskyauction.com-4838071-product-page-WB36642.html'),
   'https://www.whiskyauction.com/wac/auctionBrowser': fixture('whiskyauction.com-auction-browser.html'),
+  // Its title twice, one for phones and one for larger screens, as the site's stylesheet shows them.
+  [MAJESTIC]: Buffer.from(fixture('majestic.co.uk-laphroaig-14yo-willem-dafoe.html').toString().replace('</head>',
+    '<style>.d-block-mobile { display: none } @media (max-width: 767px) { .d-block-mobile { display: block } .d-none-mobile { display: none } }</style></head>')),
 };
 // Whiskybase's search results, by the start of the query.
 const WB_SEARCHES = {
@@ -205,6 +209,15 @@ await check('list page: the bottle matched before gets its badge', async () => {
   if (!badges || !badges.every((href) => href.includes('inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid'))) {
     throw new Error(`badges on ${JSON.stringify(badges)}`);
   }
+});
+
+const majestic = await openPage(MAJESTIC);
+const titleIconIn = `(() => { const h = document.querySelector('[data-bottle-lookup-title]'); return h && h.parentElement.className; })()`;
+await check('two titles (phones, larger screens): the icon goes after the one shown', async () => {
+  await send('Emulation.setDeviceMetricsOverride', { width: 1200, height: 800, deviceScaleFactor: 1, mobile: false }, majestic.session);
+  expect(await waitFor(titleIconIn, majestic.session), 'product-info__name d-none-mobile', 'at 1200px');
+  await send('Emulation.setDeviceMetricsOverride', { width: 400, height: 800, deviceScaleFactor: 1, mobile: true }, majestic.session);
+  expect(await waitFor(`${titleIconIn} === 'product-info__name d-block-mobile' && 'moved'`, majestic.session), 'moved', 'at 400px');
 });
 
 const smws = await openPage('https://smws.com/tempest-in-the-tropics-3-369/');

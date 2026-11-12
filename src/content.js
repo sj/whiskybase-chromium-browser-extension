@@ -244,7 +244,10 @@
   let placeTimer = null;
   addEventListener('resize', () => {
     clearTimeout(placeTimer);
-    placeTimer = setTimeout(() => document.querySelectorAll(ALL_BADGES).forEach(placeBadge), 200);
+    placeTimer = setTimeout(() => {
+      document.querySelectorAll(ALL_BADGES).forEach(placeBadge);
+      showTitleIcon(); // another title may be shown at this width
+    }, 200);
   });
   // A bottle matched or updated in another tab (one opened from this list in
   // the background, say): its badge appears or changes here straight away.
@@ -346,7 +349,9 @@
   // that the detector (which reads the title) doesn't see it.
   function showTitleIcon() {
     let host = document.querySelector(`[${TITLE_ATTR}]`);
-    const title = bottleShown() && globalThis.WhiskyDetector.mainHeadingElement(document);
+    // The first title that is shown: of one for phones and one for larger
+    // screens (Majestic), the other is hidden.
+    const title = bottleShown() && globalThis.WhiskyDetector.mainHeadingElements(document).find((h) => h.checkVisibility());
     if (host && host.parentElement !== title) host = void host.remove();
     if (!title) return;
     if (!host) {
