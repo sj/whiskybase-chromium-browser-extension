@@ -340,7 +340,9 @@
   );
   const ABV_LOOSE_RE = new RegExp('(?:^|[\\s(,/-])' + N + '\\s*%', 'i');
   // Fallback: a bare percentage in the ABV range is taken as the ABV, unless it
-  // reads like a discount or a share ("48% of reviewers").
+  // reads like a discount or a share ("48% of reviewers"). It starts at 41%: a
+  // bare 40% is more often a discount than not.
+  const FALLBACK_ABV_MIN = 41;
   const BARE_PERCENT_RE = /(?:^|[^\d.,])(\d{2}(?:[.,]\d{1,2})?)\s*%/g;
   const DISCOUNT_RE =
     /\b(?:off|korting|rabatt|discount|save|sale|uitverkoop|remise|descuento|sconto|up\s+to|tot|bis\s+zu|extra|cashback)\b|[-–]\s*$/i;
@@ -349,7 +351,7 @@
     if (!text) return null;
     for (const m of text.matchAll(BARE_PERCENT_RE)) {
       const v = num(m[1]);
-      if (!abvInRange(v)) continue;
+      if (v < FALLBACK_ABV_MIN || !abvInRange(v)) continue;
       const start = m.index + m[0].indexOf(m[1]);
       const before = text.slice(Math.max(0, start - 10), start);
       const after = text.slice(m.index + m[0].length, m.index + m[0].length + 15);
