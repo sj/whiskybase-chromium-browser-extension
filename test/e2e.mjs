@@ -226,6 +226,8 @@ const smws = await openPage('https://smws.com/tempest-in-the-tropics-3-369/');
 await check('smws.com: distillery name after the bottle code', async () => {
   const note = await waitFor(`(() => { const h = document.querySelector('[data-bottle-lookup-smws]'); return h && h.getAttribute('data-bottle-lookup-smws') + h.shadowRoot.textContent; })()`, smws.session);
   expect(note, '3.369 (Bowmore)', 'note');
+  // The bottle's own details have room: the name is not cut short there.
+  expect(await evaluate(`document.querySelector('.productView-details [data-bottle-lookup-smws]').shadowRoot.querySelector('span span').style.maxWidth`, smws.session), '', 'max width');
 });
 await check('smws.com: the note is not part of the page text the detector reads', async () => {
   const d = await detection(smws.tabId);
@@ -289,6 +291,9 @@ await check('a list with a match stored for its own address: one badge per photo
     return (h.hasAttribute('data-bottle-lookup-page') ? 'page' : 'list') + ' badge: centre ' + Math.round(b.left + b.width / 2 - (p.left + p.width / 2)) + ', gap ' + Math.round(p.bottom - b.bottom);
   }))`, smwsList.session);
   expect(found, JSON.stringify(['list badge: centre 0, gap 6']), 'badges');
+  // In a card, a long name is cut short (with an ellipsis) to fit.
+  const width = await waitFor(`(() => { const h = document.querySelector('.card [data-bottle-lookup-smws]'); return h && h.getAttribute('data-bottle-lookup-smws') + ' ' + h.shadowRoot.querySelector('span span').style.maxWidth; })()`, smwsList.session);
+  expect(width, '1.309 6em', 'note in a card');
 });
 
 console.log(failures ? `\n${failures} failed` : '\nAll browser tests passed');

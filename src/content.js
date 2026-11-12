@@ -401,18 +401,21 @@
 
   // The name is in a shadow root, so that the detector (which reads the page's
   // own text) doesn't see it; it takes the font and colour of the text round it.
-  function smwsNote(code, distillery) {
+  function smwsNote(code, distillery, short) {
     const host = document.createElement('span');
     host.setAttribute(SMWS_ATTR, code);
     host.style.cssText = 'display: inline; position: static; float: none; margin: 0; padding: 0; border: 0;';
     // Lighter and a little smaller than the text round it (faded rather than a
-    // fixed grey, so it reads on dark backgrounds too), and a long name cut
-    // short with an ellipsis ("(Highland P…)"), so that it fits a narrow table cell.
+    // fixed grey, so it reads on dark backgrounds too). In a card on a list of
+    // bottles, a long name is cut short with an ellipsis ("(Highland P…)"), so
+    // that it fits the card's narrow table cell; elsewhere it is shown in full.
     const note = document.createElement('span');
     note.style.cssText = 'opacity: 0.55; font-size: 0.85em; white-space: nowrap;';
     const name = document.createElement('span');
-    name.style.cssText =
-      'display: inline-block; max-width: 6em; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom;';
+    if (short) {
+      name.style.cssText =
+        'display: inline-block; max-width: 6em; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom;';
+    }
     name.textContent = distillery;
     note.append(' (', name, ')');
     note.title = `SMWS distillery ${code.split('.')[0]}: ${distillery} (added by Bottle lookup for Whiskybase)`;
@@ -428,11 +431,13 @@
       if (/\d\.\d/.test(n.data) && !n.parentElement.closest(SKIP_TEXT)) nodes.push(n);
     }
     for (const node of nodes) {
+      // The Society's cards: "itemSmall card" on its lists, "recommendations__card-body" on a bottle page.
+      const short = !!node.parentElement.closest('[class*="card"]');
       // Last first, so that splitting the text leaves the earlier positions as they are.
       for (const c of globalThis.SmwsCodes.findCodes(node.data).reverse()) {
         const next = c.end === node.data.length ? node.nextSibling : null;
         if (next && next.nodeType === 1 && next.getAttribute(SMWS_ATTR) === c.code) continue;
-        node.splitText(c.end).before(smwsNote(c.code, c.distillery));
+        node.splitText(c.end).before(smwsNote(c.code, c.distillery, short));
       }
     }
   }

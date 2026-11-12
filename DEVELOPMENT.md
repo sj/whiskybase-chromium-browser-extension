@@ -89,9 +89,11 @@ the distillery's name after each of the Society's bottle codes: "3.369" becomes
 has codes that published lists agree on; a newer code is left as it is. The
 name sits in a shadow root, so the detector doesn't read it as the page's text.
 It is lighter (faded, so it also reads on a dark background) and a little
-smaller than the text round it, and a long name is cut short
-with an ellipsis ("(Highland P…)", the full name in its tooltip), so that it
-fits SMWS's narrow table cells.
+smaller than the text round it. In a card (an element with "card" in its
+class: the bottles on SMWS's lists, and the recommendations on a bottle page),
+a long name is cut short with an ellipsis ("(Highland P…)", the full name in
+its tooltip), so that it fits the card's narrow table cell; on the bottle's own
+details there is room, and the name is shown in full.
 Content added later (the Society's lists of bottles load after the page) is
 annotated as well. Like everything else, this only happens where the content
 script runs: after a click on the icon, or on every page with automatic
