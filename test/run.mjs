@@ -45,6 +45,10 @@ const parserCases = [
   ['parseAbv', ['80° proof'], 45.7],
   ['parseAbv', ['20% off this week'], null],
   ['parseAbv', ['Single Malt Scotch Whisky | 70cl | 45.8%'], 45.8],
+  ['parseAbv', ['Quantity: 1 Bottle 70cl ABV: 59.7'], 59.7],
+  ['parseAbv', ['Alcohol: 46 Region: Islay'], 46],
+  ['parseAbv', ['Alcohol: 70cl'], null],
+  ['parseAbv', ['ABV: 59.7 cl'], null],
   ['parseAbv', ['52,3% 0,7 l'], 52.3],
   ['parseAbv', ['Save 25% on 70cl bottles'], null],
   ['parseAbv', ['Caol Ila 25 52,1% 0,7l', true], 52.1],
@@ -228,6 +232,12 @@ const fixtureCases = [
     status: 'whisky',
     minConfidence: 0.9,
     whisky: { name: 'Sponge cake on the wine lake', distillery: 'BenRiach', bottler: 'Scotch Malt Whisky Society', caskNumber: '12.82', age: 32, abv: 54.8, vintage: 1991 },
+  },
+  {
+    // "ABV:" with the figure and no percent sign.
+    file: 'thefinewinecompany-inchgower-2011.html',
+    status: 'whisky',
+    whisky: { distillery: 'Inchgower', bottler: 'Signatory Vintage', abv: 59.7, age: 14, vintage: 2011, caskNumber: '106', volumeMl: 700 },
   },
   {
     file: 'sub-brand-port-charlotte.html',

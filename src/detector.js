@@ -314,6 +314,16 @@
       'i'
     ),
   ];
+  // A labelled figure without the percent sign ("ABV: 59.7", "Alcohol: 46"): the
+  // label and the colon are needed, and nothing may follow that makes it another
+  // measure ("Alcohol: 70cl").
+  ABV_STRICT_RES.push(
+    new RegExp(
+      '(?:\\babv|\\balc(?:ohol)?\\.?|alcoholpercentage|alcoholgehalte|alkoholgehalt|\\balcool)' +
+        '\\s*(?:content|percentage|gehalte|by\\s+vol(?:ume)?\\.?)?\\s*:\\s*' + N + '(?![\\d.,%]|\\s*(?:°|proof\\b|(?:ml|cl|ltr|liter|litre|lt|l)(?![a-z])))',
+      'i'
+    )
+  );
   // A bare percentage right next to a bottle size ("70cl | 45.8%", "45.8% 70cl") is the ABV.
   const VOL_TOKEN = '\\d+(?:[.,]\\d+)?\\s*(?:ml|cl|ltr|liter|litre|lt|l)(?![a-z])';
   const NEAR = '[\\s|/·•,–-]{1,6}';
