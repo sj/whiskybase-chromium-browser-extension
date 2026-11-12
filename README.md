@@ -5,7 +5,7 @@ Browser extension that recognises when the current web page contains details for
 🌐 [Download here from the Google Chrome Store](https://chromewebstore.google.com/detail/bottle-lookup-for-whiskybase/nngkmbiongkmhiiiblajjiokfllneomm) (see further down for other installation options)<br/><br/><br/>
 
 
-![Screenshot (closeup)](screenshots/fettercairn-50-closeup.jpg)
+![Screenshot (closeup)](screenshots/bottle-detail-page-with-extension-popup-v0.4.0.png)
 
 
 
