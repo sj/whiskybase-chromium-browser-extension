@@ -301,6 +301,12 @@ const fixtureCases = [
   },
   // Shops
   {
+    // Its JSON-LD gives the name HTML-encoded ("&#8242;Willem Dafoe&#8242;").
+    file: 'majestic.co.uk-laphroaig-14yo-willem-dafoe.html',
+    status: 'whisky',
+    whisky: { name: 'Laphroaig \u2032Willem Dafoe\u2032 Limited Edition 14 Year Old', distillery: 'Laphroaig', bottling: 'distillery', age: 14, abv: 53.7, volumeMl: 700 },
+  },
+  {
     file: 'abbeywhisky.com-kilchoman-11-year-old-2007-cask-265-2007-product-page.html',
     status: 'whisky',
     whisky: { distillery: 'Kilchoman', bottling: 'distillery', age: 11, vintage: 2007, bottled: 2019, abv: 55.9, volumeMl: 700, caskNumber: '265' },

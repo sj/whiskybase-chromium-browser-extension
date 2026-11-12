@@ -248,11 +248,23 @@
     return parseFloat(String(s).replace(',', '.'));
   }
 
+  // Text in a page's structured data, which some sites give HTML-encoded
+  // ("Laphroaig &#39;Willem Dafoe&#39;" at Majestic).
+  const ENTITIES = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+  function decodeEntities(s) {
+    return String(s).replace(/&(?:#(\d+)|#x([0-9a-f]+)|([a-z]+));/gi, (m, dec, hex, name) => {
+      if (name) return ENTITIES[name.toLowerCase()] ?? m;
+      const code = parseInt(dec || hex, dec ? 10 : 16);
+      return code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : m;
+    });
+  }
+  const ldText = (v) => clean(decodeEntities(v == null ? '' : v));
+
   function pickName(v) {
     if (!v) return '';
     if (Array.isArray(v)) return pickName(v[0]);
-    if (typeof v === 'object') return clean(v.name || v['@value'] || '');
-    return clean(v);
+    if (typeof v === 'object') return ldText(v.name || v['@value'] || '');
+    return ldText(v);
   }
 
   function hasType(obj, re) {
@@ -683,12 +695,12 @@
   function fromJsonLd(p) {
     const props = [].concat(p.additionalProperty || [])
       .filter((x) => x && typeof x === 'object')
-      .map((x) => `${pickName(x)}: ${clean(x.value)}${x.unitText ? ' ' + clean(x.unitText) : ''}`);
+      .map((x) => `${pickName(x)}: ${ldText(x.value)}${x.unitText ? ' ' + ldText(x.unitText) : ''}`);
     return {
       source: 'JSON-LD',
       name: pickName(p.name),
       brand: pickName(p.brand) || pickName(p.manufacturer),
-      description: clean(p.description).slice(0, 2000),
+      description: ldText(p.description).slice(0, 2000),
       category: [].concat(p.category || []).map(pickName).join(' > '),
       gtin: clean(p.gtin13 || p.gtin || p.gtin12 || p.gtin14 || p.gtin8 || p.ean),
       props: props.join('\n'),
@@ -729,15 +741,17 @@
     return { products, listing: roots.length >= 3 };
   }
 
-  // The page's title (its first proper h1), or null.
-  function mainHeadingElement(doc) {
+  // The page's h1s, best first: the proper ones (outside header, menus and
+  // footer, with text), then the rest. The first is the page's title; a page
+  // may give it twice, one for phones and one for larger screens.
+  function mainHeadingElements(doc) {
     const h1s = [...doc.querySelectorAll('h1')];
     const good = h1s.filter((h) => !h.closest('header, nav, footer') && clean(h.textContent).length >= 3);
-    return good[0] || h1s[0] || null;
+    return [...good, ...h1s.filter((h) => !good.includes(h))];
   }
 
   function mainHeading(doc) {
-    return clean((mainHeadingElement(doc) || {}).textContent || '').slice(0, 300);
+    return clean((mainHeadingElements(doc)[0] || {}).textContent || '').slice(0, 300);
   }
 
   // A list of bottles without structured data says so by its layout: a grid of
@@ -1124,7 +1138,7 @@
     detect,
     collectSignals,
     evaluate,
-    mainHeadingElement,
+    mainHeadingElements,
     parseAbv,
     parseFallbackAbv,
     parseVolume,

@@ -268,8 +268,9 @@ not to get in the way of the photo, and take the icon's colours when the
 pointer is on them.
 
 While a bottle is detected (whisky or possible), the page's title (the first
-proper h1, `WhiskyDetector.mainHeadingElement`, which the detector also reads)
-ends in a very faint grey Glencairn glass, the icon's without its square
+proper h1 that is shown, from `WhiskyDetector.mainHeadingElements`; a page may
+give it twice, one for phones and one for larger screens, and resizing the
+window can switch them) ends in a very faint grey Glencairn glass, the icon's without its square
 background: an inline SVG with a dark line inside a light halo, so that it
 shows on light and dark backdrops alike, in colour on hover. It is in a shadow
 root so the detector doesn't read it. Its tooltip says whether the bottle is matched
