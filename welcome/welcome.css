@@ -162,8 +162,13 @@ figure img {
   display: block;
 }
 
+.fine-print,
 .declined-note {
   color: var(--muted);
+}
+
+.fine-print {
+  font-size: 13px;
 }
 
 button.primary {
