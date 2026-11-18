@@ -68,6 +68,16 @@ The manifest has no content scripts, so the extension can't read pages unless as
   in `chrome.storage.local`. While both hold, the background registers the same
   files as a content script on every page (`syncAutoCheck`). Pages already
   open are checked on the next load or click.
+- **The welcome page** (`welcome/`) offers the same: on first install (not on
+  updates) the background opens it in a new tab with `chrome.runtime.openOptionsPage`,
+  as it is also the options page (right-click the icon → Options; **Help** in the
+  popup). A new extension is hidden behind Chrome's Extensions button and only
+  works when clicked, so the page says what to expect and offers two steps,
+  each shown as done or to do and updated as it changes: pinning the icon (an
+  extension can't pin itself, but `chrome.action.getUserSettings` says whether
+  it is pinned, and `onUserSettingsChanged` when that changes, from Chrome 130),
+  and a button that requests the access to all sites and sets `autoCheck`, as
+  the popup's checkbox does.
 - **Whiskybase itself** is never scanned: the automatic content script excludes
   `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
   stops at once there, the background ignores detections from there, and the
@@ -309,6 +319,7 @@ data** at the bottom of the popup removes them all (and with them the badges).
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
+| `welcome/` | Welcome page, opened on install and as the options page: what the extension does, pinning its icon and turning on automatic checking |
 | `test/` | Parser unit tests, browser tests (`e2e.mjs`) and fixture pages |
 
 ## Packaging
@@ -319,7 +330,7 @@ npm run package
 
 builds `dist/whiskybase-chromium-browser-extension/` and
 `dist/whiskybase-chromium-browser-extension-<version>.zip`,
-containing only what the extension needs (manifest, licence, `src/`, `popup/`, PNG icons).
+containing only what the extension needs (manifest, licence, `src/`, `popup/`, `welcome/`, PNG icons).
 
 The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
 runs only when started by hand: on GitHub, open **Actions**, pick **Package

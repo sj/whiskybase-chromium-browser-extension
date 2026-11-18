@@ -67,7 +67,7 @@ function findBrowser() {
 rmSync(out, { recursive: true, force: true });
 const ext = join(out, 'ext');
 mkdirSync(ext, { recursive: true });
-for (const f of ['manifest.json', 'src', 'popup', 'icons']) cpSync(join(root, f), join(ext, f), { recursive: true });
+for (const f of ['manifest.json', 'src', 'popup', 'welcome', 'icons']) cpSync(join(root, f), join(ext, f), { recursive: true });
 const manifest = JSON.parse(readFileSync(join(ext, 'manifest.json'), 'utf8'));
 manifest.host_permissions.push('http://*/*', 'https://*/*');
 writeFileSync(join(ext, 'manifest.json'), JSON.stringify(manifest, null, 2));
@@ -126,6 +126,8 @@ async function waitFor(expr, session, ms = 10000) {
 events.push(async (d) => {
   if (d.method !== 'Fetch.requestPaused') return;
   const { url } = d.params.request;
+  // The extension's own files (the welcome page's script and images).
+  if (url.startsWith('chrome-extension://')) return send('Fetch.continueRequest', { requestId: d.params.requestId }, d.sessionId);
   const query = url.startsWith('https://www.whiskybase.com/search?') && new URL(url).searchParams.get('q');
   const search = query && Object.entries(WB_SEARCHES).find(([start]) => query.startsWith(start));
   const isPhoto = d.params.resourceType === 'Image' && /^https:\/\/(cdn\.whiskyauction\.com|cdn11\.bigcommerce\.com)\//.test(url);
@@ -178,7 +180,25 @@ function expect(actual, wanted, what) {
 }
 
 console.log('\nExtension in the browser');
+// The welcome page opens on install. This copy has access to all sites from the
+// start, so turning on automatic checking (below) needs no prompt.
+const welcomeStep = (id) => `(() => { const s = document.querySelector('#${id} .state').dataset.state; return s !== 'unknown' && s; })()`;
+let welcome;
+await check('install: the welcome page opens, with both steps to do', async () => {
+  for (let i = 0; i < 40 && !welcome; i++) {
+    const { targetInfos } = (await send('Target.getTargets')).result;
+    const page = targetInfos.find((t) => t.type === 'page' && t.url.endsWith('/welcome/welcome.html'));
+    if (page) welcome = (await send('Target.attachToTarget', { targetId: page.targetId, flatten: true })).result.sessionId;
+    else await sleep(250);
+  }
+  if (!welcome) throw new Error('no welcome page');
+  expect(await waitFor(welcomeStep('step-pin'), welcome), 'todo', 'pin step');
+  expect(await waitFor(welcomeStep('step-auto'), welcome), 'todo', 'automatic checking step');
+});
 await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
+await check('welcome page: the automatic checking step is done once it is turned on', async () => {
+  expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');
+});
 await waitFor(`chrome.scripting.getRegisteredContentScripts().then((s) => s.length)`, worker);
 
 const product = await openPage(PRODUCT);

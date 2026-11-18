@@ -503,6 +503,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.autoCheck) showAutoCheck();
 });
 
+// The welcome page, also the options page (welcome/welcome.js).
+$('welcome').addEventListener('click', () => {
+  chrome.runtime.openOptionsPage();
+  window.close();
+});
+
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.
 

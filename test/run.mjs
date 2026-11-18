@@ -637,6 +637,12 @@ check('release notes: install text, then the version\'s CHANGELOG section', () =
   assert.equal(releaseNotes('0.3.0', 'Get {version}.zip', ''), 'Get 0.3.0.zip\n', 'or without a CHANGELOG.md');
 });
 
+check('the package has every file the manifest names', () => {
+  const manifest = JSON.parse(readFileSync(join(here, '..', 'manifest.json'), 'utf8'));
+  const copied = readFileSync(join(here, '..', 'scripts', 'package.sh'), 'utf8').match(/^cp -r (.*) "dist/m)[1].split(' ');
+  const named = [manifest.action.default_popup, manifest.options_ui.page, manifest.background.service_worker];
+  for (const f of named) assert.ok(copied.includes(f.split('/')[0]), `${f} is not packaged`);
+});
 check('Whiskybase.HOSTS matches host_permissions in the manifest', () => {
   const manifest = JSON.parse(readFileSync(join(here, '..', 'manifest.json'), 'utf8'));
   assert.deepEqual(WB.HOSTS, manifest.host_permissions);

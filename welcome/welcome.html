@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Welcome to Bottle lookup for Whiskybase</title>
+    <link rel="icon" href="../icons/icon32.png" />
+    <link rel="stylesheet" href="welcome.css" />
+  </head>
+  <body>
+    <main>
+      <header class="intro">
+        <img src="../icons/icon128.png" width="64" height="64" alt="" />
+        <div>
+          <h1>Bottle lookup for Whiskybase</h1>
+          <p class="lede">
+            Spots whisky bottles on the pages you visit, in shops and auctions, and looks them up on Whiskybase.
+          </p>
+        </div>
+      </header>
+
+      <section>
+        <h2>What to expect</h2>
+        <p>
+          On a page about a bottle, the extension reads its details (distillery, age, ABV, vintage, bottler, and so on)
+          and finds the bottle on Whiskybase. Click the extension's icon to see what it found next to the
+          Whiskybase match, with its rating and price estimate.
+        </p>
+        <p>Once a bottle is recognised, the page itself shows it too, very subtly:</p>
+        <ul>
+          <li>a faint glass after the bottle's name;</li>
+          <li>a small badge with the Whiskybase rating on the bottle's photo;</li>
+          <li>the same badge on lists of bottles, for the bottles it has matched before.</li>
+        </ul>
+        <p>Clicking any of these opens the extension.</p>
+        <figure>
+          <img src="example.jpg" width="960" height="600"
+            alt="A shop's bottle page with the extension open: the details found on the page next to the Whiskybase match, with rating and price estimate, and the rating badge on the bottle's photo." />
+        </figure>
+      </section>
+
+      <section>
+        <h2>Two steps to get the most out of it</h2>
+        <ol class="steps">
+          <li id="step-pin" class="step">
+            <div class="step-head">
+              <h3>Pin the extension to the toolbar</h3>
+              <span class="state" data-state="unknown"></span>
+            </div>
+            <p>
+              Chrome hides new extensions behind the
+              <svg class="inline-icon" viewBox="0 0 24 24" aria-label="Extensions (puzzle piece)" role="img"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5a2.7 2.7 0 0 1 0 5.4H2V20a2 2 0 0 0 2 2h3.8v-1.5a2.7 2.7 0 0 1 5.4 0V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z" fill="currentColor" /></svg>
+              <strong>Extensions</strong> button, on the right of the address bar. Click it, then click the
+              <svg class="inline-icon" viewBox="0 0 24 24" aria-label="pin" role="img"><path d="M16 3l5 5-2 1-3.5 3.5L15 17l-2 2-3.5-3.5L5 20l-1-1 4.5-4.5L5 11l2-2 4.5-.5L15 5z" fill="currentColor" /></svg>
+              pin next to <strong>Bottle lookup for Whiskybase</strong>. Its icon then stays in the toolbar, one click
+              away on any page.
+            </p>
+            <p class="done-note">Pinned: the icon is in your toolbar.</p>
+          </li>
+
+          <li id="step-auto" class="step">
+            <div class="step-head">
+              <h3>Let it check every page automatically</h3>
+              <span class="state" data-state="unknown"></span>
+            </div>
+            <p>
+              Out of the box, the extension only looks at a page when you click its icon. Allowed to read the pages you
+              visit, it checks each one as it loads, and the glass and rating badges appear by themselves.
+            </p>
+            <p>
+              Chrome will ask whether the extension may <em>read and change all your data on all websites</em>. That
+              is how Chrome words access to every page; the extension uses it only to look for bottle details, and to
+              add the glass and badges.
+            </p>
+            <p class="actions">
+              <button type="button" id="auto-allow" class="primary">Check every page automatically</button>
+            </p>
+            <p class="done-note">On: every page is checked when it loads. You can turn this off in the extension's popup.</p>
+            <p class="declined-note" hidden>Not allowed. You can turn it on later with the checkbox at the bottom of the extension's popup.</p>
+          </li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Your privacy</h2>
+        <p>
+          The extension has no servers of its own and collects nothing. Pages are read in your browser. Only when a
+          bottle is recognised, its details are sent to Whiskybase as a search; the matches it remembers (for the
+          badges on lists of bottles) stay in your browser.
+        </p>
+      </section>
+
+      <footer>
+        <p>
+          You can come back to this page any time: right-click the extension's icon and choose <strong>Options</strong>.
+          Not affiliated with or endorsed by Whiskybase.
+          <a href="https://github.com/sj/whiskybase-chromium-browser-extension" target="_blank" rel="noopener">About &amp; feedback</a>
+        </p>
+      </footer>
+    </main>
+
+    <script src="welcome.js"></script>
+  </body>
+</html>
