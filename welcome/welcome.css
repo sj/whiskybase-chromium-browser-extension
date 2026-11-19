@@ -172,6 +172,11 @@ figure img {
   font-size: 13px;
 }
 
+/* Some room between the fine print and the button below it. */
+.step .actions {
+  margin-top: 16px;
+}
+
 button.primary {
   font: inherit;
   font-weight: 600;
