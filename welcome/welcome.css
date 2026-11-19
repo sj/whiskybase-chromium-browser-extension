@@ -148,13 +148,14 @@ figure img {
   content: '✓ Done';
 }
 
-/* A done step keeps its heading and says so; how to do it is no longer needed. */
+/* A done step keeps its heading and says so; how to do it is no longer needed
+   (what it is for, marked "keep", stays). */
 .step .done-note {
   display: none;
   color: var(--ok);
 }
 
-.step.done > p:not(.done-note) {
+.step.done > p:not(.done-note, .keep) {
   display: none;
 }
 
