@@ -1143,6 +1143,8 @@
       version: VERSION,
       status,
       isWhisky: status === 'whisky',
+      // A list of bottles that mentions whisky: the popup suggests opening one of them.
+      listing: s.listing && context > 0,
       confidence: Math.max(0, Math.min(1, Math.round(score * 10) / 100)),
       score,
       url: s.url,

@@ -415,16 +415,16 @@ const fixtureCases = [
     status: 'whisky',
     whisky: { name: 'Macallan 1968 Fine & Rare 33 Year Old Bottled 2002 - Cask No.5913', distillery: 'Macallan', bottling: 'distillery', age: 33, vintage: 1968, bottled: 2002, abv: 46.6, volumeMl: 700, caskNumber: '5913' },
   },
-  { file: 'category-listing.html', status: 'none' },
+  { file: 'category-listing.html', status: 'none', listing: true },
   // Lists of bottles without structured data for them: told apart by their grid of photos.
-  { file: 'masterofmalt.com-bottle-list.html', status: 'none' },
-  { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none' },
+  { file: 'masterofmalt.com-bottle-list.html', status: 'none', listing: true },
+  { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none', listing: true },
   { file: 'smws-list-of-bottles.html', status: 'none' },
   // Whisky Auction's list: its cards come by script, so the saved page has none.
   { file: 'whiskyauction.com-auction-browser.html', status: 'none' },
-  { file: 'gin-product.html', status: 'none' },
+  { file: 'gin-product.html', status: 'none', listing: false },
   { file: 'sherry-product.html', status: 'none' },
-  { file: 'news-article.html', status: 'none' },
+  { file: 'news-article.html', status: 'none', listing: false },
   { file: 'bourbon-vanilla-lotion.html', status: 'none' },
 ];
 
@@ -517,6 +517,7 @@ for (const c of fixtureCases) {
     if (r.error) throw new Error(r.error);
     const detail = `got ${r.status} (score ${r.score})\n` + r.reasons.map((x) => `${x.points > 0 ? '+' : ''}${x.points}  ${x.text}`).join('\n');
     assert.ok([].concat(c.status).includes(r.status), detail);
+    if (c.listing !== undefined) assert.equal(r.listing, c.listing, `listing\n${detail}`);
     if (c.minConfidence !== undefined) assert.ok(r.confidence >= c.minConfidence, `confidence ${r.confidence}\n${detail}`);
     for (const [k, want] of Object.entries(c.whisky || {})) {
       const got = r.whisky[k];

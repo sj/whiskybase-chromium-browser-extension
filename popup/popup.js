@@ -49,7 +49,12 @@ function render(result) {
   // nothing was found, the heading already says so).
   $('status').hidden = status === 'whisky';
   const here = link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here');
-  if (status === 'none') {
+  if (status === 'none' && result.listing) {
+    // Most likely the first page tried: a shop's or auction's list of bottles.
+    $('status').replaceChildren(
+      'This page seems to show multiple whiskies. Open a page for a specific bottle to see more information about that whisky.'
+    );
+  } else if (status === 'none') {
     $('status').replaceChildren(
       'This page does not seem to contain any information pertaining to a bottle of whisky. Do you think that’s incorrect? Let us know ',
       here,
