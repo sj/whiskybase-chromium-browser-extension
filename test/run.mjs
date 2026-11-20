@@ -419,7 +419,10 @@ const fixtureCases = [
   // Lists of bottles without structured data for them: told apart by their grid of photos.
   { file: 'masterofmalt.com-bottle-list.html', status: 'none', listing: true },
   { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none', listing: true },
+  // SMWS's list as first served has placeholder cards only; its bottles come by
+  // script. Once they have, it is a grid like the others.
   { file: 'smws-list-of-bottles.html', status: 'none' },
+  { file: 'smws-list-of-bottles-rendered.html', status: 'none', listing: true },
   // Whisky Auction's list: its cards come by script, so the saved page has none.
   { file: 'whiskyauction.com-auction-browser.html', status: 'none' },
   { file: 'gin-product.html', status: 'none', listing: false },
