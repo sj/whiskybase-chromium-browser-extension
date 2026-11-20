@@ -468,7 +468,7 @@ async function scan(rescan) {
       'Cannot inspect this page',
       /^file:/.test(tab.url || '')
         ? 'For local files, turn on Allow access to file URLs on the extension’s details page.'
-        : 'Browser pages and the Chrome Web Store cannot be scanned.'
+        : 'Browser pages and the Chrome Web Store cannot be scanned. Visit your favorite online whisky shop or auction to see what the extension can do!'
     );
   }
 }
