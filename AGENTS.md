@@ -21,8 +21,12 @@ the section of `DEVELOPMENT.md` for the part you change before changing it.
   never look anything up.
 - **Privacy:** everything the extension stores stays in the browser. A change
   to what is stored or sent needs the README's Privacy section updated too.
-- **British English** in prose and messages ("recognise", "colour", "licence");
-  the licence file is still named `LICENSE.md`.
+- **British English** in the repository's prose, comments and commit messages
+  ("recognise", "colour", "licence"); the licence file is still named `LICENSE.md`.
+- **American English** in everything the browser shows ("recognized", "color",
+  "favorite"): the popup, the welcome page, tooltips, badges, menu entries, the
+  manifest's description, and the detector's and matcher's reasons (shown in
+  the popup). Identifiers and comments stay British (`analyseSearchHtml`).
 - Update `README.md`, `DEVELOPMENT.md` and the "Under development" section of
   `CHANGELOG.md` along with user-visible changes. Match the surrounding code:
   comments say why, in the same terse style.
@@ -37,6 +41,7 @@ the section of `DEVELOPMENT.md` for the part you change before changing it.
 | `src/whiskybase.js` | Whiskybase search and page parsing, matching (no DOM) |
 | `src/known-pages.js`, `src/smws.js` | Keys for stored matches; SMWS codes (no DOM) |
 | `popup/` | The toolbar popup |
+| `settings-welcome/` | Welcome page (on install, and the options page) |
 | `test/run.mjs`, `test/e2e.mjs` | Unit and detector tests; browser tests of the extension |
 | `test/fixtures/` | Saved pages (shops, auctions, Whiskybase), scrubbed |
 

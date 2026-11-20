@@ -64,8 +64,8 @@ servers of its own, and doesn't send anything about you or the pages you visit
 to anyone, except for the Whiskybase lookups described below.
 
 - **Reading pages.** The extension reads the page you're on to look for details
-  of a whisky bottle. By default it only does so when you click its icon; if you click
-  **Check every page automatically**, it will request extra permissions in order to reads every page as it loads.
+  of a whisky bottle. By default it only does so when you click its icon; if you turn on
+  **Check every page automatically** (on the extension's options page), it will request extra permissions in order to read every page as it loads.
   This happens entirely inside your browser.
 - **Whiskybase lookups.** When the extension is confident it has found a bottle,
   or when you click **Find this bottle on Whiskybase** or **Manual search**, it searches Whiskybase for it. If you click the extension's icon, it then
@@ -83,7 +83,7 @@ to anyone, except for the Whiskybase lookups described below.
   (with the bottle's Whiskybase ID, address, name, rating and number of ratings, so that
   lists of bottles linking to it can show its rating) are stored permanently, in
   your browser only. They are removed when you click **Clear stored bottle data**
-  at the bottom of the popup, or remove the extension.
+  on the extension's options page, or remove the extension.
 - **Links.** The About & feedback links and the right-click menu entries just
   open GitHub pages in a new tab when you click them.
 

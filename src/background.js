@@ -646,6 +646,16 @@ chrome.permissions.onAdded.addListener(async () => {
   syncAutoCheck();
 });
 
+// --- Welcome page ----------------------------------------------------------
+// Opened once, when the extension is installed (not on updates): a new
+// extension is hidden behind Chrome's Extensions button and only looks at a page
+// when clicked, so the page says what to expect and offers to pin the icon and
+// to check every page. It is also the options page (right-click the icon).
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === chrome.runtime.OnInstalledReason.INSTALL) chrome.runtime.openOptionsPage();
+});
+
 // --- Toolbar icon menu ------------------------------------------------------
 // Right-clicking the icon offers the project's README, next to Chrome's own entries.
 

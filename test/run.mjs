@@ -415,16 +415,19 @@ const fixtureCases = [
     status: 'whisky',
     whisky: { name: 'Macallan 1968 Fine & Rare 33 Year Old Bottled 2002 - Cask No.5913', distillery: 'Macallan', bottling: 'distillery', age: 33, vintage: 1968, bottled: 2002, abv: 46.6, volumeMl: 700, caskNumber: '5913' },
   },
-  { file: 'category-listing.html', status: 'none' },
+  { file: 'category-listing.html', status: 'none', listing: true },
   // Lists of bottles without structured data for them: told apart by their grid of photos.
-  { file: 'masterofmalt.com-bottle-list.html', status: 'none' },
-  { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none' },
+  { file: 'masterofmalt.com-bottle-list.html', status: 'none', listing: true },
+  { file: 'whiskyauctioneer-october2026-bottle-list.html', status: 'none', listing: true },
+  // SMWS's list as first served has placeholder cards only; its bottles come by
+  // script. Once they have, it is a grid like the others.
   { file: 'smws-list-of-bottles.html', status: 'none' },
+  { file: 'smws-list-of-bottles-rendered.html', status: 'none', listing: true },
   // Whisky Auction's list: its cards come by script, so the saved page has none.
   { file: 'whiskyauction.com-auction-browser.html', status: 'none' },
-  { file: 'gin-product.html', status: 'none' },
+  { file: 'gin-product.html', status: 'none', listing: false },
   { file: 'sherry-product.html', status: 'none' },
-  { file: 'news-article.html', status: 'none' },
+  { file: 'news-article.html', status: 'none', listing: false },
   { file: 'bourbon-vanilla-lotion.html', status: 'none' },
 ];
 
@@ -517,6 +520,7 @@ for (const c of fixtureCases) {
     if (r.error) throw new Error(r.error);
     const detail = `got ${r.status} (score ${r.score})\n` + r.reasons.map((x) => `${x.points > 0 ? '+' : ''}${x.points}  ${x.text}`).join('\n');
     assert.ok([].concat(c.status).includes(r.status), detail);
+    if (c.listing !== undefined) assert.equal(r.listing, c.listing, `listing\n${detail}`);
     if (c.minConfidence !== undefined) assert.ok(r.confidence >= c.minConfidence, `confidence ${r.confidence}\n${detail}`);
     for (const [k, want] of Object.entries(c.whisky || {})) {
       const got = r.whisky[k];
@@ -637,6 +641,12 @@ check('release notes: install text, then the version\'s CHANGELOG section', () =
   assert.equal(releaseNotes('0.3.0', 'Get {version}.zip', ''), 'Get 0.3.0.zip\n', 'or without a CHANGELOG.md');
 });
 
+check('the package has every file the manifest names', () => {
+  const manifest = JSON.parse(readFileSync(join(here, '..', 'manifest.json'), 'utf8'));
+  const copied = readFileSync(join(here, '..', 'scripts', 'package.sh'), 'utf8').match(/^cp -r (.*) "dist/m)[1].split(' ');
+  const named = [manifest.action.default_popup, manifest.options_ui.page, manifest.background.service_worker];
+  for (const f of named) assert.ok(copied.includes(f.split('/')[0]), `${f} is not packaged`);
+});
 check('Whiskybase.HOSTS matches host_permissions in the manifest', () => {
   const manifest = JSON.parse(readFileSync(join(here, '..', 'manifest.json'), 'utf8'));
   assert.deepEqual(WB.HOSTS, manifest.host_permissions);

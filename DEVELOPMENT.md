@@ -27,7 +27,9 @@ page's DevTools console as `[Bottle lookup for Whiskybase]`.
 - **Penalties**: listing/category pages, other drinks (gin, rum, cognac, ...),
   non-bottle products (lotion, glasses, books, ...). A listing is recognised by
   its structured data (several products, an item list) or, on a page without
-  product data, by a grid of at least 12 linked photos in alike cards.
+  product data, by a grid of at least 12 linked photos in alike cards. A
+  listing that mentions whisky anywhere is flagged (`listing`), and the popup
+  then suggests opening the page of one of its bottles.
 
 **Brand** is only shown when it adds something: a name a distillery sells under
 (Port Charlotte and Octomore at Bruichladdich, Longrow at Springbank, Ledaig at Tobermory,
@@ -63,11 +65,27 @@ The manifest has no content scripts, so the extension can't read pages unless as
   The lookup starts by itself only for a detection with at least 90% confidence
   (`AUTO_MIN_CONFIDENCE`); for others the popup offers **Find this bottle on
   Whiskybase**, which sends `whisky:lookup` to start the same lookup.
-- **Automatic checking (opt-in):** the popup's **Check every page automatically**
-  requests the optional access to all `http`/`https` sites and sets `autoCheck`
+- **Automatic checking (opt-in):** **Check every page automatically** on the
+  welcome page (below) requests the optional access to all `http`/`https` sites and sets `autoCheck`
   in `chrome.storage.local`. While both hold, the background registers the same
   files as a content script on every page (`syncAutoCheck`). Pages already
   open are checked on the next load or click.
+- **The welcome page** (`settings-welcome/`) offers the same: on first install (not on
+  updates) the background opens it in a new tab with `chrome.runtime.openOptionsPage`,
+  as it is also the options page (right-click the icon → Options; **Options &
+  help** in the popup). A new extension is hidden behind Chrome's Extensions button and only
+  works when clicked, so the page says what to expect and offers two steps,
+  each shown as done or to do and updated as it changes: pinning the icon (an
+  extension can't pin itself, but `chrome.action.getUserSettings` says whether
+  it is pinned, and `onUserSettingsChanged` when that changes, from Chrome 130),
+  and a button that requests the access to all sites and sets `autoCheck`. The
+  button is a label around the setting's checkbox, so it shows whether
+  automatic checking is on, stays once it is, and turns it off again.
+  A step that gets done fades, all but its **Done** badge, and the border of a
+  step still to do flashes briefly, in whichever order they are done.
+- **The popup** only says what is still to do: while the icon isn't pinned or
+  automatic checking is off, a subtle notice in its footer says so, and clicking
+  it opens the welcome page.
 - **Whiskybase itself** is never scanned: the automatic content script excludes
   `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
   stops at once there, the background ignores detections from there, and the
@@ -295,7 +313,7 @@ content script is on: every page with automatic checking on, otherwise the page
 whose toolbar icon was clicked. Unlike the lookups, the stored matches are kept
 in local storage, so they last after the browser closes; at about 100 bytes
 each, the 10 MB that local storage allows is plenty. **Clear stored bottle
-data** at the bottom of the popup removes them all (and with them the badges).
+data** on the welcome page removes them all (and with them the badges).
 
 ## Files
 
@@ -309,6 +327,7 @@ data** at the bottom of the popup removes them all (and with them the badges).
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
+| `settings-welcome/` | Welcome page, opened on install and as the options page: what the extension does, pinning its icon and turning on automatic checking |
 | `test/` | Parser unit tests, browser tests (`e2e.mjs`) and fixture pages |
 
 ## Packaging
@@ -319,7 +338,7 @@ npm run package
 
 builds `dist/whiskybase-chromium-browser-extension/` and
 `dist/whiskybase-chromium-browser-extension-<version>.zip`,
-containing only what the extension needs (manifest, licence, `src/`, `popup/`, PNG icons).
+containing only what the extension needs (manifest, licence, `src/`, `popup/`, `settings-welcome/`, PNG icons).
 
 The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
 runs only when started by hand: on GitHub, open **Actions**, pick **Package

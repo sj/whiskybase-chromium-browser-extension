@@ -49,7 +49,12 @@ function render(result) {
   // nothing was found, the heading already says so).
   $('status').hidden = status === 'whisky';
   const here = link(`${README_URL}#did-your-bottle-not-get-detected-on-a-page`, 'here');
-  if (status === 'none') {
+  if (status === 'none' && result.listing) {
+    // Most likely the first page tried: a shop's or auction's list of bottles.
+    $('status').replaceChildren(
+      'This page seems to show multiple whiskies. Open a page for a specific bottle to see more information about that whisky.'
+    );
+  } else if (status === 'none') {
     $('status').replaceChildren(
       'This page does not seem to contain any information pertaining to a bottle of whisky. Do you think that’s incorrect? Let us know ',
       here,
@@ -468,40 +473,35 @@ async function scan(rescan) {
       'Cannot inspect this page',
       /^file:/.test(tab.url || '')
         ? 'For local files, turn on Allow access to file URLs on the extension’s details page.'
-        : 'Browser pages and the Chrome Web Store cannot be scanned.'
+        : 'Browser pages and the Chrome Web Store cannot be scanned. Visit your favorite online whisky shop or auction to see what the extension can do!'
     );
   }
 }
 
-// --- Automatic checking -------------------------------------------------------
-// Off: pages are only checked when the toolbar icon is clicked. On: the optional
-// access to all sites is granted, autoCheck is set, and the background
-// registers the detector on every page. Chrome may close the popup for its
-// permission prompt; the background turns the setting on when it is accepted.
-// Turning it off keeps the access (see background.js for why).
+// --- Notices --------------------------------------------------------------------
+// The welcome page (settings-welcome/settings-welcome.js), also the options page, has the two steps
+// that make the extension visible and the setting for automatic checking. While
+// a step is still to do, a notice in the footer says so and opens that page.
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
-async function showAutoCheck() {
+async function showNotices() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
-  $('auto-check').checked = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
+  $('notice-auto').hidden = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
+  // Before Chrome 91 there is no way to tell, so no notice.
+  const settings = await chrome.action.getUserSettings?.();
+  $('notice-pin').hidden = !settings || settings.isOnToolbar;
 }
-
-$('auto-check').addEventListener('change', async (e) => {
-  try {
-    if (e.target.checked) {
-      // Asked straight away: Chrome only shows the prompt during the click.
-      if (await chrome.permissions.request({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
-    } else {
-      await chrome.storage.local.set({ autoCheck: false });
-    }
-  } finally {
-    showAutoCheck();
-  }
-});
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.autoCheck) showAutoCheck();
+  if (area === 'local' && changes.autoCheck) showNotices();
 });
+chrome.action.onUserSettingsChanged?.addListener(showNotices);
+
+function openWelcome() {
+  chrome.runtime.openOptionsPage();
+  window.close();
+}
+for (const id of ['notice-auto', 'notice-pin', 'welcome']) $(id).addEventListener('click', openWelcome);
 
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.
@@ -517,15 +517,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && debugNotes.some((p) => p.dataset.flag in changes)) showDebug();
 });
 
-// The bottles matched before (known:<key>, see background.js), for the badges on lists of bottles.
-$('clear-known').addEventListener('click', async () => {
-  const keys = Object.keys(await chrome.storage.local.get(null)).filter((k) => k.startsWith('known:'));
-  await chrome.storage.local.remove(keys);
-  $('clear-known').textContent = 'Stored bottle data cleared';
-  $('clear-known').disabled = true;
-});
-
 $('rescan').addEventListener('click', () => scan(true));
-showAutoCheck();
+showNotices();
 showDebug();
 scan(false);
