@@ -21,8 +21,10 @@
   }
 }
 
+/* Always as wide as the two-column layout, so the popup doesn't change size
+   once it knows what to show. */
 body {
-  width: 340px;
+  width: 620px;
   margin: 0;
   padding: 12px 14px 14px;
   font: 13px/1.4 system-ui, sans-serif;
@@ -163,9 +165,6 @@ a {
 }
 
 /* Two columns when there is a Whiskybase column: parsed data left, Whiskybase right. */
-body.wide {
-  width: 620px;
-}
 body.wide .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -395,7 +394,7 @@ body.wide #wb {
 
 .footer-links {
   display: flex;
-  flex-wrap: wrap; /* should they not fit the narrow popup */
+  flex-wrap: wrap; /* should they not fit */
   justify-content: flex-end;
   column-gap: 10px;
   margin-left: auto;
