@@ -76,9 +76,9 @@ The manifest has no content scripts, so the extension can't read pages unless as
   each shown as done or to do and updated as it changes: pinning the icon (an
   extension can't pin itself, but `chrome.action.getUserSettings` says whether
   it is pinned, and `onUserSettingsChanged` when that changes, from Chrome 130),
-  and a button that requests the access to all sites and sets `autoCheck`. Its
-  **Settings** section has the checkbox that turns automatic checking on and
-  off again.
+  and a button that requests the access to all sites and sets `autoCheck`. The
+  button is a label around the setting's checkbox, so it shows whether
+  automatic checking is on, stays once it is, and turns it off again.
 - **The popup** only says what is still to do: while the icon isn't pinned or
   automatic checking is off, a subtle notice in its footer says so, and clicking
   it opens the welcome page.

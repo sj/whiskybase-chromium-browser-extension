@@ -177,25 +177,12 @@ figure img {
   margin-top: 16px;
 }
 
-/* Settings: a checkbox with its explanation beside it. */
-.setting {
-  display: flex;
-  align-items: flex-start;
+/* The step's button: a label around the setting's checkbox, so the box shows
+   whether it is on and a click turns it on or off. */
+.primary {
+  display: inline-flex;
+  align-items: center;
   gap: 10px;
-  cursor: pointer;
-}
-
-.setting input {
-  margin: 4px 0 0;
-}
-
-.setting-note {
-  display: block;
-  color: var(--muted);
-  font-size: 14px;
-}
-
-button.primary {
   font: inherit;
   font-weight: 600;
   padding: 8px 16px;
@@ -206,8 +193,21 @@ button.primary {
   cursor: pointer;
 }
 
-button.primary:hover {
+.primary:hover {
   filter: brightness(1.1);
+}
+
+.primary input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent-fg);
+  cursor: pointer;
+}
+
+.primary:has(input:focus-visible) {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
 }
 
 footer {

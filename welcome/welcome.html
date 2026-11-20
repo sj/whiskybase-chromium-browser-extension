@@ -40,11 +40,13 @@
 	      and to annotate pages where possible. No data leaves
 	      your computer (also see the privacy policy below).
             </p>
-            <p class="actions">
-              <button type="button" id="auto-allow" class="primary">Check every page automatically</button>
+            <p class="actions keep">
+              <label class="primary">
+                <input type="checkbox" id="auto-check" /> Check every page automatically
+              </label>
             </p>
-            <p class="done-note">On: every page is checked when it loads. You can turn this off under <a href="#settings">Settings</a> below.</p>
-            <p class="declined-note" hidden>Not allowed. You can turn it on later with the button above, or under <a href="#settings">Settings</a> below.</p>
+            <p class="done-note">On: every page is checked when it loads. Click the button again to turn this off.</p>
+            <p class="declined-note" hidden>Not allowed. You can turn it on later with the button above.</p>
           </li>
 
           <li id="step-pin" class="step">
@@ -83,21 +85,6 @@
           <img src="example.jpg" width="960" height="600"
             alt="A shop's bottle page with the extension open: the details found on the page next to the Whiskybase match, with rating and price estimate, and the rating badge on the bottle's photo." />
         </figure>
-      </section>
-
-      <section id="settings">
-        <h2>Settings</h2>
-        <label class="setting">
-          <input type="checkbox" id="auto-check" />
-          <span>
-            <strong>Check every page automatically</strong>
-            <span class="setting-note">
-              When on, every page is checked when it loads, and when a bottle is recognized, it is looked up on
-              Whiskybase straight away. This requires the extra browser permission described above. When off, pages
-              are only checked when you click the extension's icon.
-            </span>
-          </span>
-        </label>
       </section>
 
       <section>

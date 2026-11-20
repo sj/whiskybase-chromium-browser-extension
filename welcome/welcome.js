@@ -3,7 +3,8 @@
  * extension's options page. It says what the extension does and offers the two
  * steps that make it visible: pinning its icon, and checking every page
  * automatically. Each step shows whether it is done, and updates as it changes.
- * Below them, the setting for automatic checking turns it on and off again.
+ * The automatic checking step's button holds the setting's checkbox, so it
+ * also turns it off again.
  */
 const $ = (id) => document.getElementById(id);
 
@@ -45,19 +46,13 @@ async function showAutoCheck() {
   if (on) $('step-auto').querySelector('.declined-note').hidden = true;
 }
 
-$('auto-allow').addEventListener('click', async () => {
-  // Asked straight away: Chrome only shows the prompt during the click.
-  const granted = await chrome.permissions.request({ origins: ALL_SITES });
-  if (granted) await chrome.storage.local.set({ autoCheck: true });
-  $('step-auto').querySelector('.declined-note').hidden = granted;
-  showAutoCheck();
-});
-
 $('auto-check').addEventListener('change', async (e) => {
   try {
     if (e.target.checked) {
       // Asked straight away: Chrome only shows the prompt during the click.
-      if (await chrome.permissions.request({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
+      const granted = await chrome.permissions.request({ origins: ALL_SITES });
+      if (granted) await chrome.storage.local.set({ autoCheck: true });
+      $('step-auto').querySelector('.declined-note').hidden = granted;
     } else {
       await chrome.storage.local.set({ autoCheck: false });
     }

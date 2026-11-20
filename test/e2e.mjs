@@ -204,7 +204,7 @@ await check('popup: a notice for each step still to do', async () => {
 await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 await check('welcome page: the automatic checking step is done once it is turned on', async () => {
   expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');
-  expect(await evaluate(`document.getElementById('auto-check').checked`, welcome), true, 'settings checkbox');
+  expect(await evaluate(`document.getElementById('auto-check').checked`, welcome), true, 'the checkbox in the button');
 });
 await check('popup: no notice about automatic checking once it is on', async () => {
   expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown');
