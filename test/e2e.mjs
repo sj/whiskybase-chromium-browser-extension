@@ -211,6 +211,11 @@ await check('popup: a dismissed banner stays dismissed until the browser restart
   expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown after reopening');
   await evaluate(`chrome.storage.session.remove('dismissed:notice-auto')`, worker);
 });
+await check('popup: a banner opens the welcome page, which flashes the step it was about', async () => {
+  await evaluate(`window.close = () => {}; document.querySelector('#notice-pin .banner-text').click()`, popup.session);
+  expect(await waitFor(`document.getElementById('step-pin').classList.contains('attention')`, welcome), true, 'pin step flashes');
+  expect(await waitFor(`chrome.storage.session.get('focus-step').then((r) => !r['focus-step'])`, worker), true, 'focus-step taken');
+});
 await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 await check('welcome page: the automatic checking step is done once it is turned on', async () => {
   expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');
@@ -221,6 +226,13 @@ await check('welcome page: then the pin step, still to do, flashes', async () =>
 });
 await check('popup: no notice about automatic checking once it is on', async () => {
   expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown');
+});
+await check('popup: a dismissed banner comes back when its step is undone', async () => {
+  await evaluate(`chrome.storage.session.set({ 'dismissed:notice-auto': true })`, worker);
+  await evaluate(`chrome.storage.local.set({ autoCheck: false })`, worker);
+  expect(await waitFor(`chrome.storage.session.get('dismissed:notice-auto').then((r) => !r['dismissed:notice-auto'])`, worker), true, 'dismissal forgotten');
+  expect(await waitFor(`${notices} === 'notice-auto,notice-pin' && ${notices}`, popup.session), 'notice-auto,notice-pin', 'notices shown');
+  await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 });
 await evaluate(`chrome.tabs.remove(${popup.tabId})`, worker);
 await waitFor(`chrome.scripting.getRegisteredContentScripts().then((s) => s.length)`, worker);

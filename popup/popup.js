@@ -534,7 +534,9 @@ async function scan(rescan) {
 // The welcome page (settings-welcome/settings-welcome.js), also the options page, has the two steps
 // that make the extension visible and the setting for automatic checking. While
 // a step is still to do, a banner at the top says so and opens that page. Its
-// cross hides it until the browser restarts (dismissed:<id> in session storage).
+// cross hides it until the browser restarts (dismissed:<id> in session storage),
+// or until that step is undone (background.js). The page then flashes the step
+// the banner was about (focus-step in session storage, settings-welcome.js).
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
@@ -546,17 +548,20 @@ async function showNotices() {
   $('notice-pin').hidden = (await chrome.action.getUserSettings()).isOnToolbar || !!dismissed['dismissed:notice-pin'];
 }
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.autoCheck) showNotices();
+  if ((area === 'local' && changes.autoCheck) || (area === 'session' && Object.keys(changes).some((k) => k.startsWith('dismissed:')))) showNotices();
 });
-chrome.action.onUserSettingsChanged.addListener(showNotices);
+chrome.action.onUserSettingsChanged?.addListener(showNotices); // Chrome 130 and later
 
-function openWelcome() {
-  chrome.runtime.openOptionsPage();
+const BANNER_STEPS = { 'notice-auto': 'step-auto', 'notice-pin': 'step-pin' };
+
+async function openWelcome(step) {
+  if (step) await chrome.storage.session.set({ 'focus-step': step });
+  await chrome.runtime.openOptionsPage();
   window.close();
 }
-$('welcome').addEventListener('click', openWelcome);
+$('welcome').addEventListener('click', () => openWelcome());
 for (const banner of document.querySelectorAll('.banner')) {
-  banner.querySelector('.banner-text').addEventListener('click', openWelcome);
+  banner.querySelector('.banner-text').addEventListener('click', () => openWelcome(BANNER_STEPS[banner.id]));
   banner.querySelector('.banner-close').addEventListener('click', () => {
     banner.hidden = true;
     chrome.storage.session.set({ [`dismissed:${banner.id}`]: true });

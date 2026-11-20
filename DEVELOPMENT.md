@@ -104,8 +104,11 @@ The manifest has no content scripts, so the extension can't read pages unless as
   step still to do flashes briefly, in whichever order they are done.
 - **The popup** only says what is still to do: while automatic checking is off
   or the icon isn't pinned, a banner at its top says so, and clicking it opens
-  the welcome page. Its cross hides it until the browser restarts
-  (`dismissed:<id>` in `chrome.storage.session`).
+  the welcome page, where that step's border flashes (`focus-step` in
+  `chrome.storage.session`). Its cross hides it until the browser restarts
+  (`dismissed:<id>` in `chrome.storage.session`), or until the step is undone:
+  the background forgets the dismissal when automatic checking is turned off,
+  or the icon is unpinned (Chrome 130 and later say so).
 - **Whiskybase itself** is never scanned: the automatic content script excludes
   `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
   stops at once there, the background ignores detections from there, and the

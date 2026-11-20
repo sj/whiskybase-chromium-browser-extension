@@ -30,6 +30,20 @@ for (const step of document.querySelectorAll('.step')) {
   step.addEventListener('animationend', () => step.classList.remove('attention'));
 }
 
+// A popup banner opened the page for one step (focus-step, popup.js): that step
+// flashes, whether the page was open already or not.
+async function focusStep() {
+  const { 'focus-step': id } = await chrome.storage.session.get('focus-step');
+  if (!id || !$(id)) return;
+  await chrome.storage.session.remove('focus-step');
+  $(id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+  flash($(id));
+}
+focusStep();
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'session' && changes['focus-step']?.newValue) focusStep();
+});
+
 // --- Pinned ---------------------------------------------------------------------
 // An extension can't pin itself, but it can see whether it is pinned. Chrome 130
 // and later say when that changes; older versions are asked again when the page

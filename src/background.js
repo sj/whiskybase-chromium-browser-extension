@@ -671,6 +671,21 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === chrome.runtime.OnInstalledReason.INSTALL) chrome.runtime.openOptionsPage();
 });
 
+// The popup's banners for these steps can be dismissed until the browser
+// restarts (popup.js), but come back when a step is undone: when the icon is
+// unpinned (Chrome 130 and later say so), or automatic checking is turned off.
+chrome.action.onUserSettingsChanged?.addListener(({ isOnToolbar }) => {
+  if (isOnToolbar === false) chrome.storage.session.remove('dismissed:notice-pin');
+});
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.autoCheck && changes.autoCheck.oldValue && !changes.autoCheck.newValue) {
+    chrome.storage.session.remove('dismissed:notice-auto');
+  }
+});
+chrome.permissions.onRemoved.addListener(async () => {
+  if (!(await chrome.permissions.contains({ origins: ALL_SITES }))) chrome.storage.session.remove('dismissed:notice-auto');
+});
+
 // --- Menus -------------------------------------------------------------------
 // Right-clicking the icon offers the project's README, next to Chrome's own entries.
 
