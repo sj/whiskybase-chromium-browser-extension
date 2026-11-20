@@ -536,27 +536,35 @@ async function scan(rescan) {
 // --- Notices --------------------------------------------------------------------
 // The welcome page (settings-welcome/settings-welcome.js), also the options page, has the two steps
 // that make the extension visible and the setting for automatic checking. While
-// a step is still to do, a notice in the footer says so and opens that page.
+// a step is still to do, a notice says so and opens that page: a banner at the
+// top while pages are only checked on click, which can be dismissed until the
+// browser restarts (autoNoticeDismissed in session storage), and a line in the
+// footer while the extension isn't pinned.
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
 async function showNotices() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
-  $('notice-auto').hidden = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
-  // Before Chrome 91 there is no way to tell, so no notice.
-  const settings = await chrome.action.getUserSettings?.();
-  $('notice-pin').hidden = !settings || settings.isOnToolbar;
+  const { autoNoticeDismissed } = await chrome.storage.session.get('autoNoticeDismissed');
+  const on = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
+  $('notice-auto').hidden = on || !!autoNoticeDismissed;
+  $('notice-pin').hidden = (await chrome.action.getUserSettings()).isOnToolbar;
 }
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.autoCheck) showNotices();
 });
-chrome.action.onUserSettingsChanged?.addListener(showNotices);
+chrome.action.onUserSettingsChanged.addListener(showNotices);
+
+$('notice-auto-close').addEventListener('click', () => {
+  $('notice-auto').hidden = true;
+  chrome.storage.session.set({ autoNoticeDismissed: true });
+});
 
 function openWelcome() {
   chrome.runtime.openOptionsPage();
   window.close();
 }
-for (const id of ['notice-auto', 'notice-pin', 'welcome']) $(id).addEventListener('click', openWelcome);
+for (const id of ['notice-auto-open', 'notice-pin', 'welcome']) $(id).addEventListener('click', openWelcome);
 
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.

@@ -204,6 +204,13 @@ const notices = `(() => { const n = ['notice-auto', 'notice-pin'].filter((id) =>
 await check('popup: a notice for each step still to do', async () => {
   expect(await waitFor(`${notices} === 'notice-auto,notice-pin' && ${notices}`, popup.session), 'notice-auto,notice-pin', 'notices shown');
 });
+await check('popup: the automatic checking banner stays dismissed until the browser restarts', async () => {
+  await evaluate(`document.getElementById('notice-auto-close').click()`, popup.session);
+  await waitFor(`chrome.storage.session.get('autoNoticeDismissed').then((r) => r.autoNoticeDismissed)`, worker);
+  await send('Page.reload', {}, popup.session);
+  expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown after reopening');
+  await evaluate(`chrome.storage.session.remove('autoNoticeDismissed')`, worker);
+});
 await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 await check('welcome page: the automatic checking step is done once it is turned on', async () => {
   expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');

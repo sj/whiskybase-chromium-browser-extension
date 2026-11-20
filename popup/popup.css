@@ -347,6 +347,44 @@ body.wide #wb {
   padding-top: 8px;
   border-top: 1px solid var(--line);
 }
+/* At the very top: automatic checking is off, which matters most. */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 6px 6px 6px 10px;
+  border-left: 4px solid var(--maybe);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--maybe) 18%, transparent);
+}
+.banner[hidden] {
+  display: none;
+}
+.banner-text {
+  flex: 1;
+  padding: 0;
+  border: none;
+  font-weight: 600;
+  text-align: left;
+}
+.banner-text u {
+  white-space: nowrap;
+}
+.banner-text:hover u {
+  color: var(--maybe);
+}
+.banner-close {
+  flex: none;
+  display: inline-flex;
+  padding: 3px;
+  border: none;
+  color: var(--muted);
+}
+.banner-close:hover {
+  color: var(--fg);
+}
+
 .notices {
   flex-basis: 100%;
   display: grid;
