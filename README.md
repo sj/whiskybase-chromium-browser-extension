@@ -66,7 +66,9 @@ to anyone, except for the Whiskybase lookups described below.
 - **Reading pages.** The extension reads the page you're on to look for details
   of a whisky bottle. By default it only does so when you click its icon; if you turn on
   **Check every page automatically** (on the extension's options page), it will request extra permissions in order to read every page as it loads.
-  This happens entirely inside your browser.
+  This happens entirely inside your browser. When you right-click a bottle on a
+  list of bottles and choose **Identify this bottle**, the extension also fetches
+  that bottle's page from the same site, as the list itself would.
 - **Whiskybase lookups.** When the extension is confident it has found a bottle,
   or when you click **Find this bottle on Whiskybase** or **Manual search**, it searches Whiskybase for it. If you click the extension's icon, it then
   fetches the matching bottle's page and photo. These requests contain only the
@@ -84,8 +86,8 @@ to anyone, except for the Whiskybase lookups described below.
   lists of bottles linking to it can show its rating) are stored permanently, in
   your browser only. They are removed when you click **Clear stored bottle data**
   on the extension's options page, or remove the extension.
-- **Links.** The About & feedback links and the right-click menu entries just
-  open GitHub pages in a new tab when you click them.
+- **Links.** The About & feedback links and the entries in the extension icon's
+  right-click menu just open GitHub pages in a new tab when you click them.
 
 ## Licence
 

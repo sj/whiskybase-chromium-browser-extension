@@ -6,6 +6,9 @@
  *    (Chrome resets tab-specific badges on navigation);
  *  - for confident detections, looks the bottle up on Whiskybase and stores
  *    the outcome per tab in chrome.storage.session, where the popup reads it;
+ *  - offers a right-click menu entry on pages, which says what it does for the
+ *    page in the active tab and opens the popup (on a list of bottles, for the
+ *    bottle right-clicked);
  *  - when a search on Whiskybase fails, opens it in a tab for the user and reads
  *    the results from that tab once they load; while the checks go on, that
  *    tab (while it stays on Whiskybase) does the requests instead.
@@ -183,8 +186,13 @@ function missingPriceNote(page) {
 const brief = (r) =>
   r && { id: r.id, url: r.url, text: r.text, score: r.score, reasons: r.reasons, rating: r.rating, photo: r.photo };
 
+// A lookup is kept per tab, and per tab for a bottle identified from a list
+// (slot "<tabId>-card", see the page menu below).
+const tabOf = (slot) => Number.parseInt(slot, 10);
+
 async function setLookup(tabId, lookup) {
   await chrome.storage.session.set({ [`lookup:${tabId}`]: lookup });
+  if (lookup.state === 'match') refreshPageMenu();
 }
 
 /**
@@ -219,7 +227,7 @@ async function lookup(tabId, pageUrl, whisky, searched) {
   };
   await setLookup(tabId, result);
   await rememberMatch(tabId, pageUrl, match);
-  if (match) setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
+  if (match && Number.isInteger(tabId)) setBadge(tabId, 'match', `${Whiskybase.displayId(match.id)} ${match.text}`);
 }
 
 // ---------------------------------------------------------------------------
@@ -230,6 +238,7 @@ async function lookup(tabId, pageUrl, whisky, searched) {
 
 // The address the page in the tab gives as its own (rel=canonical), from content.js.
 async function pageCanonical(tabId, pageUrl) {
+  if (!Number.isInteger(tabId)) return null; // a bottle from a list: not the page in the tab
   try {
     const r = await chrome.tabs.sendMessage(tabId, { type: 'whisky:get' });
     return r && r.url === pageUrl ? r.canonical || null : null;
@@ -381,7 +390,7 @@ async function openSearch(tabId, pageUrl, whisky) {
   const query = Whiskybase.buildQuery(whisky);
   const searchUrl = Whiskybase.searchUrl(query);
   // A new tab even when there is a helper tab: the user may be using that one.
-  const tab = await chrome.tabs.create({ url: searchUrl, openerTabId: tabId });
+  const tab = await chrome.tabs.create({ url: searchUrl, openerTabId: tabOf(tabId) });
   // The failed lookup, to go back to if the tab doesn't bring results.
   const before = (await chrome.storage.session.get(`lookup:${tabId}`))[`lookup:${tabId}`] || null;
   await chrome.storage.session.set({ [`searchTab:${tab.id}`]: { tabId, pageUrl, whisky, query, before } });
@@ -557,11 +566,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
+  if (msg.type === 'whisky:menu' && sender.tab) return void refreshPageMenu();
+
   if (msg.type !== 'whisky:detection' || !sender.tab || sender.frameId !== 0) return;
   const tabId = sender.tab.id;
-  const { status, whisky, confidence, url } = msg.result;
+  const { status, whisky, confidence, url, listing } = msg.result;
   if (Whiskybase.isWhiskybasePage(url)) return;
   setBadge(tabId, status, whisky.name);
+  chrome.storage.session.set({ [`detected:${tabId}`]: { url, status, listing: !!listing } }).then(refreshPageMenu);
 
   const previousUrl = pageUrls.get(tabId);
   pageUrls.set(tabId, url);
@@ -593,7 +605,8 @@ chrome.tabs.onActivated.addListener(async ({ tabId }) => {
 
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   pageUrls.delete(tabId);
-  chrome.storage.session.remove(`lookup:${tabId}`);
+  pageUrls.delete(`${tabId}-card`);
+  chrome.storage.session.remove([`lookup:${tabId}`, `lookup:${tabId}-card`, `detected:${tabId}`, `menu:${tabId}`]);
   const pending = (await chrome.storage.session.get(`searchTab:${tabId}`))[`searchTab:${tabId}`];
   if (pending) dropSearchTab(tabId, pending);
   const { helperTab: h } = await chrome.storage.session.get('helperTab');
@@ -656,7 +669,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === chrome.runtime.OnInstalledReason.INSTALL) chrome.runtime.openOptionsPage();
 });
 
-// --- Toolbar icon menu ------------------------------------------------------
+// --- Menus -------------------------------------------------------------------
 // Right-clicking the icon offers the project's README, next to Chrome's own entries.
 
 const REPO_URL = 'https://github.com/sj/whiskybase-chromium-browser-extension';
@@ -665,13 +678,68 @@ const MENU_LINKS = {
   report: ['Report a problem with this extension', `${REPO_URL}/blob/main/README.md#did-your-bottle-not-get-detected-on-a-page`],
 };
 
+// Right-clicking a page offers one entry, which says what it does there: the
+// page in the active tab is all the menus know about, so the entry is updated
+// as that changes. Whatever it says, a click opens the popup (and gives the
+// extension access to the tab, as clicking the icon does); the popup then shows
+// the page, or, on a list of bottles, the bottle right-clicked (popup.js).
+const PAGE_MENU = 'page';
+const PAGE_MENU_TITLES = {
+  identify: 'Identify whisky on this page', // not checked yet, or nothing found
+  match: 'Show bottle info and Whiskybase match',
+  bottle: 'Show whisky bottle information',
+  card: 'Identify this bottle', // a list of bottles
+};
+
 // Chrome keeps the entries across restarts, so they are (re)made on install and update only.
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
     for (const [id, [title]] of Object.entries(MENU_LINKS)) chrome.contextMenus.create({ id, title, contexts: ['action'] });
+    chrome.contextMenus.create({
+      id: PAGE_MENU,
+      title: PAGE_MENU_TITLES.identify,
+      contexts: ['page', 'link', 'image', 'selection'],
+      documentUrlPatterns: ALL_SITES,
+    });
+    refreshPageMenu();
   });
 });
-chrome.contextMenus.onClicked.addListener((info) => {
+
+// The page's last detection (detected:<tabId>, from content.js), until it navigates.
+async function pageMenuState(tab) {
+  const d = (await chrome.storage.session.get(`detected:${tab.id}`))[`detected:${tab.id}`];
+  if (!d || d.status === 'none') return d && d.listing ? 'card' : 'identify';
+  const lk = (await chrome.storage.session.get(`lookup:${tab.id}`))[`lookup:${tab.id}`];
+  return lk && lk.state === 'match' && lk.pageUrl === d.url ? 'match' : 'bottle';
+}
+
+async function refreshPageMenu() {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (!tab) return;
+  // Whiskybase itself has nothing to look up.
+  const visible = !Whiskybase.isWhiskybasePage(tab.url || '');
+  const title = PAGE_MENU_TITLES[await pageMenuState(tab)];
+  chrome.contextMenus.update(PAGE_MENU, { title, visible }, () => void chrome.runtime.lastError);
+}
+
+chrome.tabs.onActivated.addListener(refreshPageMenu);
+chrome.windows.onFocusChanged.addListener(refreshPageMenu);
+chrome.tabs.onUpdated.addListener(async (tabId, info) => {
+  if (info.status !== 'loading') return;
+  await chrome.storage.session.remove(`detected:${tabId}`);
+  refreshPageMenu();
+});
+
+async function pageMenuClicked(info, tab) {
+  // For the popup, opened just now: on a list of bottles, which one was right-clicked.
+  await chrome.storage.session.set({ [`menu:${tab.id}`]: { at: Date.now(), linkUrl: info.linkUrl || null } });
+  // Not before Chrome 127: the detector is loaded at least, for the badge.
+  if (chrome.action.openPopup && (await chrome.action.openPopup({ windowId: tab.windowId }).then(() => true, () => false))) return;
+  chrome.scripting.executeScript({ target: { tabId: tab.id }, files: AUTO_SCRIPT.js }).catch(() => {});
+}
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === PAGE_MENU && tab) return void pageMenuClicked(info, tab);
   const entry = MENU_LINKS[info.menuItemId];
   if (entry) chrome.tabs.create({ url: entry[1] });
 });

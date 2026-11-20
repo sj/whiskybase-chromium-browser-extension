@@ -131,7 +131,10 @@ events.push(async (d) => {
   const query = url.startsWith('https://www.whiskybase.com/search?') && new URL(url).searchParams.get('q');
   const search = query && Object.entries(WB_SEARCHES).find(([start]) => query.startsWith(start));
   const isPhoto = d.params.resourceType === 'Image' && /^https:\/\/(cdn\.whiskyauction\.com|cdn11\.bigcommerce\.com)\//.test(url);
-  const body = PAGES[url] && d.params.resourceType === 'Document' ? PAGES[url]
+  // A bottle's page is also fetched by the content script, from a list's link to it (with its query).
+  const type = d.params.resourceType;
+  const page = type === 'Document' ? PAGES[url] : (type === 'Fetch' || type === 'XHR') && (PAGES[url] || PAGES[url.split('?')[0]]);
+  const body = page ? page
     : query ? search && search[1]
     : url.startsWith('https://www.whiskybase.com/whiskies/') ? WB_BOTTLE
     : isPhoto ? PHOTO : null;
@@ -245,6 +248,34 @@ await check('list page: the bottle matched before gets its badge', async () => {
   if (!badges || !badges.every((href) => href.includes('inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid'))) {
     throw new Error(`badges on ${JSON.stringify(badges)}`);
   }
+});
+
+
+// The page's right-click menu entry. Chrome's menus can't be clicked from here,
+// so what the entry says is asked of the background, and the popup (in a tab of
+// its own, told that it is on the list's tab) is opened as the click would.
+await check('page menu: says what it does for the page', async () => {
+  expect(await evaluate(`pageMenuState({ id: ${product.tabId} })`, worker), 'match', 'bottle page with a match');
+  expect(await evaluate(`pageMenuState({ id: ${list.tabId} })`, worker), 'card', 'list of bottles');
+  expect(await evaluate(`pageMenuState({ id: -1 })`, worker), 'identify', 'page not checked');
+});
+await check('list page: right-clicking a bottle identifies it from its own page', async () => {
+  await evaluate(`document.querySelector('a[href*="madeira-finish-cask-craft"] img').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
+  const card = await evaluate(`chrome.tabs.sendMessage(${list.tabId}, { type: 'whisky:card' })`, worker);
+  if (!card.href || !card.href.includes('madeira-finish-cask-craft')) throw new Error(`card ${JSON.stringify(card.href || card.error)}`);
+  expect(card.result && card.result.status, 'whisky', 'detection');
+  expect(card.result.whisky.distillery, 'Inchgower', 'distillery');
+});
+await check('popup from the page menu on a list: the bottle right-clicked, matched to Whiskybase', async () => {
+  const cardPopup = await openPage(await evaluate(`chrome.runtime.getURL('popup/popup.html')`, worker));
+  await waitFor(`document.readyState === 'complete'`, cardPopup.session);
+  await evaluate(`chrome.storage.session.set({ 'menu:${list.tabId}': { at: Date.now(), linkUrl: null } })`, worker);
+  await evaluate(`chrome.tabs.query = async () => [{ id: ${list.tabId}, url: 'https://www.masterofmalt.com/distilleries/inchgower-whisky-distillery/' }]; scan(false)`, cardPopup.session);
+  expect(await waitFor(`document.getElementById('parsed-title').textContent === 'Bottle you clicked' && !document.getElementById('fields').hidden && 'ok'`, cardPopup.session), 'ok', 'popup shows the bottle');
+  const lookup = await waitFor(`chrome.storage.session.get('lookup:${list.tabId}-card').then((r) => { const l = r['lookup:${list.tabId}-card']; return l && l.state !== 'searching' && l; })`, worker, 20000);
+  expect(lookup && lookup.state, 'match', 'lookup');
+  expect(lookup.match.id, '233907', 'match');
+  await evaluate(`chrome.tabs.remove(${cardPopup.tabId})`, worker);
 });
 
 const majestic = await openPage(MAJESTIC);

@@ -441,10 +441,64 @@ function renderShown(shown) {
   if (!shown.match.detailed) chrome.runtime.sendMessage({ type: 'whisky:shown-details', tabId: currentTabId });
 }
 
+// --- A bottle right-clicked on a list ----------------------------------------
+// The page's right-click menu entry opens the popup (background.js), and keeps
+// menu:<tabId> for it: on a list of bottles, the popup then shows the bottle
+// right-clicked instead. The page's content script finds its card and reads its
+// page; the lookup is kept apart from the tab's own, as lookup:<tabId>-card.
+
+const MENU_MS = 10 * 1000;
+
+async function takeMenuClick(tabId) {
+  const key = `menu:${tabId}`;
+  const menu = (await chrome.storage.session.get(key))[key];
+  if (menu) await chrome.storage.session.remove(key);
+  return menu && Date.now() - menu.at < MENU_MS ? menu : null;
+}
+
+async function identifyCard(tabId, linkUrl) {
+  $('parsed-title').textContent = 'Bottle you clicked';
+  $('fields').hidden = true;
+  $('why').hidden = true;
+  $('wb').hidden = true;
+  document.body.classList.remove('wide');
+  $('status').hidden = false;
+  $('status').className = 'status status-loading';
+  $('status').textContent = 'Identifying the bottle you clicked…';
+  const card = await chrome.tabs.sendMessage(tabId, { type: 'whisky:card', linkUrl }).catch(() => null);
+  if (!card || !card.result) {
+    $('status').className = 'status status-none';
+    if (card && card.error === 'nocard') {
+      $('status').textContent = 'Right-click on one of the bottles in the list to identify it.';
+    } else {
+      $('status').replaceChildren(
+        'The page of the bottle you clicked could not be read',
+        ...(card && card.href ? [' (', link(card.href, 'open it'), ' to have a look)'] : []),
+        '.'
+      );
+    }
+    return;
+  }
+  currentTabId = `${tabId}-card`;
+  currentResult = card.result;
+  const key = `lookup:${currentTabId}`;
+  const lk = (await chrome.storage.session.get(key))[key];
+  currentLookup = lk && lk.pageUrl === card.result.url ? lk : null;
+  // Looked up as the background does for the page itself: confident detections only.
+  if (!currentLookup && card.result.status === 'whisky' && card.result.confidence >= 0.9) {
+    chrome.runtime.sendMessage({ type: 'whisky:lookup', tabId: currentTabId, url: card.result.url, whisky: card.result.whisky });
+  }
+  render(currentResult);
+  $('parsed-title').textContent = 'Bottle you clicked';
+  $('card-note').replaceChildren('From this list. ', link(card.href, 'Open its page'));
+  $('card-note').hidden = false;
+}
+
 async function scan(rescan) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
   currentShown = null;
+  $('card-note').hidden = true;
   const shownKey = `shown:${tab.id}`;
   const shown = !rescan && (await chrome.storage.session.get(shownKey))[shownKey];
   if (shown && Date.now() - shown.at < SHOWN_MS) return renderShown(shown);
@@ -463,6 +517,8 @@ async function scan(rescan) {
   }
   try {
     currentResult = await detection(tab.id, rescan);
+    const menu = !rescan && (await takeMenuClick(tab.id));
+    if (menu && currentResult.listing) return identifyCard(tab.id, menu.linkUrl);
     render(currentResult);
   } catch (e) {
     $('fields').hidden = true;

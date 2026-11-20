@@ -65,6 +65,22 @@ The manifest has no content scripts, so the extension can't read pages unless as
   The lookup starts by itself only for a detection with at least 90% confidence
   (`AUTO_MIN_CONFIDENCE`); for others the popup offers **Find this bottle on
   Whiskybase**, which sends `whisky:lookup` to start the same lookup.
+- **The page's right-click menu** has one entry, which also gives the extension
+  access to the tab (`activeTab`) and opens the popup (`chrome.action.openPopup`,
+  Chrome 127 and later; before that, it only loads the detector). Menus can't
+  change per tab, so the background updates the entry for the active tab
+  (`refreshPageMenu`) from its last detection (`detected:<tabId>` in
+  `chrome.storage.session`) and lookup: **Identify whisky on this page** (not
+  checked yet, or nothing found), **Show bottle info and Whiskybase match**,
+  **Show whisky bottle information**, or, on a list of bottles, **Identify this
+  bottle**. The click keeps `menu:<tabId>` (with the link right-clicked, if any)
+  for the popup. On a list, the popup then asks the content script for the
+  bottle right-clicked (`whisky:card`): the link right-clicked if a card has it,
+  else the card round what was right-clicked (the box round it with links to one
+  page only), else the nearest card. The content script fetches that card's page
+  from the site, as the page itself would, and runs the detector on it; its
+  lookup is kept as `lookup:<tabId>-card`, apart from the tab's own, and a match
+  is stored for the card's page as usual, so the list shows its badge.
 - **Automatic checking (opt-in):** **Check every page automatically** on the
   welcome page (below) requests the optional access to all `http`/`https` sites and sets `autoCheck`
   in `chrome.storage.local`. While both hold, the background registers the same
@@ -319,11 +335,11 @@ data** on the welcome page removes them all (and with them the badges).
 
 | Path | Role |
 | ---- | ---- |
-| `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
+| `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's and the page's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
 | `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content; marks images that link to bottles matched before; adds distillery names to SMWS codes on smws.com |
 | `src/smws.js` | The Scotch Malt Whisky Society's codes and their distilleries, and finding them in text (no DOM; also used by the tests) |
-| `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's right-click menu entries |
+| `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's and the page's right-click menu entries |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |

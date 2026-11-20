@@ -19,6 +19,10 @@
  *
  * On smws.com, it also adds the distillery's name after each of the Society's
  * bottle codes ("3.369 (Bowmore)").
+ *
+ * On a list of bottles, the page's right-click menu entry identifies the bottle
+ * that was right-clicked: its card's own page is fetched (from the page, as the
+ * site's own address) and run through the detector.
  */
 (() => {
   'use strict';
@@ -451,9 +455,70 @@
     }, SMWS_DELAY_MS);
   });
 
+  // --- The bottle right-clicked on a list -------------------------------------
+
+  let rightClicked = null;
+  document.addEventListener(
+    'contextmenu',
+    (e) => {
+      rightClicked = { target: e.target, x: e.clientX, y: e.clientY };
+      // So that the menu entry says what it does here, if the worker had stopped.
+      try {
+        chrome.runtime.sendMessage({ type: 'whisky:menu' }).catch(() => {});
+      } catch (e) {}
+    },
+    true
+  );
+
+  // The bottle page a card links to: the link right-clicked, if a card has it
+  // too; else the card round what was right-clicked (the box round it with
+  // links to one page only), or else the nearest card. Cards are links round a
+  // photo, as for the badges.
+  function cardHref(linkUrl) {
+    const links = [...imageLinks(true)].filter(([, as]) => as.some((a) => !a.closest('header, nav, footer')));
+    const clicked = linkUrl && links.find(([href]) => href === linkUrl);
+    if (clicked) return clicked[0];
+    if (!rightClicked) return null;
+    for (let box = rightClicked.target; box && box !== document.body; box = box.parentElement) {
+      const hrefs = links.filter(([, as]) => as.some((a) => box.contains(a))).map(([href]) => href);
+      if (hrefs.length === 1) return hrefs[0];
+      if (hrefs.length > 1) break;
+    }
+    let nearest = null;
+    let best = Infinity;
+    for (const [href, as] of links) {
+      for (const a of as) {
+        const r = a.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        const dx = Math.max(r.left - rightClicked.x, 0, rightClicked.x - r.right);
+        const dy = Math.max(r.top - rightClicked.y, 0, rightClicked.y - r.bottom);
+        const d = Math.hypot(dx, dy);
+        if (d < best) [nearest, best] = [href, d];
+      }
+    }
+    return nearest;
+  }
+
+  async function identifyCard(linkUrl) {
+    const href = cardHref(linkUrl);
+    if (!href) return { error: 'nocard' };
+    try {
+      const res = await fetch(href, { credentials: 'include' });
+      if (!res.ok) return { href, error: `HTTP ${res.status}` };
+      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+      return { href, result: globalThis.WhiskyDetector.detect(doc, { url: res.url || href }) };
+    } catch (e) {
+      return { href, error: String(e.message || e) };
+    }
+  }
+
   chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg && msg.type === 'whisky:get') {
       sendResponse(msg.rescan || !latest ? scan() : latest);
+    }
+    if (msg && msg.type === 'whisky:card') {
+      identifyCard(msg.linkUrl).then(sendResponse);
+      return true;
     }
   });
 

@@ -9,6 +9,8 @@ For each release, changes are listed below. When a release is published, the cha
 - **Clear stored bottle data** moved from the popup to the welcome page, under "Your privacy".
 - On a list of whisky bottles (a shop's whisky section, an auction), the popup now suggests opening the page of a specific bottle, and on pages that can't be scanned at all it suggests visiting an online whisky shop or auction.
 
+- Right-click any page for a new menu entry: **Identify whisky on this page** on a page the extension hasn't checked yet, **Show bottle info and Whiskybase match** or **Show whisky bottle information** on a bottle's page, which open the extension's popup. On a list of bottles, right-click a bottle and choose **Identify this bottle**: the extension reads that bottle's own page and shows it, with its Whiskybase match.
+
 ## 0.4.0
 
 - Subtle score badge on pages with multiple bottles: on lists of bottles (a shop's whisky section, say), the extension checks whether it has any information readily cached about any of the bottles. If one of the bottles in the list was previously matched to Whiskybase, the extension adds a subtle small badge with the Whiskybase rating. It only uses what the extension already looked up: nothing is looked up for it (this is to avoid triggering a large number of searches and matches for every shop bottle list). Clicking a badge opens the extension on that bottle. There's a new button 'Clear stored bottle data' at the bottom of the popup that clears the cache of information. Information is only ever stored locally, never transmitted.
