@@ -177,6 +177,24 @@ figure img {
   margin-top: 16px;
 }
 
+/* Settings: a checkbox with its explanation beside it. */
+.setting {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.setting input {
+  margin: 4px 0 0;
+}
+
+.setting-note {
+  display: block;
+  color: var(--muted);
+  font-size: 14px;
+}
+
 button.primary {
   font: inherit;
   font-weight: 600;

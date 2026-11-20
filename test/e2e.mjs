@@ -195,10 +195,21 @@ await check('install: the welcome page opens, with both steps to do', async () =
   expect(await waitFor(welcomeStep('step-pin'), welcome), 'todo', 'pin step');
   expect(await waitFor(welcomeStep('step-auto'), welcome), 'todo', 'automatic checking step');
 });
+// The popup, in a tab of its own: a notice for each step still to do.
+const popup = await openPage(await evaluate(`chrome.runtime.getURL('popup/popup.html')`, worker));
+const notices = `(() => { const n = ['notice-auto', 'notice-pin'].filter((id) => !document.getElementById(id).hidden); return document.readyState === 'complete' && n.join(); })()`;
+await check('popup: a notice for each step still to do', async () => {
+  expect(await waitFor(`${notices} === 'notice-auto,notice-pin' && ${notices}`, popup.session), 'notice-auto,notice-pin', 'notices shown');
+});
 await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 await check('welcome page: the automatic checking step is done once it is turned on', async () => {
   expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');
+  expect(await evaluate(`document.getElementById('auto-check').checked`, welcome), true, 'settings checkbox');
 });
+await check('popup: no notice about automatic checking once it is on', async () => {
+  expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown');
+});
+await evaluate(`chrome.tabs.remove(${popup.tabId})`, worker);
 await waitFor(`chrome.scripting.getRegisteredContentScripts().then((s) => s.length)`, worker);
 
 const product = await openPage(PRODUCT);

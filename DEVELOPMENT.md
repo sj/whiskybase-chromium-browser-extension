@@ -63,21 +63,25 @@ The manifest has no content scripts, so the extension can't read pages unless as
   The lookup starts by itself only for a detection with at least 90% confidence
   (`AUTO_MIN_CONFIDENCE`); for others the popup offers **Find this bottle on
   Whiskybase**, which sends `whisky:lookup` to start the same lookup.
-- **Automatic checking (opt-in):** the popup's **Check every page automatically**
-  requests the optional access to all `http`/`https` sites and sets `autoCheck`
+- **Automatic checking (opt-in):** **Check every page automatically** on the
+  welcome page (below) requests the optional access to all `http`/`https` sites and sets `autoCheck`
   in `chrome.storage.local`. While both hold, the background registers the same
   files as a content script on every page (`syncAutoCheck`). Pages already
   open are checked on the next load or click.
 - **The welcome page** (`welcome/`) offers the same: on first install (not on
   updates) the background opens it in a new tab with `chrome.runtime.openOptionsPage`,
-  as it is also the options page (right-click the icon → Options; **Help** in the
-  popup). A new extension is hidden behind Chrome's Extensions button and only
+  as it is also the options page (right-click the icon → Options; **Options &
+  help** in the popup). A new extension is hidden behind Chrome's Extensions button and only
   works when clicked, so the page says what to expect and offers two steps,
   each shown as done or to do and updated as it changes: pinning the icon (an
   extension can't pin itself, but `chrome.action.getUserSettings` says whether
   it is pinned, and `onUserSettingsChanged` when that changes, from Chrome 130),
-  and a button that requests the access to all sites and sets `autoCheck`, as
-  the popup's checkbox does.
+  and a button that requests the access to all sites and sets `autoCheck`. Its
+  **Settings** section has the checkbox that turns automatic checking on and
+  off again.
+- **The popup** only says what is still to do: while the icon isn't pinned or
+  automatic checking is off, a subtle notice in its footer says so, and clicking
+  it opens the welcome page.
 - **Whiskybase itself** is never scanned: the automatic content script excludes
   `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
   stops at once there, the background ignores detections from there, and the

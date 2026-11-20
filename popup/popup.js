@@ -473,41 +473,30 @@ async function scan(rescan) {
   }
 }
 
-// --- Automatic checking -------------------------------------------------------
-// Off: pages are only checked when the toolbar icon is clicked. On: the optional
-// access to all sites is granted, autoCheck is set, and the background
-// registers the detector on every page. Chrome may close the popup for its
-// permission prompt; the background turns the setting on when it is accepted.
-// Turning it off keeps the access (see background.js for why).
+// --- Notices --------------------------------------------------------------------
+// The welcome page (welcome/welcome.js), also the options page, has the two steps
+// that make the extension visible and the setting for automatic checking. While
+// a step is still to do, a notice in the footer says so and opens that page.
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
-async function showAutoCheck() {
+async function showNotices() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
-  $('auto-check').checked = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
+  $('notice-auto').hidden = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
+  // Before Chrome 91 there is no way to tell, so no notice.
+  const settings = await chrome.action.getUserSettings?.();
+  $('notice-pin').hidden = !settings || settings.isOnToolbar;
 }
-
-$('auto-check').addEventListener('change', async (e) => {
-  try {
-    if (e.target.checked) {
-      // Asked straight away: Chrome only shows the prompt during the click.
-      if (await chrome.permissions.request({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
-    } else {
-      await chrome.storage.local.set({ autoCheck: false });
-    }
-  } finally {
-    showAutoCheck();
-  }
-});
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.autoCheck) showAutoCheck();
+  if (area === 'local' && changes.autoCheck) showNotices();
 });
+chrome.action.onUserSettingsChanged?.addListener(showNotices);
 
-// The welcome page, also the options page (welcome/welcome.js).
-$('welcome').addEventListener('click', () => {
+function openWelcome() {
   chrome.runtime.openOptionsPage();
   window.close();
-});
+}
+for (const id of ['notice-auto', 'notice-pin', 'welcome']) $(id).addEventListener('click', openWelcome);
 
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.
@@ -532,6 +521,6 @@ $('clear-known').addEventListener('click', async () => {
 });
 
 $('rescan').addEventListener('click', () => scan(true));
-showAutoCheck();
+showNotices();
 showDebug();
 scan(false);

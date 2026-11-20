@@ -43,8 +43,8 @@
             <p class="actions">
               <button type="button" id="auto-allow" class="primary">Check every page automatically</button>
             </p>
-            <p class="done-note">On: every page is checked when it loads. You can turn this off in the extension's popup.</p>
-            <p class="declined-note" hidden>Not allowed. You can turn it on later with the checkbox at the bottom of the extension's popup.</p>
+            <p class="done-note">On: every page is checked when it loads. You can turn this off under <a href="#settings">Settings</a> below.</p>
+            <p class="declined-note" hidden>Not allowed. You can turn it on later with the button above, or under <a href="#settings">Settings</a> below.</p>
           </li>
 
           <li id="step-pin" class="step">
@@ -85,6 +85,21 @@
         </figure>
       </section>
 
+      <section id="settings">
+        <h2>Settings</h2>
+        <label class="setting">
+          <input type="checkbox" id="auto-check" />
+          <span>
+            <strong>Check every page automatically</strong>
+            <span class="setting-note">
+              When on, every page is checked when it loads, and when a bottle is recognized, it is looked up on
+              Whiskybase straight away. This requires the extra browser permission described above. When off, pages
+              are only checked when you click the extension's icon.
+            </span>
+          </span>
+        </label>
+      </section>
+
       <section>
         <h2>Suggestions? Check the GitHub repository!</h2>
         <p>
@@ -107,7 +122,7 @@
 
       <footer>
         <p>
-          You can come back to this page any time: right-click the extension's icon and choose <strong>Options</strong>.
+          You can come back to this page any time: click <strong>Options &amp; help</strong> in the extension's popup, or right-click the extension's icon and choose <strong>Options</strong>.
           Not affiliated with or endorsed by Whiskybase.
           <a href="https://github.com/sj/whiskybase-chromium-browser-extension" target="_blank" rel="noopener">About &amp; feedback</a>
         </p>

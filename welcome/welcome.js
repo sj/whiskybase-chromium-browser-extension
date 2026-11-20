@@ -3,6 +3,7 @@
  * extension's options page. It says what the extension does and offers the two
  * steps that make it visible: pinning its icon, and checking every page
  * automatically. Each step shows whether it is done, and updates as it changes.
+ * Below them, the setting for automatic checking turns it on and off again.
  */
 const $ = (id) => document.getElementById(id);
 
@@ -29,8 +30,10 @@ window.addEventListener('focus', showPinned);
 document.addEventListener('visibilitychange', showPinned);
 
 // --- Automatic checking ---------------------------------------------------------
-// As the popup's checkbox (popup.js): the optional access to all sites, and
-// autoCheck in chrome.storage.local; the background registers the detector.
+// On: the optional access to all sites is granted, autoCheck is set in
+// chrome.storage.local, and the background registers the detector on every page.
+// Turning it off only clears autoCheck and keeps the access (see background.js
+// for why). The popup only says whether it is on (popup.js).
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
@@ -38,6 +41,7 @@ async function showAutoCheck() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
   const on = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
   showStep('step-auto', on);
+  $('auto-check').checked = on;
   if (on) $('step-auto').querySelector('.declined-note').hidden = true;
 }
 
@@ -47,6 +51,19 @@ $('auto-allow').addEventListener('click', async () => {
   if (granted) await chrome.storage.local.set({ autoCheck: true });
   $('step-auto').querySelector('.declined-note').hidden = granted;
   showAutoCheck();
+});
+
+$('auto-check').addEventListener('change', async (e) => {
+  try {
+    if (e.target.checked) {
+      // Asked straight away: Chrome only shows the prompt during the click.
+      if (await chrome.permissions.request({ origins: ALL_SITES })) await chrome.storage.local.set({ autoCheck: true });
+    } else {
+      await chrome.storage.local.set({ autoCheck: false });
+    }
+  } finally {
+    showAutoCheck();
+  }
 });
 
 showAutoCheck();
