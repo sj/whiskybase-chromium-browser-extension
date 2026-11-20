@@ -41,7 +41,7 @@ the section of `DEVELOPMENT.md` for the part you change before changing it.
 | `src/whiskybase.js` | Whiskybase search and page parsing, matching (no DOM) |
 | `src/known-pages.js`, `src/smws.js` | Keys for stored matches; SMWS codes (no DOM) |
 | `popup/` | The toolbar popup |
-| `welcome/` | Welcome page (on install, and the options page) |
+| `settings-welcome/` | Welcome page (on install, and the options page) |
 | `test/run.mjs`, `test/e2e.mjs` | Unit and detector tests; browser tests of the extension |
 | `test/fixtures/` | Saved pages (shops, auctions, Whiskybase), scrubbed |
 

@@ -479,7 +479,7 @@ async function scan(rescan) {
 }
 
 // --- Notices --------------------------------------------------------------------
-// The welcome page (welcome/welcome.js), also the options page, has the two steps
+// The welcome page (settings-welcome/settings-welcome.js), also the options page, has the two steps
 // that make the extension visible and the setting for automatic checking. While
 // a step is still to do, a notice in the footer says so and opens that page.
 

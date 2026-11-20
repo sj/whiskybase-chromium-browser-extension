@@ -19,7 +19,7 @@
     }
   },
   "options_ui": {
-    "page": "welcome/welcome.html",
+    "page": "settings-welcome/settings-welcome.html",
     "open_in_tab": true
   },
   "background": {

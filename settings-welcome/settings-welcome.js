@@ -8,7 +8,7 @@
  */
 const $ = (id) => document.getElementById(id);
 
-// A step that gets done fades (welcome.css), and the steps still to do flash
+// A step that gets done fades (settings-welcome.css), and the steps still to do flash
 // their border, in whichever order the steps are done. The state the page
 // opens with shows as it is.
 function showStep(id, done) {

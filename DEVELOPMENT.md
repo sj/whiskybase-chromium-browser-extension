@@ -70,7 +70,7 @@ The manifest has no content scripts, so the extension can't read pages unless as
   in `chrome.storage.local`. While both hold, the background registers the same
   files as a content script on every page (`syncAutoCheck`). Pages already
   open are checked on the next load or click.
-- **The welcome page** (`welcome/`) offers the same: on first install (not on
+- **The welcome page** (`settings-welcome/`) offers the same: on first install (not on
   updates) the background opens it in a new tab with `chrome.runtime.openOptionsPage`,
   as it is also the options page (right-click the icon → Options; **Options &
   help** in the popup). A new extension is hidden behind Chrome's Extensions button and only
@@ -327,7 +327,7 @@ data** on the welcome page removes them all (and with them the badges).
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
 | `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
-| `welcome/` | Welcome page, opened on install and as the options page: what the extension does, pinning its icon and turning on automatic checking |
+| `settings-welcome/` | Welcome page, opened on install and as the options page: what the extension does, pinning its icon and turning on automatic checking |
 | `test/` | Parser unit tests, browser tests (`e2e.mjs`) and fixture pages |
 
 ## Packaging
@@ -338,7 +338,7 @@ npm run package
 
 builds `dist/whiskybase-chromium-browser-extension/` and
 `dist/whiskybase-chromium-browser-extension-<version>.zip`,
-containing only what the extension needs (manifest, licence, `src/`, `popup/`, `welcome/`, PNG icons).
+containing only what the extension needs (manifest, licence, `src/`, `popup/`, `settings-welcome/`, PNG icons).
 
 The GitHub Actions workflow [`.github/workflows/package.yml`](.github/workflows/package.yml)
 runs only when started by hand: on GitHub, open **Actions**, pick **Package

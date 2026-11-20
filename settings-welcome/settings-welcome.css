@@ -160,7 +160,7 @@ figure img {
   opacity: 0.45;
 }
 
-/* Changes fade; the state the page opens with doesn't (welcome.js). */
+/* Changes fade; the state the page opens with doesn't (settings-welcome.js). */
 .step.settled > :not(.step-head),
 .step.settled h3 {
   transition: opacity 0.8s ease;

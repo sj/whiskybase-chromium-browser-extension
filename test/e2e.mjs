@@ -67,7 +67,7 @@ function findBrowser() {
 rmSync(out, { recursive: true, force: true });
 const ext = join(out, 'ext');
 mkdirSync(ext, { recursive: true });
-for (const f of ['manifest.json', 'src', 'popup', 'welcome', 'icons']) cpSync(join(root, f), join(ext, f), { recursive: true });
+for (const f of ['manifest.json', 'src', 'popup', 'settings-welcome', 'icons']) cpSync(join(root, f), join(ext, f), { recursive: true });
 const manifest = JSON.parse(readFileSync(join(ext, 'manifest.json'), 'utf8'));
 manifest.host_permissions.push('http://*/*', 'https://*/*');
 writeFileSync(join(ext, 'manifest.json'), JSON.stringify(manifest, null, 2));
@@ -187,7 +187,7 @@ let welcome;
 await check('install: the welcome page opens, with both steps to do', async () => {
   for (let i = 0; i < 40 && !welcome; i++) {
     const { targetInfos } = (await send('Target.getTargets')).result;
-    const page = targetInfos.find((t) => t.type === 'page' && t.url.endsWith('/welcome/welcome.html'));
+    const page = targetInfos.find((t) => t.type === 'page' && t.url.endsWith('/settings-welcome/settings-welcome.html'));
     if (page) welcome = (await send('Target.attachToTarget', { targetId: page.targetId, flatten: true })).result.sessionId;
     else await sleep(250);
   }
