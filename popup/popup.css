@@ -368,7 +368,7 @@ body.wide #wb {
 }
 .footer-links {
   display: flex;
-  flex-wrap: wrap; /* in the narrow popup, About & feedback goes to a line of its own */
+  flex-wrap: wrap; /* should they not fit the narrow popup */
   justify-content: flex-end;
   column-gap: 10px;
   margin-left: auto;

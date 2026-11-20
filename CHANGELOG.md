@@ -6,6 +6,7 @@ For each release, changes are listed below. When a release is published, the cha
 
 - A welcome page opens when the extension is installed. It explains what the extension does and what to expect, and helps with two steps that make it visible: pinning its icon to the toolbar, and allowing it to check every page automatically. It is also the extension's options page (right-click the icon → Options), and the popup links to it ("Options & help").
 - The **Check every page automatically** setting moved from the popup to the welcome page: its button has a checkbox that shows whether it is on, and turns it off again. In its place, the popup shows a subtle notice while the extension isn't pinned or doesn't check every page, which opens the welcome page.
+- **Clear stored bottle data** moved from the popup to the welcome page, under "Your privacy".
 - On a list of whisky bottles (a shop's whisky section, an auction), the popup now suggests opening the page of a specific bottle, and on pages that can't be scanned at all it suggests visiting an online whisky shop or auction.
 
 ## 0.4.0

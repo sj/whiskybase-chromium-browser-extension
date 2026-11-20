@@ -219,6 +219,25 @@ figure img {
   cursor: pointer;
 }
 
+button.secondary {
+  font: inherit;
+  padding: 6px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--fg);
+  cursor: pointer;
+}
+
+button.secondary:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+button.secondary:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
 .primary:hover {
   filter: brightness(1.1);
 }
