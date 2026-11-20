@@ -337,7 +337,7 @@ body.wide #wb {
   margin: 6px 0 0;
 }
 
-/* Below both columns: notices of what is still to do, then the links. */
+/* Below both columns: the links. */
 .foot {
   display: flex;
   flex-wrap: wrap;
@@ -347,12 +347,19 @@ body.wide #wb {
   padding-top: 8px;
   border-top: 1px solid var(--line);
 }
-/* At the very top: automatic checking is off, which matters most. */
+/* At the very top: the welcome page's steps still to do. */
+.banners {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.banners:not(:has(.banner:not([hidden]))) {
+  display: none;
+}
 .banner {
   display: flex;
   align-items: flex-start;
   gap: 6px;
-  margin: 0 0 10px;
   padding: 6px 6px 6px 10px;
   border-left: 4px solid var(--maybe);
   border-radius: 6px;
@@ -361,6 +368,7 @@ body.wide #wb {
 .banner[hidden] {
   display: none;
 }
+
 .banner-text {
   flex: 1;
   padding: 0;
@@ -385,32 +393,6 @@ body.wide #wb {
   color: var(--fg);
 }
 
-.notices {
-  flex-basis: 100%;
-  display: grid;
-  gap: 4px;
-}
-.notices:not(:has(.notice:not([hidden]))) {
-  display: none;
-}
-/* Subtle: a muted line with a small accent, the whole line clickable. */
-.notice {
-  padding: 3px 8px;
-  border: none;
-  border-left: 3px solid var(--maybe);
-  border-radius: 0;
-  background: color-mix(in srgb, var(--maybe) 8%, transparent);
-  color: var(--muted);
-  font-size: 12px;
-  text-align: left;
-  cursor: pointer;
-}
-.notice[hidden] {
-  display: none;
-}
-.notice:hover u {
-  color: var(--fg);
-}
 .footer-links {
   display: flex;
   flex-wrap: wrap; /* should they not fit the narrow popup */

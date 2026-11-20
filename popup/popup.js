@@ -536,35 +536,35 @@ async function scan(rescan) {
 // --- Notices --------------------------------------------------------------------
 // The welcome page (settings-welcome/settings-welcome.js), also the options page, has the two steps
 // that make the extension visible and the setting for automatic checking. While
-// a step is still to do, a notice says so and opens that page: a banner at the
-// top while pages are only checked on click, which can be dismissed until the
-// browser restarts (autoNoticeDismissed in session storage), and a line in the
-// footer while the extension isn't pinned.
+// a step is still to do, a banner at the top says so and opens that page. Its
+// cross hides it until the browser restarts (dismissed:<id> in session storage).
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
 async function showNotices() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
-  const { autoNoticeDismissed } = await chrome.storage.session.get('autoNoticeDismissed');
+  const dismissed = await chrome.storage.session.get(['dismissed:notice-auto', 'dismissed:notice-pin']);
   const on = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
-  $('notice-auto').hidden = on || !!autoNoticeDismissed;
-  $('notice-pin').hidden = (await chrome.action.getUserSettings()).isOnToolbar;
+  $('notice-auto').hidden = on || !!dismissed['dismissed:notice-auto'];
+  $('notice-pin').hidden = (await chrome.action.getUserSettings()).isOnToolbar || !!dismissed['dismissed:notice-pin'];
 }
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'local' && changes.autoCheck) showNotices();
 });
 chrome.action.onUserSettingsChanged.addListener(showNotices);
 
-$('notice-auto-close').addEventListener('click', () => {
-  $('notice-auto').hidden = true;
-  chrome.storage.session.set({ autoNoticeDismissed: true });
-});
-
 function openWelcome() {
   chrome.runtime.openOptionsPage();
   window.close();
 }
-for (const id of ['notice-auto-open', 'notice-pin', 'welcome']) $(id).addEventListener('click', openWelcome);
+$('welcome').addEventListener('click', openWelcome);
+for (const banner of document.querySelectorAll('.banner')) {
+  banner.querySelector('.banner-text').addEventListener('click', openWelcome);
+  banner.querySelector('.banner-close').addEventListener('click', () => {
+    banner.hidden = true;
+    chrome.storage.session.set({ [`dismissed:${banner.id}`]: true });
+  });
+}
 
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.

@@ -6,16 +6,28 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <!-- While pages are only checked on click; it opens the welcome page, and its cross hides it until the browser restarts. -->
-    <div id="notice-auto" class="banner" hidden>
-      <button type="button" id="notice-auto-open" class="banner-text">
-        Pages are only checked on click. <u>Check every page</u>.
-      </button>
-      <button type="button" id="notice-auto-close" class="banner-close" title="Dismiss" aria-label="Dismiss">
-        <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-          <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-        </svg>
-      </button>
+    <!-- The welcome page's steps still to do: each opens it, and its cross hides it until the browser restarts. -->
+    <div class="banners">
+      <div id="notice-auto" class="banner" hidden>
+        <button type="button" class="banner-text">
+          Pages are only checked on click. <u>Check every page</u>.
+        </button>
+        <button type="button" class="banner-close" title="Dismiss" aria-label="Dismiss">
+          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div id="notice-pin" class="banner" hidden>
+        <button type="button" class="banner-text">
+          Not pinned to the toolbar yet. <u>Pin the extension</u>.
+        </button>
+        <button type="button" class="banner-close" title="Dismiss" aria-label="Dismiss">
+          <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
+            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
     </div>
     <div class="layout">
       <main class="parsed">
@@ -55,12 +67,6 @@
     </div>
 
     <footer class="foot">
-      <!-- Shown while the extension isn't pinned; it opens the welcome page. -->
-      <div id="notices" class="notices">
-        <button type="button" id="notice-pin" class="notice" hidden>
-          Not pinned to the toolbar yet. <u>Pin the extension</u>.
-        </button>
-      </div>
       <span class="footer-links">
         <button type="button" id="welcome" class="link" title="What the extension does, how to get the most out of it (pinning its icon, checking every page), and its settings">Options &amp; help</button>
         <a class="about" href="https://github.com/sj/whiskybase-chromium-browser-extension" target="_blank" rel="noopener">About &amp; feedback</a>
