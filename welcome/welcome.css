@@ -149,18 +149,44 @@ figure img {
 }
 
 /* A done step keeps its heading and says so; how to do it is no longer needed
-   (what it is for, marked "keep", stays). */
-.step .done-note {
-  display: none;
-  color: var(--ok);
-}
-
-.step.done > p:not(.done-note, .keep) {
+   (what it is for, marked "keep", stays). The rest fades, all but the Done
+   badge, to leave the attention to the steps still to do. */
+.step.done > p:not(.keep) {
   display: none;
 }
 
-.step.done .done-note {
-  display: block;
+.step.done > :not(.step-head),
+.step.done h3 {
+  opacity: 0.45;
+}
+
+/* Changes fade; the state the page opens with doesn't (welcome.js). */
+.step.settled > :not(.step-head),
+.step.settled h3 {
+  transition: opacity 0.8s ease;
+}
+
+/* Once a step is done, the border of a step still to do flashes briefly. */
+.step.attention {
+  animation: attention 0.5s ease-in-out 3;
+}
+
+@keyframes attention {
+  50% {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step.settled > :not(.step-head),
+  .step.settled h3 {
+    transition: none;
+  }
+
+  .step.attention {
+    animation: none;
+  }
 }
 
 .fine-print,

@@ -206,6 +206,9 @@ await check('welcome page: the automatic checking step is done once it is turned
   expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');
   expect(await evaluate(`document.getElementById('auto-check').checked`, welcome), true, 'the checkbox in the button');
 });
+await check('welcome page: then the pin step, still to do, flashes', async () => {
+  expect(await waitFor(`document.getElementById('step-pin').classList.contains('attention')`, welcome), true, 'pin step flashes');
+});
 await check('popup: no notice about automatic checking once it is on', async () => {
   expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown');
 });

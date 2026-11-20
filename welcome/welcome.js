@@ -8,10 +8,26 @@
  */
 const $ = (id) => document.getElementById(id);
 
+// A step that gets done fades (welcome.css), and the steps still to do flash
+// their border, in whichever order the steps are done. The state the page
+// opens with shows as it is.
 function showStep(id, done) {
   const step = $(id);
+  const state = step.querySelector('.state');
+  const gotDone = done && state.dataset.state === 'todo';
   step.classList.toggle('done', done);
-  step.querySelector('.state').dataset.state = done ? 'done' : 'todo';
+  state.dataset.state = done ? 'done' : 'todo';
+  setTimeout(() => step.classList.add('settled'), 100);
+  if (gotDone) for (const other of document.querySelectorAll('.step:has(.state[data-state="todo"])')) flash(other);
+}
+
+function flash(step) {
+  step.classList.remove('attention');
+  void step.offsetWidth; // so that it starts again
+  step.classList.add('attention');
+}
+for (const step of document.querySelectorAll('.step')) {
+  step.addEventListener('animationend', () => step.classList.remove('attention'));
 }
 
 // --- Pinned ---------------------------------------------------------------------
