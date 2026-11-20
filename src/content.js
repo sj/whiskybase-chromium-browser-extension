@@ -462,9 +462,9 @@
     'contextmenu',
     (e) => {
       rightClicked = { target: e.target, x: e.clientX, y: e.clientY };
-      // So that the menu entry says what it does here, if the worker had stopped.
+      // So that the menu entry says what it does here, should the worker have lost the detection.
       try {
-        chrome.runtime.sendMessage({ type: 'whisky:menu' }).catch(() => {});
+        if (latest) chrome.runtime.sendMessage({ type: 'whisky:menu', result: latest }).catch(() => {});
       } catch (e) {}
     },
     true
@@ -472,8 +472,7 @@
 
   // The bottle page a card links to: the link right-clicked, if a card has it
   // too; else the card round what was right-clicked (the box round it with
-  // links to one page only), or else the nearest card. Cards are links round a
-  // photo, as for the badges.
+  // links to one page only). Cards are links round a photo, as for the badges.
   function cardHref(linkUrl) {
     const links = [...imageLinks(true)].filter(([, as]) => as.some((a) => !a.closest('header, nav, footer')));
     const clicked = linkUrl && links.find(([href]) => href === linkUrl);
@@ -484,19 +483,7 @@
       if (hrefs.length === 1) return hrefs[0];
       if (hrefs.length > 1) break;
     }
-    let nearest = null;
-    let best = Infinity;
-    for (const [href, as] of links) {
-      for (const a of as) {
-        const r = a.getBoundingClientRect();
-        if (!r.width || !r.height) continue;
-        const dx = Math.max(r.left - rightClicked.x, 0, rightClicked.x - r.right);
-        const dy = Math.max(r.top - rightClicked.y, 0, rightClicked.y - r.bottom);
-        const d = Math.hypot(dx, dy);
-        if (d < best) [nearest, best] = [href, d];
-      }
-    }
-    return nearest;
+    return null;
   }
 
   async function identifyCard(linkUrl) {

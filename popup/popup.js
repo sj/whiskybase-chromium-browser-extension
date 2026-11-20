@@ -456,6 +456,7 @@ async function takeMenuClick(tabId) {
   return menu && Date.now() - menu.at < MENU_MS ? menu : null;
 }
 
+// Null when no card was right-clicked: the popup then shows the list itself.
 async function identifyCard(tabId, linkUrl) {
   $('parsed-title').textContent = 'Bottle you clicked';
   $('fields').hidden = true;
@@ -466,18 +467,15 @@ async function identifyCard(tabId, linkUrl) {
   $('status').className = 'status status-loading';
   $('status').textContent = 'Identifying the bottle you clicked…';
   const card = await chrome.tabs.sendMessage(tabId, { type: 'whisky:card', linkUrl }).catch(() => null);
+  if (card && card.error === 'nocard') return null;
   if (!card || !card.result) {
     $('status').className = 'status status-none';
-    if (card && card.error === 'nocard') {
-      $('status').textContent = 'Right-click on one of the bottles in the list to identify it.';
-    } else {
-      $('status').replaceChildren(
-        'The page of the bottle you clicked could not be read',
-        ...(card && card.href ? [' (', link(card.href, 'open it'), ' to have a look)'] : []),
-        '.'
-      );
-    }
-    return;
+    $('status').replaceChildren(
+      'The page of the bottle you clicked could not be read',
+      ...(card && card.href ? [' (', link(card.href, 'open it'), ' to have a look)'] : []),
+      '.'
+    );
+    return card;
   }
   currentTabId = `${tabId}-card`;
   currentResult = card.result;
@@ -492,6 +490,7 @@ async function identifyCard(tabId, linkUrl) {
   $('parsed-title').textContent = 'Bottle you clicked';
   $('card-note').replaceChildren('From this list. ', link(card.href, 'Open its page'));
   $('card-note').hidden = false;
+  return card;
 }
 
 async function scan(rescan) {
@@ -518,7 +517,7 @@ async function scan(rescan) {
   try {
     currentResult = await detection(tab.id, rescan);
     const menu = !rescan && (await takeMenuClick(tab.id));
-    if (menu && currentResult.listing) return identifyCard(tab.id, menu.linkUrl);
+    if (menu && currentResult.listing && (await identifyCard(tab.id, menu.linkUrl))) return;
     render(currentResult);
   } catch (e) {
     $('fields').hidden = true;

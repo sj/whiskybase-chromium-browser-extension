@@ -66,18 +66,21 @@ The manifest has no content scripts, so the extension can't read pages unless as
   (`AUTO_MIN_CONFIDENCE`); for others the popup offers **Find this bottle on
   Whiskybase**, which sends `whisky:lookup` to start the same lookup.
 - **The page's right-click menu** has one entry, which also gives the extension
-  access to the tab (`activeTab`) and opens the popup (`chrome.action.openPopup`,
-  Chrome 127 and later; before that, it only loads the detector). Menus can't
-  change per tab, so the background updates the entry for the active tab
-  (`refreshPageMenu`) from its last detection (`detected:<tabId>` in
-  `chrome.storage.session`) and lookup: **Identify whisky on this page** (not
-  checked yet, or nothing found), **Show bottle info and Whiskybase match**,
-  **Show whisky bottle information**, or, on a list of bottles, **Identify this
-  bottle**. The click keeps `menu:<tabId>` (with the link right-clicked, if any)
-  for the popup. On a list, the popup then asks the content script for the
-  bottle right-clicked (`whisky:card`): the link right-clicked if a card has it,
-  else the card round what was right-clicked (the box round it with links to one
-  page only), else the nearest card. The content script fetches that card's page
+  access to the tab (`activeTab`) and opens the popup (`chrome.action.openPopup`).
+  It is two entries in fact, one for links and images and one for the rest of
+  the page, which Chrome never shows together. Menus can't change per tab, so
+  the background updates them for the active tab (`refreshPageMenu`) from its
+  last detection (`detected:<tabId>` in `chrome.storage.session`, while the tab
+  still shows that address; the content script sends it again on a right-click)
+  and lookup: **Identify whisky on this page** (not checked yet, nothing found,
+  or a list of bottles), **Show bottle info and Whiskybase match**, or **Show
+  whisky bottle information**; on a list, a link or image says **Identify this
+  bottle of whisky**. The click keeps `menu:<tabId>` (with the link
+  right-clicked, if any) for the popup. On a list, the popup then asks the
+  content script for the bottle right-clicked (`whisky:card`): the link
+  right-clicked if a card has it, else the card round what was right-clicked
+  (the box round it with links to one page only). Without one, the popup shows
+  the list as usual. The content script fetches that card's page
   from the site, as the page itself would, and runs the detector on it; its
   lookup is kept as `lookup:<tabId>-card`, apart from the tab's own, and a match
   is stored for the card's page as usual, so the list shows its badge.
@@ -287,7 +290,7 @@ goes to Whiskybase.
 
 Clicking a badge opens the popup on that bottle instead of following the link:
 the background stores it as `shown:<tabId>` in session storage and calls
-`chrome.action.openPopup()` (Chrome 127 and later). A popup opened within ten
+`chrome.action.openPopup()`. A popup opened within ten
 seconds of that shows the bottle's card rather than the page's own data, and
 asks for its details (photo, price) as it does for a lookup, which is the only
 time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
@@ -308,7 +311,7 @@ It appears as soon as a lookup stores the match, comes back straight away on
 a later visit, and goes when a lookup no longer finds one. As a photo may only
 get its size once it loads (a lazy one), every image that loads counts until
 there is a badge. Clicking it opens the popup (`whisky:open-popup`,
-`chrome.action.openPopup`, Chrome 127 and later), as the toolbar icon would.
+`chrome.action.openPopup`), as the toolbar icon would.
 
 All badges are faint and grey (a frosted white pill, the icon in grey), so as
 not to get in the way of the photo, and take the icon's colours when the

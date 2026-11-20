@@ -67,7 +67,7 @@ to anyone, except for the Whiskybase lookups described below.
   of a whisky bottle. By default it only does so when you click its icon; if you turn on
   **Check every page automatically** (on the extension's options page), it will request extra permissions in order to read every page as it loads.
   This happens entirely inside your browser. When you right-click a bottle on a
-  list of bottles and choose **Identify this bottle**, the extension also fetches
+  list of bottles and choose **Identify this bottle of whisky**, the extension also fetches
   that bottle's page from the same site, as the list itself would.
 - **Whiskybase lookups.** When the extension is confident it has found a bottle,
   or when you click **Find this bottle on Whiskybase** or **Manual search**, it searches Whiskybase for it. If you click the extension's icon, it then

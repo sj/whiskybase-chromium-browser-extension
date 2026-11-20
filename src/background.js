@@ -359,8 +359,7 @@ async function showKnown(tab, href) {
   if (!storedAs) return;
   const match = { ...bottle, url: bottle.url || Whiskybase.WHISKY_URL + bottle.id };
   await chrome.storage.session.set({ [`shown:${tab.id}`]: { href, storedAs, at: Date.now(), match } });
-  // Not before Chrome 127; and it fails with a popup already open, say.
-  if (chrome.action.openPopup) await chrome.action.openPopup({ windowId: tab.windowId }).catch(() => {});
+  await chrome.action.openPopup({ windowId: tab.windowId }).catch(() => {}); // fails with a popup already open, say
 }
 
 async function addShownDetails(tabId) {
@@ -522,9 +521,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg) return;
 
   // The icon on the page was clicked: the popup opens as if the toolbar icon
-  // had been (chrome.action.openPopup: Chrome 127 and later).
+  // had been.
   if (msg.type === 'whisky:open-popup' && sender.tab) {
-    if (chrome.action.openPopup) chrome.action.openPopup({ windowId: sender.tab.windowId }).catch(() => {});
+    chrome.action.openPopup({ windowId: sender.tab.windowId }).catch(() => {});
     return;
   }
 
@@ -566,14 +565,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 
-  if (msg.type === 'whisky:menu' && sender.tab) return void refreshPageMenu();
+  // Right-clicked: the page's detection again, in case the worker had lost it.
+  if (msg.type === 'whisky:menu' && sender.tab && sender.frameId === 0 && msg.result) {
+    return void storeDetected(sender.tab.id, msg.result);
+  }
 
   if (msg.type !== 'whisky:detection' || !sender.tab || sender.frameId !== 0) return;
   const tabId = sender.tab.id;
   const { status, whisky, confidence, url, listing } = msg.result;
   if (Whiskybase.isWhiskybasePage(url)) return;
   setBadge(tabId, status, whisky.name);
-  chrome.storage.session.set({ [`detected:${tabId}`]: { url, status, listing: !!listing } }).then(refreshPageMenu);
+  storeDetected(tabId, msg.result);
 
   const previousUrl = pageUrls.get(tabId);
   pageUrls.set(tabId, url);
@@ -679,36 +681,47 @@ const MENU_LINKS = {
 };
 
 // Right-clicking a page offers one entry, which says what it does there: the
-// page in the active tab is all the menus know about, so the entry is updated
-// as that changes. Whatever it says, a click opens the popup (and gives the
-// extension access to the tab, as clicking the icon does); the popup then shows
-// the page, or, on a list of bottles, the bottle right-clicked (popup.js).
+// page in the active tab is all the menus know about, so the entries are
+// updated as that changes. There are two, never shown together: one for links
+// and images, one for the rest of the page. Whatever they say, a click opens
+// the popup (and gives the extension access to the tab, as clicking the icon
+// does); the popup then shows the page, or, on a list of bottles, the bottle
+// right-clicked (popup.js).
 const PAGE_MENU = 'page';
+const LINK_MENU = 'page-link';
 const PAGE_MENU_TITLES = {
-  identify: 'Identify whisky on this page', // not checked yet, or nothing found
+  identify: 'Identify whisky on this page', // not checked yet, nothing found, or a list of bottles
   match: 'Show bottle info and Whiskybase match',
   bottle: 'Show whisky bottle information',
-  card: 'Identify this bottle', // a list of bottles
+  card: 'Identify this bottle of whisky', // a link or image on a list of bottles
 };
 
 // Chrome keeps the entries across restarts, so they are (re)made on install and update only.
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.removeAll(() => {
     for (const [id, [title]] of Object.entries(MENU_LINKS)) chrome.contextMenus.create({ id, title, contexts: ['action'] });
-    chrome.contextMenus.create({
-      id: PAGE_MENU,
-      title: PAGE_MENU_TITLES.identify,
-      contexts: ['page', 'link', 'image', 'selection'],
-      documentUrlPatterns: ALL_SITES,
-    });
+    const page = { title: PAGE_MENU_TITLES.identify, documentUrlPatterns: ALL_SITES };
+    chrome.contextMenus.create({ ...page, id: PAGE_MENU, contexts: ['page', 'selection'] });
+    chrome.contextMenus.create({ ...page, id: LINK_MENU, contexts: ['link', 'image'] });
     refreshPageMenu();
   });
 });
 
-// The page's last detection (detected:<tabId>, from content.js), until it navigates.
+// The page's last detection, from content.js (detected:<tabId>).
+async function storeDetected(tabId, { url, status, listing }) {
+  await chrome.storage.session.set({ [`detected:${tabId}`]: { url, status, listing: !!listing } });
+  refreshPageMenu();
+}
+
+const withoutHash = (url) => (url || '').split('#')[0];
+
+// 'identify', 'match', 'bottle' or 'list', from the page's last detection, as
+// long as the tab still shows that page (its address is known while the
+// extension has access to the tab).
 async function pageMenuState(tab) {
   const d = (await chrome.storage.session.get(`detected:${tab.id}`))[`detected:${tab.id}`];
-  if (!d || d.status === 'none') return d && d.listing ? 'card' : 'identify';
+  if (!d || (tab.url && withoutHash(tab.url) !== withoutHash(d.url))) return 'identify';
+  if (d.status === 'none') return d.listing ? 'list' : 'identify';
   const lk = (await chrome.storage.session.get(`lookup:${tab.id}`))[`lookup:${tab.id}`];
   return lk && lk.state === 'match' && lk.pageUrl === d.url ? 'match' : 'bottle';
 }
@@ -718,28 +731,26 @@ async function refreshPageMenu() {
   if (!tab) return;
   // Whiskybase itself has nothing to look up.
   const visible = !Whiskybase.isWhiskybasePage(tab.url || '');
-  const title = PAGE_MENU_TITLES[await pageMenuState(tab)];
-  chrome.contextMenus.update(PAGE_MENU, { title, visible }, () => void chrome.runtime.lastError);
+  const state = await pageMenuState(tab);
+  const update = (id, key) => chrome.contextMenus.update(id, { title: PAGE_MENU_TITLES[key], visible }, () => void chrome.runtime.lastError);
+  update(PAGE_MENU, state === 'list' ? 'identify' : state);
+  update(LINK_MENU, state === 'list' ? 'card' : state);
 }
 
 chrome.tabs.onActivated.addListener(refreshPageMenu);
 chrome.windows.onFocusChanged.addListener(refreshPageMenu);
-chrome.tabs.onUpdated.addListener(async (tabId, info) => {
-  if (info.status !== 'loading') return;
-  await chrome.storage.session.remove(`detected:${tabId}`);
-  refreshPageMenu();
+chrome.tabs.onUpdated.addListener((tabId, info) => {
+  if (info.url || info.status === 'complete') refreshPageMenu();
 });
 
 async function pageMenuClicked(info, tab) {
   // For the popup, opened just now: on a list of bottles, which one was right-clicked.
   await chrome.storage.session.set({ [`menu:${tab.id}`]: { at: Date.now(), linkUrl: info.linkUrl || null } });
-  // Not before Chrome 127: the detector is loaded at least, for the badge.
-  if (chrome.action.openPopup && (await chrome.action.openPopup({ windowId: tab.windowId }).then(() => true, () => false))) return;
-  chrome.scripting.executeScript({ target: { tabId: tab.id }, files: AUTO_SCRIPT.js }).catch(() => {});
+  await chrome.action.openPopup({ windowId: tab.windowId }).catch(() => {}); // fails with a popup already open, say
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (info.menuItemId === PAGE_MENU && tab) return void pageMenuClicked(info, tab);
+  if ((info.menuItemId === PAGE_MENU || info.menuItemId === LINK_MENU) && tab) return void pageMenuClicked(info, tab);
   const entry = MENU_LINKS[info.menuItemId];
   if (entry) chrome.tabs.create({ url: entry[1] });
 });

@@ -9,7 +9,7 @@ For each release, changes are listed below. When a release is published, the cha
 - **Clear stored bottle data** moved from the popup to the welcome page, under "Your privacy".
 - On a list of whisky bottles (a shop's whisky section, an auction), the popup now suggests opening the page of a specific bottle, and on pages that can't be scanned at all it suggests visiting an online whisky shop or auction.
 
-- Right-click any page for a new menu entry: **Identify whisky on this page** on a page the extension hasn't checked yet, **Show bottle info and Whiskybase match** or **Show whisky bottle information** on a bottle's page, which open the extension's popup. On a list of bottles, right-click a bottle and choose **Identify this bottle**: the extension reads that bottle's own page and shows it, with its Whiskybase match.
+- Right-click any page for a new menu entry: **Identify whisky on this page** on a page the extension hasn't checked yet, **Show bottle info and Whiskybase match** or **Show whisky bottle information** on a bottle's page, which open the extension's popup. On a list of bottles, right-click a bottle's photo or link and choose **Identify this bottle of whisky**: the extension reads that bottle's own page and shows it, with its Whiskybase match.
 
 ## 0.4.0
 

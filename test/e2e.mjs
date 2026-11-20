@@ -256,8 +256,21 @@ await check('list page: the bottle matched before gets its badge', async () => {
 // its own, told that it is on the list's tab) is opened as the click would.
 await check('page menu: says what it does for the page', async () => {
   expect(await evaluate(`pageMenuState({ id: ${product.tabId} })`, worker), 'match', 'bottle page with a match');
-  expect(await evaluate(`pageMenuState({ id: ${list.tabId} })`, worker), 'card', 'list of bottles');
+  expect(await evaluate(`pageMenuState({ id: ${list.tabId} })`, worker), 'list', 'list of bottles');
   expect(await evaluate(`pageMenuState({ id: -1 })`, worker), 'identify', 'page not checked');
+  expect(await evaluate(`pageMenuState({ id: ${list.tabId}, url: 'https://www.masterofmalt.com/elsewhere/' })`, worker), 'identify', 'tab moved on');
+});
+await check('page menu on a list: links and images identify a bottle of whisky', async () => {
+  await evaluate(`chrome.tabs.update(${list.tabId}, { active: true })`, worker);
+  const titles = await evaluate(`(async () => {
+    const titles = {};
+    const update = chrome.contextMenus.update;
+    chrome.contextMenus.update = (id, props, done) => { titles[id] = props.title; done && done(); };
+    try { await refreshPageMenu(); } finally { chrome.contextMenus.update = update; }
+    return titles;
+  })()`, worker);
+  expect(titles['page-link'], 'Identify this bottle of whisky', 'link and image entry');
+  expect(titles.page, 'Identify whisky on this page', 'page entry');
 });
 await check('list page: right-clicking a bottle identifies it from its own page', async () => {
   await evaluate(`document.querySelector('a[href*="madeira-finish-cask-craft"] img').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
@@ -265,6 +278,11 @@ await check('list page: right-clicking a bottle identifies it from its own page'
   if (!card.href || !card.href.includes('madeira-finish-cask-craft')) throw new Error(`card ${JSON.stringify(card.href || card.error)}`);
   expect(card.result && card.result.status, 'whisky', 'detection');
   expect(card.result.whisky.distillery, 'Inchgower', 'distillery');
+});
+await check('list page: right-clicking outside the cards identifies no bottle', async () => {
+  await evaluate(`document.body.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
+  expect((await evaluate(`chrome.tabs.sendMessage(${list.tabId}, { type: 'whisky:card' })`, worker)).error, 'nocard', 'card');
+  await evaluate(`document.querySelector('a[href*="madeira-finish-cask-craft"] img').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
 });
 await check('popup from the page menu on a list: the bottle right-clicked, matched to Whiskybase', async () => {
   const cardPopup = await openPage(await evaluate(`chrome.runtime.getURL('popup/popup.html')`, worker));
