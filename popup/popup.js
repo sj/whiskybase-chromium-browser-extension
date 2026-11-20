@@ -52,7 +52,7 @@ function render(result) {
   if (status === 'none' && result.listing) {
     // Most likely the first page tried: a shop's or auction's list of bottles.
     $('status').replaceChildren(
-      'This page seems to show multiple whiskies. Open a page for a specific bottle to see more information about that whisky.'
+      'This page seems to show multiple whiskies. Right-click on a particular bottle to identify it, or open a page for a specific bottle to see more information about that whisky.'
     );
   } else if (status === 'none') {
     $('status').replaceChildren(

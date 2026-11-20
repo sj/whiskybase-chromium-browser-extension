@@ -345,8 +345,9 @@ data** on the welcome page removes them all (and with them the badges).
 | `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's and the page's right-click menu entries |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
-| `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
+| `popup/` | Toolbar popup with results, a Re-scan button, and notices for the welcome page's steps still to do; loads the detector into the tab when needed |
 | `settings-welcome/` | Welcome page, opened on install and as the options page: what the extension does, pinning its icon and turning on automatic checking |
+| `icons/` | The extension's icon (`icon.svg`, the glass on a brown square) for the toolbar and Chrome's extension pages, and the glass on its own (`menu.svg`, as on pages) as the manifest's 16 and 32 pixel icons, which Chrome shows in the right-click menu |
 | `test/` | Parser unit tests, browser tests (`e2e.mjs`) and fixture pages |
 
 ## Packaging

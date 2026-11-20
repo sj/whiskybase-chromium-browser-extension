@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- The page's glass (content.js) on its own, for the right-click menu: a dark line inside a light halo, for light and dark menus alike. -->
+  <path d="M8.6 2.6H15.4C15.3 4.6 14.6 6.2 14.8 7.9C15.1 10 17.7 11.1 17.7 13.9C17.7 16.3 15.6 17.5 13.1 17.7V19.4C15.1 19.6 16.5 20 16.5 20.6C16.5 21.3 7.5 21.3 7.5 20.6C7.5 20 8.9 19.6 10.9 19.4V17.7C8.4 17.5 6.3 16.3 6.3 13.9C6.3 11.1 8.9 10 9.2 7.9C9.4 6.2 8.7 4.6 8.6 2.6Z" fill="none" stroke="#fff" stroke-width="3.2" stroke-linejoin="round"/>
+  <path d="M8.6 2.6H15.4C15.3 4.6 14.6 6.2 14.8 7.9C15.1 10 17.7 11.1 17.7 13.9C17.7 16.3 15.6 17.5 13.1 17.7V19.4C15.1 19.6 16.5 20 16.5 20.6C16.5 21.3 7.5 21.3 7.5 20.6C7.5 20 8.9 19.6 10.9 19.4V17.7C8.4 17.5 6.3 16.3 6.3 13.9C6.3 11.1 8.9 10 9.2 7.9C9.4 6.2 8.7 4.6 8.6 2.6Z" fill="rgba(255, 255, 255, 0.18)" stroke="#2b2118" stroke-width="1.2" stroke-linejoin="round"/>
+  <path d="M7.25 13.1H16.75C16.8 15.6 14.9 16.75 12 16.75C9.1 16.75 7.2 15.6 7.25 13.1Z" fill="#e39b2d"/>
+</svg>
