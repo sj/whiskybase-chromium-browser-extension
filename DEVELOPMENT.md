@@ -27,7 +27,7 @@ page's DevTools console as `[Bottle lookup for Whiskybase]`.
 - **Penalties**: listing/category pages, other drinks (gin, rum, cognac, ...),
   non-bottle products (lotion, glasses, books, ...). A listing is recognised by
   its structured data (several products, an item list) or, on a page without
-  product data, by a grid of at least 12 linked photos in alike cards. A
+  product data, by a grid of at least 8 linked photos in alike cards. A
   listing that mentions whisky anywhere is flagged (`listing`), and the popup
   then suggests opening the page of one of its bottles.
 

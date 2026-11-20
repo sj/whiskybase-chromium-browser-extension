@@ -423,6 +423,7 @@ const fixtureCases = [
   // script. Once they have, it is a grid like the others.
   { file: 'smws-list-of-bottles.html', status: 'none' },
   { file: 'smws-list-of-bottles-rendered.html', status: 'none', listing: true },
+  { file: 'smws-list-of-bottles-specific-category-as-rendered.html', status: 'none', listing: true },
   // Whisky Auction's list: its cards come by script, so the saved page has none.
   { file: 'whiskyauction.com-auction-browser.html', status: 'none' },
   { file: 'gin-product.html', status: 'none', listing: false },
