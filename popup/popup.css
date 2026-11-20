@@ -322,13 +322,6 @@ body.wide #wb {
 }
 
 
-.card-note {
-  margin: 0 0 6px;
-}
-.card-note[hidden] {
-  display: none;
-}
-
 .accept {
   margin: 6px 0 0;
 }

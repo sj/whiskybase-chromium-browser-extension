@@ -458,7 +458,7 @@ async function takeMenuClick(tabId) {
 
 // Null when no card was right-clicked: the popup then shows the list itself.
 async function identifyCard(tabId, linkUrl) {
-  $('parsed-title').textContent = 'Bottle you clicked';
+  $('parsed-title').textContent = 'Bottle you clicked in the list';
   $('fields').hidden = true;
   $('why').hidden = true;
   $('wb').hidden = true;
@@ -487,9 +487,7 @@ async function identifyCard(tabId, linkUrl) {
     chrome.runtime.sendMessage({ type: 'whisky:lookup', tabId: currentTabId, url: card.result.url, whisky: card.result.whisky });
   }
   render(currentResult);
-  $('parsed-title').textContent = 'Bottle you clicked';
-  $('card-note').replaceChildren('From this list. ', link(card.href, 'Open its page'));
-  $('card-note').hidden = false;
+  $('parsed-title').textContent = 'Bottle you clicked in the list';
   return card;
 }
 
@@ -497,7 +495,6 @@ async function scan(rescan) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
   currentShown = null;
-  $('card-note').hidden = true;
   const shownKey = `shown:${tab.id}`;
   const shown = !rescan && (await chrome.storage.session.get(shownKey))[shownKey];
   if (shown && Date.now() - shown.at < SHOWN_MS) return renderShown(shown);

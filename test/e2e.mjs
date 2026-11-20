@@ -296,7 +296,7 @@ await check('popup from the page menu on a list: the bottle right-clicked, match
   await waitFor(`document.readyState === 'complete'`, cardPopup.session);
   await evaluate(`chrome.storage.session.set({ 'menu:${list.tabId}': { at: Date.now(), linkUrl: null } })`, worker);
   await evaluate(`chrome.tabs.query = async () => [{ id: ${list.tabId}, url: 'https://www.masterofmalt.com/distilleries/inchgower-whisky-distillery/' }]; scan(false)`, cardPopup.session);
-  expect(await waitFor(`document.getElementById('parsed-title').textContent === 'Bottle you clicked' && !document.getElementById('fields').hidden && 'ok'`, cardPopup.session), 'ok', 'popup shows the bottle');
+  expect(await waitFor(`document.getElementById('parsed-title').textContent === 'Bottle you clicked in the list' && !document.getElementById('fields').hidden && 'ok'`, cardPopup.session), 'ok', 'popup shows the bottle');
   const lookup = await waitFor(`chrome.storage.session.get('lookup:${list.tabId}-card').then((r) => { const l = r['lookup:${list.tabId}-card']; return l && l.state !== 'searching' && l; })`, worker, 20000);
   expect(lookup && lookup.state, 'match', 'lookup');
   expect(lookup.match.id, '233907', 'match');
