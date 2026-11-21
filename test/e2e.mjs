@@ -312,6 +312,21 @@ await check('popup from the page menu on a list: the bottle right-clicked, match
   const lookup = await waitFor(`chrome.storage.session.get('lookup:${list.tabId}-card').then((r) => { const l = r['lookup:${list.tabId}-card']; return l && l.state !== 'searching' && l; })`, worker, 20000);
   expect(lookup && lookup.state, 'match', 'lookup');
   expect(lookup.match.id, '233907', 'match');
+  // The two copy icons next to the Whiskybase ID: the ID, and the URL.
+  await waitFor(`document.querySelectorAll('.wb-id .copy').length === 2`, cardPopup.session);
+  const copied = await evaluate(`(async () => {
+    const out = [];
+    navigator.clipboard.writeText = async (t) => { out.push(t); };
+    const [id, url] = document.querySelectorAll('.wb-id .copy');
+    const titles = [id.title, url.title];
+    id.click(); url.click();
+    await new Promise((r) => setTimeout(r, 50));
+    return { out, titles, after: url.title };
+  })()`, cardPopup.session);
+  expect(copied.titles.join(' | '), 'Copy Whiskybase ID to clipboard | Copy Whiskybase URL to clipboard', 'tooltips');
+  expect(copied.out[0], 'WB233907', 'ID copied');
+  expect(/^https:\/\/www\.whiskybase\.com\/.*233907/.test(copied.out[1]), true, 'URL copied: ' + copied.out[1]);
+  expect(copied.after, 'Copied', 'tick shown');
   await evaluate(`chrome.tabs.remove(${cardPopup.tabId})`, worker);
 });
 

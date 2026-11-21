@@ -131,12 +131,12 @@ function icon(...paths) {
 }
 
 const COPY_ICON = ['M5.5 5.5h7v8h-7z', 'M3.5 10.5v-8h7'];
+const LINK_ICON = ['M7 9a2.5 2.5 0 0 0 3.5 0L13 6.5A2.5 2.5 0 0 0 9.5 3l-1 1', 'M9 7a2.5 2.5 0 0 0-3.5 0L3 9.5A2.5 2.5 0 0 0 6.5 13l1-1'];
 const COPIED_ICON = ['M3.5 8.5l3 3 6-7'];
 
 // A small icon button that copies `text`, showing a tick for a moment after.
-function copyButton(text) {
-  const label = `Copy ${text}`;
-  const button = el('button', { type: 'button', className: 'copy', title: label, ariaLabel: label }, icon(...COPY_ICON));
+function copyButton(text, label, glyph = COPY_ICON) {
+  const button = el('button', { type: 'button', className: 'copy', title: label, ariaLabel: label }, icon(...glyph));
   let timer;
   button.addEventListener('click', async () => {
     try {
@@ -148,7 +148,7 @@ function copyButton(text) {
     button.title = button.ariaLabel = 'Copied';
     clearTimeout(timer);
     timer = setTimeout(() => {
-      button.replaceChildren(icon(...COPY_ICON));
+      button.replaceChildren(icon(...glyph));
       button.title = button.ariaLabel = label;
     }, 1500);
   });
@@ -228,7 +228,7 @@ function matchCard(m) {
   }
   card.append(photo);
   const rows = [
-    ['Whiskybase ID', [link(m.url, Whiskybase.displayId(m.id)), copyButton(Whiskybase.displayId(m.id))], 'wb-id'],
+    ['Whiskybase ID', [link(m.url, Whiskybase.displayId(m.id)), copyButton(Whiskybase.displayId(m.id), 'Copy Whiskybase ID to clipboard'), copyButton(m.url, 'Copy Whiskybase URL to clipboard', LINK_ICON)], 'wb-id'],
     ['Rating', ratingText(m), 'wb-rating'],
     ['Price estimate', m.detailed ? priceText(m) : spinner('Loading price'), 'wb-price'],
   ];
