@@ -131,7 +131,10 @@ events.push(async (d) => {
   const query = url.startsWith('https://www.whiskybase.com/search?') && new URL(url).searchParams.get('q');
   const search = query && Object.entries(WB_SEARCHES).find(([start]) => query.startsWith(start));
   const isPhoto = d.params.resourceType === 'Image' && /^https:\/\/(cdn\.whiskyauction\.com|cdn11\.bigcommerce\.com)\//.test(url);
-  const body = PAGES[url] && d.params.resourceType === 'Document' ? PAGES[url]
+  // A bottle's page is also fetched by the content script, from a list's link to it (with its query).
+  const type = d.params.resourceType;
+  const page = type === 'Document' ? PAGES[url] : (type === 'Fetch' || type === 'XHR') && (PAGES[url] || PAGES[url.split('?')[0]]);
+  const body = page ? page
     : query ? search && search[1]
     : url.startsWith('https://www.whiskybase.com/whiskies/') ? WB_BOTTLE
     : isPhoto ? PHOTO : null;
@@ -201,6 +204,18 @@ const notices = `(() => { const n = ['notice-auto', 'notice-pin'].filter((id) =>
 await check('popup: a notice for each step still to do', async () => {
   expect(await waitFor(`${notices} === 'notice-auto,notice-pin' && ${notices}`, popup.session), 'notice-auto,notice-pin', 'notices shown');
 });
+await check('popup: a dismissed banner stays dismissed until the browser restarts', async () => {
+  await evaluate(`document.querySelector('#notice-auto .banner-close').click()`, popup.session);
+  await waitFor(`chrome.storage.session.get('dismissed:notice-auto').then((r) => r['dismissed:notice-auto'])`, worker);
+  await send('Page.reload', {}, popup.session);
+  expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown after reopening');
+  await evaluate(`chrome.storage.session.remove('dismissed:notice-auto')`, worker);
+});
+await check('popup: a banner opens the welcome page, which flashes the step it was about', async () => {
+  await evaluate(`window.close = () => {}; document.querySelector('#notice-pin .banner-text').click()`, popup.session);
+  expect(await waitFor(`document.getElementById('step-pin').classList.contains('attention')`, welcome), true, 'pin step flashes');
+  expect(await waitFor(`chrome.storage.session.get('focus-step').then((r) => !r['focus-step'])`, worker), true, 'focus-step taken');
+});
 await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 await check('welcome page: the automatic checking step is done once it is turned on', async () => {
   expect(await waitFor(`${welcomeStep('step-auto')} === 'done' && 'done'`, welcome), 'done', 'automatic checking step');
@@ -211,6 +226,13 @@ await check('welcome page: then the pin step, still to do, flashes', async () =>
 });
 await check('popup: no notice about automatic checking once it is on', async () => {
   expect(await waitFor(`${notices} === 'notice-pin' && ${notices}`, popup.session), 'notice-pin', 'notices shown');
+});
+await check('popup: a dismissed banner comes back when its step is undone', async () => {
+  await evaluate(`chrome.storage.session.set({ 'dismissed:notice-auto': true })`, worker);
+  await evaluate(`chrome.storage.local.set({ autoCheck: false })`, worker);
+  expect(await waitFor(`chrome.storage.session.get('dismissed:notice-auto').then((r) => !r['dismissed:notice-auto'])`, worker), true, 'dismissal forgotten');
+  expect(await waitFor(`${notices} === 'notice-auto,notice-pin' && ${notices}`, popup.session), 'notice-auto,notice-pin', 'notices shown');
+  await evaluate(`chrome.storage.local.set({ autoCheck: true })`, worker);
 });
 await evaluate(`chrome.tabs.remove(${popup.tabId})`, worker);
 await waitFor(`chrome.scripting.getRegisteredContentScripts().then((s) => s.length)`, worker);
@@ -245,6 +267,67 @@ await check('list page: the bottle matched before gets its badge', async () => {
   if (!badges || !badges.every((href) => href.includes('inchgower-fruity-and-sweet-madeira-finish-cask-craft-murray-mcdavid'))) {
     throw new Error(`badges on ${JSON.stringify(badges)}`);
   }
+});
+
+
+// The page's right-click menu entry. Chrome's menus can't be clicked from here,
+// so what the entry says is asked of the background, and the popup (in a tab of
+// its own, told that it is on the list's tab) is opened as the click would.
+await check('page menu: says what it does for the page', async () => {
+  expect(await evaluate(`pageMenuState({ id: ${product.tabId} })`, worker), 'match', 'bottle page with a match');
+  expect(await evaluate(`pageMenuState({ id: ${list.tabId} })`, worker), 'list', 'list of bottles');
+  expect(await evaluate(`pageMenuState({ id: -1 })`, worker), 'identify', 'page not checked');
+  expect(await evaluate(`pageMenuState({ id: ${list.tabId}, url: 'https://www.masterofmalt.com/elsewhere/' })`, worker), 'identify', 'tab moved on');
+});
+await check('page menu on a list: links and images identify a bottle of whisky', async () => {
+  await evaluate(`chrome.tabs.update(${list.tabId}, { active: true })`, worker);
+  const titles = await evaluate(`(async () => {
+    const titles = {};
+    const update = chrome.contextMenus.update;
+    chrome.contextMenus.update = (id, props, done) => { titles[id] = props.title; done && done(); };
+    try { await refreshPageMenu(); } finally { chrome.contextMenus.update = update; }
+    return titles;
+  })()`, worker);
+  expect(titles['page-link'], 'Identify this bottle of whisky', 'link and image entry');
+  expect(titles.page, 'Identify whisky on this page', 'page entry');
+});
+await check('list page: right-clicking a bottle identifies it from its own page', async () => {
+  await evaluate(`document.querySelector('a[href*="madeira-finish-cask-craft"] img').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
+  const card = await evaluate(`chrome.tabs.sendMessage(${list.tabId}, { type: 'whisky:card' })`, worker);
+  if (!card.href || !card.href.includes('madeira-finish-cask-craft')) throw new Error(`card ${JSON.stringify(card.href || card.error)}`);
+  expect(card.result && card.result.status, 'whisky', 'detection');
+  expect(card.result.whisky.distillery, 'Inchgower', 'distillery');
+});
+await check('list page: right-clicking outside the cards identifies no bottle', async () => {
+  await evaluate(`document.body.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
+  expect((await evaluate(`chrome.tabs.sendMessage(${list.tabId}, { type: 'whisky:card' })`, worker)).error, 'nocard', 'card');
+  await evaluate(`document.querySelector('a[href*="madeira-finish-cask-craft"] img').dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }))`, list.session);
+});
+await check('popup from the page menu on a list: the bottle right-clicked, matched to Whiskybase', async () => {
+  const cardPopup = await openPage(await evaluate(`chrome.runtime.getURL('popup/popup.html')`, worker));
+  await waitFor(`document.readyState === 'complete'`, cardPopup.session);
+  await evaluate(`chrome.storage.session.set({ 'menu:${list.tabId}': { at: Date.now(), linkUrl: null } })`, worker);
+  await evaluate(`chrome.tabs.query = async () => [{ id: ${list.tabId}, url: 'https://www.masterofmalt.com/distilleries/inchgower-whisky-distillery/' }]; scan(false)`, cardPopup.session);
+  expect(await waitFor(`document.getElementById('parsed-title').textContent === 'Bottle you clicked in the list' && !document.getElementById('fields').hidden && 'ok'`, cardPopup.session), 'ok', 'popup shows the bottle');
+  const lookup = await waitFor(`chrome.storage.session.get('lookup:${list.tabId}-card').then((r) => { const l = r['lookup:${list.tabId}-card']; return l && l.state !== 'searching' && l; })`, worker, 20000);
+  expect(lookup && lookup.state, 'match', 'lookup');
+  expect(lookup.match.id, '233907', 'match');
+  // The two copy icons next to the Whiskybase ID: the ID, and the URL.
+  await waitFor(`document.querySelectorAll('.wb-id .copy').length === 2`, cardPopup.session);
+  const copied = await evaluate(`(async () => {
+    const out = [];
+    navigator.clipboard.writeText = async (t) => { out.push(t); };
+    const [id, url] = document.querySelectorAll('.wb-id .copy');
+    const titles = [id.title, url.title];
+    id.click(); url.click();
+    await new Promise((r) => setTimeout(r, 50));
+    return { out, titles, after: url.title };
+  })()`, cardPopup.session);
+  expect(copied.titles.join(' | '), 'Copy Whiskybase ID to clipboard | Copy Whiskybase URL to clipboard', 'tooltips');
+  expect(copied.out[0], 'WB233907', 'ID copied');
+  expect(/^https:\/\/www\.whiskybase\.com\/.*233907/.test(copied.out[1]), true, 'URL copied: ' + copied.out[1]);
+  expect(copied.after, 'Copied', 'tick shown');
+  await evaluate(`chrome.tabs.remove(${cardPopup.tabId})`, worker);
 });
 
 const majestic = await openPage(MAJESTIC);

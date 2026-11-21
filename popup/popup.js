@@ -52,7 +52,7 @@ function render(result) {
   if (status === 'none' && result.listing) {
     // Most likely the first page tried: a shop's or auction's list of bottles.
     $('status').replaceChildren(
-      'This page seems to show multiple whiskies. Open a page for a specific bottle to see more information about that whisky.'
+      'This page seems to show multiple whiskies. Right-click on a particular bottle to identify it, or open a page for a specific bottle to see more information about that whisky.'
     );
   } else if (status === 'none') {
     $('status').replaceChildren(
@@ -131,12 +131,12 @@ function icon(...paths) {
 }
 
 const COPY_ICON = ['M5.5 5.5h7v8h-7z', 'M3.5 10.5v-8h7'];
+const LINK_ICON = ['M7 9a2.5 2.5 0 0 0 3.5 0L13 6.5A2.5 2.5 0 0 0 9.5 3l-1 1', 'M9 7a2.5 2.5 0 0 0-3.5 0L3 9.5A2.5 2.5 0 0 0 6.5 13l1-1'];
 const COPIED_ICON = ['M3.5 8.5l3 3 6-7'];
 
 // A small icon button that copies `text`, showing a tick for a moment after.
-function copyButton(text) {
-  const label = `Copy ${text}`;
-  const button = el('button', { type: 'button', className: 'copy', title: label, ariaLabel: label }, icon(...COPY_ICON));
+function copyButton(text, label, glyph = COPY_ICON) {
+  const button = el('button', { type: 'button', className: 'copy', title: label, ariaLabel: label }, icon(...glyph));
   let timer;
   button.addEventListener('click', async () => {
     try {
@@ -148,7 +148,7 @@ function copyButton(text) {
     button.title = button.ariaLabel = 'Copied';
     clearTimeout(timer);
     timer = setTimeout(() => {
-      button.replaceChildren(icon(...COPY_ICON));
+      button.replaceChildren(icon(...glyph));
       button.title = button.ariaLabel = label;
     }, 1500);
   });
@@ -228,7 +228,7 @@ function matchCard(m) {
   }
   card.append(photo);
   const rows = [
-    ['Whiskybase ID', [link(m.url, Whiskybase.displayId(m.id)), copyButton(Whiskybase.displayId(m.id))], 'wb-id'],
+    ['Whiskybase ID', [link(m.url, Whiskybase.displayId(m.id)), copyButton(Whiskybase.displayId(m.id), 'Copy Whiskybase ID to clipboard'), copyButton(m.url, 'Copy Whiskybase URL to clipboard', LINK_ICON)], 'wb-id'],
     ['Rating', ratingText(m), 'wb-rating'],
     ['Price estimate', m.detailed ? priceText(m) : spinner('Loading price'), 'wb-price'],
   ];
@@ -441,6 +441,56 @@ function renderShown(shown) {
   if (!shown.match.detailed) chrome.runtime.sendMessage({ type: 'whisky:shown-details', tabId: currentTabId });
 }
 
+// --- A bottle right-clicked on a list ----------------------------------------
+// The page's right-click menu entry opens the popup (background.js), and keeps
+// menu:<tabId> for it: on a list of bottles, the popup then shows the bottle
+// right-clicked instead. The page's content script finds its card and reads its
+// page; the lookup is kept apart from the tab's own, as lookup:<tabId>-card.
+
+const MENU_MS = 10 * 1000;
+
+async function takeMenuClick(tabId) {
+  const key = `menu:${tabId}`;
+  const menu = (await chrome.storage.session.get(key))[key];
+  if (menu) await chrome.storage.session.remove(key);
+  return menu && Date.now() - menu.at < MENU_MS ? menu : null;
+}
+
+// Null when no card was right-clicked: the popup then shows the list itself.
+async function identifyCard(tabId, linkUrl) {
+  $('parsed-title').textContent = 'Bottle you clicked in the list';
+  $('fields').hidden = true;
+  $('why').hidden = true;
+  $('wb').hidden = true;
+  document.body.classList.remove('wide');
+  $('status').hidden = false;
+  $('status').className = 'status status-loading';
+  $('status').textContent = 'Identifying the bottle you clicked…';
+  const card = await chrome.tabs.sendMessage(tabId, { type: 'whisky:card', linkUrl }).catch(() => null);
+  if (card && card.error === 'nocard') return null;
+  if (!card || !card.result) {
+    $('status').className = 'status status-none';
+    $('status').replaceChildren(
+      'The page of the bottle you clicked could not be read',
+      ...(card && card.href ? [' (', link(card.href, 'open it'), ' to have a look)'] : []),
+      '.'
+    );
+    return card;
+  }
+  currentTabId = `${tabId}-card`;
+  currentResult = card.result;
+  const key = `lookup:${currentTabId}`;
+  const lk = (await chrome.storage.session.get(key))[key];
+  currentLookup = lk && lk.pageUrl === card.result.url ? lk : null;
+  // Looked up as the background does for the page itself: confident detections only.
+  if (!currentLookup && card.result.status === 'whisky' && card.result.confidence >= 0.9) {
+    chrome.runtime.sendMessage({ type: 'whisky:lookup', tabId: currentTabId, url: card.result.url, whisky: card.result.whisky });
+  }
+  render(currentResult);
+  $('parsed-title').textContent = 'Bottle you clicked in the list';
+  return card;
+}
+
 async function scan(rescan) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   currentTabId = tab.id;
@@ -463,6 +513,8 @@ async function scan(rescan) {
   }
   try {
     currentResult = await detection(tab.id, rescan);
+    const menu = !rescan && (await takeMenuClick(tab.id));
+    if (menu && currentResult.listing && (await identifyCard(tab.id, menu.linkUrl))) return;
     render(currentResult);
   } catch (e) {
     $('fields').hidden = true;
@@ -481,27 +533,40 @@ async function scan(rescan) {
 // --- Notices --------------------------------------------------------------------
 // The welcome page (settings-welcome/settings-welcome.js), also the options page, has the two steps
 // that make the extension visible and the setting for automatic checking. While
-// a step is still to do, a notice in the footer says so and opens that page.
+// a step is still to do, a banner at the top says so and opens that page. Its
+// cross hides it until the browser restarts (dismissed:<id> in session storage),
+// or until that step is undone (background.js). The page then flashes the step
+// the banner was about (focus-step in session storage, settings-welcome.js).
 
 const ALL_SITES = ['http://*/*', 'https://*/*'];
 
 async function showNotices() {
   const { autoCheck } = await chrome.storage.local.get('autoCheck');
-  $('notice-auto').hidden = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
-  // Before Chrome 91 there is no way to tell, so no notice.
-  const settings = await chrome.action.getUserSettings?.();
-  $('notice-pin').hidden = !settings || settings.isOnToolbar;
+  const dismissed = await chrome.storage.session.get(['dismissed:notice-auto', 'dismissed:notice-pin']);
+  const on = !!autoCheck && (await chrome.permissions.contains({ origins: ALL_SITES }));
+  $('notice-auto').hidden = on || !!dismissed['dismissed:notice-auto'];
+  $('notice-pin').hidden = (await chrome.action.getUserSettings()).isOnToolbar || !!dismissed['dismissed:notice-pin'];
 }
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === 'local' && changes.autoCheck) showNotices();
+  if ((area === 'local' && changes.autoCheck) || (area === 'session' && Object.keys(changes).some((k) => k.startsWith('dismissed:')))) showNotices();
 });
-chrome.action.onUserSettingsChanged?.addListener(showNotices);
+chrome.action.onUserSettingsChanged?.addListener(showNotices); // Chrome 130 and later
 
-function openWelcome() {
-  chrome.runtime.openOptionsPage();
+const BANNER_STEPS = { 'notice-auto': 'step-auto', 'notice-pin': 'step-pin' };
+
+async function openWelcome(step) {
+  if (step) await chrome.storage.session.set({ 'focus-step': step });
+  await chrome.runtime.openOptionsPage();
   window.close();
 }
-for (const id of ['notice-auto', 'notice-pin', 'welcome']) $(id).addEventListener('click', openWelcome);
+$('welcome').addEventListener('click', () => openWelcome());
+for (const banner of document.querySelectorAll('.banner')) {
+  banner.querySelector('.banner-text').addEventListener('click', () => openWelcome(BANNER_STEPS[banner.id]));
+  banner.querySelector('.banner-close').addEventListener('click', () => {
+    banner.hidden = true;
+    chrome.storage.session.set({ [`dismissed:${banner.id}`]: true });
+  });
+}
 
 // --- Debugging ------------------------------------------------------------------
 // Set from the service worker's console (see background.js); only then is this shown.

@@ -21,8 +21,10 @@
   }
 }
 
+/* Always as wide as the two-column layout, so the popup doesn't change size
+   once it knows what to show. */
 body {
-  width: 340px;
+  width: 620px;
   margin: 0;
   padding: 12px 14px 14px;
   font: 13px/1.4 system-ui, sans-serif;
@@ -163,9 +165,6 @@ a {
 }
 
 /* Two columns when there is a Whiskybase column: parsed data left, Whiskybase right. */
-body.wide {
-  width: 620px;
-}
 body.wide .layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -277,7 +276,7 @@ body.wide #wb {
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
-/* Copies the ID; faint until hovered, like the info icon. */
+/* Copy the ID and the URL; faint until hovered, like the info icon. */
 .copy {
   display: inline-flex;
   vertical-align: -2px;
@@ -286,6 +285,9 @@ body.wide #wb {
   border: none;
   color: var(--muted);
   opacity: 0.6;
+}
+.copy + .copy {
+  margin-left: 1px;
 }
 .copy:hover,
 .copy:focus-visible {
@@ -330,7 +332,7 @@ body.wide #wb {
   margin: 6px 0 0;
 }
 
-/* Below both columns: notices of what is still to do, then the links. */
+/* Below both columns: the links. */
 .foot {
   display: flex;
   flex-wrap: wrap;
@@ -340,35 +342,55 @@ body.wide #wb {
   padding-top: 8px;
   border-top: 1px solid var(--line);
 }
-.notices {
-  flex-basis: 100%;
+/* At the very top: the welcome page's steps still to do. */
+.banners {
   display: grid;
-  gap: 4px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
-.notices:not(:has(.notice:not([hidden]))) {
+.banners:not(:has(.banner:not([hidden]))) {
   display: none;
 }
-/* Subtle: a muted line with a small accent, the whole line clickable. */
-.notice {
-  padding: 3px 8px;
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 6px 6px 6px 10px;
+  border-left: 4px solid var(--maybe);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--maybe) 18%, transparent);
+}
+.banner[hidden] {
+  display: none;
+}
+
+.banner-text {
+  flex: 1;
+  padding: 0;
   border: none;
-  border-left: 3px solid var(--maybe);
-  border-radius: 0;
-  background: color-mix(in srgb, var(--maybe) 8%, transparent);
-  color: var(--muted);
-  font-size: 12px;
+  font-weight: 600;
   text-align: left;
-  cursor: pointer;
 }
-.notice[hidden] {
-  display: none;
+.banner-text u {
+  white-space: nowrap;
 }
-.notice:hover u {
+.banner-text:hover u {
+  color: var(--maybe);
+}
+.banner-close {
+  flex: none;
+  display: inline-flex;
+  padding: 3px;
+  border: none;
+  color: var(--muted);
+}
+.banner-close:hover {
   color: var(--fg);
 }
+
 .footer-links {
   display: flex;
-  flex-wrap: wrap; /* should they not fit the narrow popup */
+  flex-wrap: wrap; /* should they not fit */
   justify-content: flex-end;
   column-gap: 10px;
   margin-left: auto;

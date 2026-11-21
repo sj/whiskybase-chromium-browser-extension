@@ -27,7 +27,7 @@ page's DevTools console as `[Bottle lookup for Whiskybase]`.
 - **Penalties**: listing/category pages, other drinks (gin, rum, cognac, ...),
   non-bottle products (lotion, glasses, books, ...). A listing is recognised by
   its structured data (several products, an item list) or, on a page without
-  product data, by a grid of at least 12 linked photos in alike cards. A
+  product data, by a grid of at least 8 linked photos in alike cards. A
   listing that mentions whisky anywhere is flagged (`listing`), and the popup
   then suggests opening the page of one of its bottles.
 
@@ -65,6 +65,25 @@ The manifest has no content scripts, so the extension can't read pages unless as
   The lookup starts by itself only for a detection with at least 90% confidence
   (`AUTO_MIN_CONFIDENCE`); for others the popup offers **Find this bottle on
   Whiskybase**, which sends `whisky:lookup` to start the same lookup.
+- **The page's right-click menu** has one entry, which also gives the extension
+  access to the tab (`activeTab`) and opens the popup (`chrome.action.openPopup`).
+  It is two entries in fact, one for links and images and one for the rest of
+  the page, which Chrome never shows together. Menus can't change per tab, so
+  the background updates them for the active tab (`refreshPageMenu`) from its
+  last detection (`detected:<tabId>` in `chrome.storage.session`, while the tab
+  still shows that address; the content script sends it again on a right-click)
+  and lookup: **Identify whisky on this page** (not checked yet, nothing found,
+  or a list of bottles), **Show bottle info and Whiskybase match**, or **Show
+  whisky bottle information**; on a list, a link or image says **Identify this
+  bottle of whisky**. The click keeps `menu:<tabId>` (with the link
+  right-clicked, if any) for the popup. On a list, the popup then asks the
+  content script for the bottle right-clicked (`whisky:card`): the link
+  right-clicked if a card has it, else the card round what was right-clicked
+  (the box round it with links to one page only). Without one, the popup shows
+  the list as usual. The content script fetches that card's page
+  from the site, as the page itself would, and runs the detector on it; its
+  lookup is kept as `lookup:<tabId>-card`, apart from the tab's own, and a match
+  is stored for the card's page as usual, so the list shows its badge.
 - **Automatic checking (opt-in):** **Check every page automatically** on the
   welcome page (below) requests the optional access to all `http`/`https` sites and sets `autoCheck`
   in `chrome.storage.local`. While both hold, the background registers the same
@@ -83,9 +102,13 @@ The manifest has no content scripts, so the extension can't read pages unless as
   automatic checking is on, stays once it is, and turns it off again.
   A step that gets done fades, all but its **Done** badge, and the border of a
   step still to do flashes briefly, in whichever order they are done.
-- **The popup** only says what is still to do: while the icon isn't pinned or
-  automatic checking is off, a subtle notice in its footer says so, and clicking
-  it opens the welcome page.
+- **The popup** only says what is still to do: while automatic checking is off
+  or the icon isn't pinned, a banner at its top says so, and clicking it opens
+  the welcome page, where that step's border flashes (`focus-step` in
+  `chrome.storage.session`). Its cross hides it until the browser restarts
+  (`dismissed:<id>` in `chrome.storage.session`), or until the step is undone:
+  the background forgets the dismissal when automatic checking is turned off,
+  or the icon is unpinned (Chrome 130 and later say so).
 - **Whiskybase itself** is never scanned: the automatic content script excludes
   `whiskybase.com` and its subdomains (`Whiskybase.OWN_PAGES`), `content.js`
   stops at once there, the background ignores detections from there, and the
@@ -271,7 +294,7 @@ goes to Whiskybase.
 
 Clicking a badge opens the popup on that bottle instead of following the link:
 the background stores it as `shown:<tabId>` in session storage and calls
-`chrome.action.openPopup()` (Chrome 127 and later). A popup opened within ten
+`chrome.action.openPopup()`. A popup opened within ten
 seconds of that shows the bottle's card rather than the page's own data, and
 asks for its details (photo, price) as it does for a lookup, which is the only
 time Whiskybase is asked anything for a badge. Re-scan goes back to the page.
@@ -292,7 +315,7 @@ It appears as soon as a lookup stores the match, comes back straight away on
 a later visit, and goes when a lookup no longer finds one. As a photo may only
 get its size once it loads (a lazy one), every image that loads counts until
 there is a badge. Clicking it opens the popup (`whisky:open-popup`,
-`chrome.action.openPopup`, Chrome 127 and later), as the toolbar icon would.
+`chrome.action.openPopup`), as the toolbar icon would.
 
 All badges are faint and grey (a frosted white pill, the icon in grey), so as
 not to get in the way of the photo, and take the icon's colours when the
@@ -319,15 +342,16 @@ data** on the welcome page removes them all (and with them the badges).
 
 | Path | Role |
 | ---- | ---- |
-| `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
+| `manifest.json` | Manifest V3; `storage`, `activeTab`, `scripting` and `contextMenus` (the icon's and the page's right-click menu) permissions, access to www.whiskybase.com (pages) and static.whiskybase.com (photos), and optional access to all sites (for automatic checking) |
 | `src/detector.js` | Detection and extraction, no dependencies (also used by the tests) |
 | `src/content.js` | Runs the detector on the page; re-scans single-page-app navigations and late-rendered content; marks images that link to bottles matched before; adds distillery names to SMWS codes on smws.com |
 | `src/smws.js` | The Scotch Malt Whisky Society's codes and their distilleries, and finding them in text (no DOM; also used by the tests) |
-| `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's right-click menu entries |
+| `src/background.js` | Per-tab badge and tooltip; automatic Whiskybase lookup; registers the content script while automatic checking is on; the icon's and the page's right-click menu entries |
 | `src/whiskybase.js` | Whiskybase query, results parsing and matching (no DOM; also used by the tests) |
 | `src/known-pages.js` | Keys for the page addresses of bottles matched before, for the badges on lists of bottles (no DOM; also used by the tests) |
-| `popup/` | Toolbar popup with results, a Re-scan button and the automatic-checking setting; loads the detector into the tab when needed |
+| `popup/` | Toolbar popup with results, a Re-scan button, and notices for the welcome page's steps still to do; loads the detector into the tab when needed |
 | `settings-welcome/` | Welcome page, opened on install and as the options page: what the extension does, pinning its icon and turning on automatic checking |
+| `icons/` | The extension's icon (`icon.svg`, the glass on a brown square) for the toolbar and Chrome's extension pages, and the glass on its own (`menu.svg`, as on pages) as the manifest's 16 and 32 pixel icons, which Chrome shows in the right-click menu |
 | `test/` | Parser unit tests, browser tests (`e2e.mjs`) and fixture pages |
 
 ## Packaging

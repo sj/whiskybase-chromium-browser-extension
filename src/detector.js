@@ -785,8 +785,9 @@
   // A list of bottles without structured data says so by its layout: a grid of
   // cards, each a link round a photo. The largest set of distinct image links
   // whose cards (or a box up to six levels round them) are alike siblings.
-  // Product pages have grids too (related bottles, a gallery), but smaller ones.
-  const GRID_LISTING = 12;
+  // Product pages have grids too (related bottles, a gallery), but smaller ones:
+  // at most 3 in the fixtures, and a small category has 11 (SMWS's smoky & fruity).
+  const GRID_LISTING = 8;
   function productGrid(doc) {
     const groups = new Map(); // parent → card signature → hrefs
     let largest = 0;
